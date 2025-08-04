@@ -29,6 +29,25 @@ Aetherwave is an immersive media engine for displaying cinematic MidJourney art 
 
 ## **🚀 Quick Start**
 
+### **Unity App (Visual Display)**
+
+```bash
+# Build the Aetherwave app
+./scripts/unity-build-verify.sh
+
+# Launch Aetherwave
+./scripts/unity-app-run.sh
+```
+
+**App Location**: `/src/build/bin/Aetherwave.app` (built by Unity AutoBuild system)
+
+**Controls**:
+- `→` / `SPACE`: Next image
+- `←` / `BACKSPACE`: Previous image  
+- `F`: Toggle fullscreen
+- `I`: Toggle debug info (shows build version)
+- `ESC`: Exit application
+
 ### **🎮 Unity Gallery (Recommended)**
 
 **Professional gallery with 10x faster development:**
