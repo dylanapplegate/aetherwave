@@ -54,10 +54,10 @@ if [[ $? -eq 0 ]]; then
     echo -e "${GREEN}✅ Unity build completed successfully${NC}"
 
     # Check if build was successful
-if [ -f "/Users/dylanapplegate/Development/aetherwave/src/build/bin/Aetherwave.app/Contents/MacOS/Aetherwave" ]; then
+if [ -f "/Users/dylanapplegate/Development/aetherwave/src/unity/Aetherwave/build/unity/Aetherwave.app/Contents/MacOS/Aetherwave" ]; then
     echo -e "${GREEN}✅ Unity build completed successfully${NC}"
     echo -e "${BLUE}🚀 Launching Aetherwave Unity Gallery...${NC}"
-    open "/Users/dylanapplegate/Development/aetherwave/src/build/bin/Aetherwave.app"
+    open "/Users/dylanapplegate/Development/aetherwave/src/unity/Aetherwave/build/unity/Aetherwave.app"
 else
     echo -e "${RED}❌ Build failed - app not found${NC}"
     echo "Check build log: build/unity-build.log"

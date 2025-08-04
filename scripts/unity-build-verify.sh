@@ -170,7 +170,7 @@ fi
 echo ""
 # Step 7: Check for built application
 echo -e "${YELLOW}Step 7: Checking for built application...${NC}"
-APP_PATH="$PROJECT_ROOT/src/build/bin/Aetherwave.app"
+APP_PATH="$PROJECT_ROOT/src/unity/Aetherwave/build/unity/Aetherwave.app"
 if [ -d "$APP_PATH" ]; then
     echo -e "${GREEN}✅ Built application found: $APP_PATH${NC}"
     # Get app size for verification
