@@ -41,7 +41,7 @@ Aetherwave is an immersive media engine for displaying cinematic MidJourney art 
 pip install PySide6 PyYAML requests Pillow
 
 # 3. Launch Qt gallery
-./scripts/qt-run.sh
+./scripts/fe-run.sh
 
 # Or run manually:
 cd src/qt

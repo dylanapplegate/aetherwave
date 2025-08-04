@@ -252,7 +252,7 @@ input:
    ./scripts/dev-setup.sh
 
    # Start Qt gallery
-   ./scripts/qt-run.sh
+   ./scripts/fe-run.sh
    
    # Or manually
    cd src/qt && python main.py

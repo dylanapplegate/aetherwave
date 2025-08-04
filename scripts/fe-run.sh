@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Aetherwave Qt Frontend Startup Script
+# Aetherwave Frontend Startup Script
 # Starts the Qt gallery application with proper error handling
 
 set -e
@@ -12,7 +12,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🎨 Starting Aetherwave Qt Frontend${NC}"
+echo -e "${BLUE}🎨 Starting Aetherwave Frontend${NC}"
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -69,7 +69,7 @@ fi
 mkdir -p "$PROJECT_ROOT/build/logs"
 
 # Start the Qt application
-echo -e "${BLUE}🎨 Starting Qt Gallery...${NC}"
+echo -e "${BLUE}🎨 Starting Frontend Gallery...${NC}"
 cd "$PROJECT_ROOT/src/fe"
 
 # Set Qt environment variables for better rendering
@@ -85,4 +85,4 @@ if [[ -n "$BACKEND_PID" ]]; then
     kill $BACKEND_PID 2>/dev/null || true
 fi
 
-echo -e "${GREEN}✅ Aetherwave Qt Frontend stopped${NC}"
+echo -e "${GREEN}✅ Aetherwave Frontend stopped${NC}"

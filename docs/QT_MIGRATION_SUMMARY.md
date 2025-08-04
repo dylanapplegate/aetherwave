@@ -75,7 +75,7 @@ python main.py
 ### **Full Setup Script**
 ```bash
 # Use the automated startup script
-./scripts/qt-run.sh
+./scripts/fe-run.sh
 ```
 
 ## 🎯 Business Value Delivered

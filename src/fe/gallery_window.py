@@ -341,7 +341,7 @@ class GalleryWindow(QMainWindow):
             QTimer.singleShot(1000, self.next_image)
     
     def display_current_image(self) -> None:
-        """Display the current image with proper scaling."""
+        """Display the current image with proper scaling and adaptive background."""
         if not self.current_pixmap:
             return
         
@@ -354,7 +354,72 @@ class GalleryWindow(QMainWindow):
         )
         
         self.image_label.setPixmap(scaled_pixmap)
+        
+        # Apply adaptive background color based on image
+        self.apply_adaptive_background()
+        
         self.logger.debug(f"Displayed image {self.current_index + 1}/{len(self.image_list)}")
+    
+    def apply_adaptive_background(self) -> None:
+        """Apply background color that complements the current image."""
+        if not self.image_list:
+            return
+            
+        try:
+            # Get classification data for current image
+            filename = self.image_list[self.current_index]
+            classification_data = self.api_client.classify_image(filename, include_metadata=True)
+            
+            if classification_data and 'metadata' in classification_data:
+                metadata = classification_data['metadata']
+                
+                # Get dominant color from classification
+                dominant_color = metadata.get('dominant_color')
+                
+                r, g, b = None, None, None
+                
+                # Handle both hex string and RGB array formats
+                if isinstance(dominant_color, str) and dominant_color.startswith('#'):
+                    # Convert hex to RGB
+                    hex_color = dominant_color.lstrip('#')
+                    if len(hex_color) == 6:
+                        r = int(hex_color[0:2], 16)
+                        g = int(hex_color[2:4], 16)
+                        b = int(hex_color[4:6], 16)
+                elif isinstance(dominant_color, list) and len(dominant_color) >= 3:
+                    # RGB array format
+                    r, g, b = dominant_color[:3]
+                
+                if r is not None and g is not None and b is not None:
+                    # Create a darker, desaturated version for background
+                    # Reduce brightness and saturation for better readability
+                    bg_r = max(10, int(r * 0.2))  # 20% of original brightness, minimum 10
+                    bg_g = max(10, int(g * 0.2))
+                    bg_b = max(10, int(b * 0.2))
+                    
+                    # Apply the adaptive background
+                    background_style = f"""
+                        QMainWindow {{
+                            background-color: rgb({bg_r}, {bg_g}, {bg_b});
+                        }}
+                        QLabel#image_label {{
+                            background-color: rgb({bg_r}, {bg_g}, {bg_b});
+                        }}
+                    """
+                    self.setStyleSheet(background_style)
+                    
+                    self.logger.debug(f"Applied adaptive background: rgb({bg_r}, {bg_g}, {bg_b}) from dominant color {dominant_color}")
+                else:
+                    # Fallback to default cyberfemme background
+                    self.apply_cyberfemme_theme()
+            else:
+                # Fallback to default cyberfemme background
+                self.apply_cyberfemme_theme()
+                
+        except Exception as e:
+            self.logger.warning(f"Failed to apply adaptive background: {e}")
+            # Fallback to default cyberfemme background
+            self.apply_cyberfemme_theme()
     
     def update_info_display(self) -> None:
         """Update the information overlay."""

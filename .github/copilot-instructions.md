@@ -61,10 +61,8 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
    sleep 3
    
    # Test Qt application startup
-   python src/python/main.py
-   # EXPECTED: Gallery window opens, connects to API, displays images
-   
-   pkill -f "uvicorn"
+   ./scripts/fe-run.sh
+   # EXPECTED: Gallery window opens, connects to API, displays images   pkill -f "uvicorn"
    pkill -f "python.*main.py"
    ```
 
@@ -138,7 +136,7 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
    curl -s http://localhost:8000/health | grep -q "healthy"
 
    # Must pass: Qt application verification
-   ./scripts/qt-run.sh
+   ./scripts/fe-run.sh
    # Expected: Gallery window opens successfully
 
    # Must pass: All tests
@@ -378,7 +376,7 @@ Image Collection → Classification → Theme Detection → Qt Rendering
 
 **Qt Application:**
 
-- **Qt Setup**: `./scripts/qt-run.sh` (starts Qt gallery application)
+- **Qt Setup**: `./scripts/fe-run.sh` (starts Qt gallery application)
 - **Manual Setup**: `python src/python/main.py` (direct application launch)
 
 **Manual Workflow:**

@@ -409,5 +409,61 @@
       "monochromatic",
       "triadic"
     ]
+  },
+  "31fc461191186aeb9ee1e171b1fbfb3b": {
+    "theme_name": "organic",
+    "confidence": 0.4,
+    "primary_colors": [
+      "#302532",
+      "#b8aeba",
+      "#eeedee",
+      "#343e4a"
+    ],
+    "accent_colors": [
+      "#8fbc8f",
+      "#daa520",
+      "#f4a460",
+      "#90ee90"
+    ],
+    "temperature_bias": "neutral",
+    "mood_profile": {
+      "mysterious": 0.4,
+      "peaceful": 0.6
+    },
+    "energy_level": "low",
+    "complexity_preference": 0.3198,
+    "harmony_types": [
+      "monochromatic",
+      "triadic",
+      "analogous"
+    ]
+  },
+  "b84e0c16773b94fd31703750beda674b": {
+    "theme_name": "organic",
+    "confidence": 0.4,
+    "primary_colors": [
+      "#302532",
+      "#b8aeba",
+      "#eeedee",
+      "#281e2b"
+    ],
+    "accent_colors": [
+      "#8fbc8f",
+      "#daa520",
+      "#f4a460",
+      "#90ee90"
+    ],
+    "temperature_bias": "neutral",
+    "mood_profile": {
+      "mysterious": 0.5,
+      "peaceful": 0.5
+    },
+    "energy_level": "low",
+    "complexity_preference": 0.357,
+    "harmony_types": [
+      "monochromatic",
+      "triadic",
+      "analogous"
+    ]
   }
 }
