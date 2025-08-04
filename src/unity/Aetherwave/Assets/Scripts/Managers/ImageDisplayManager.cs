@@ -17,10 +17,11 @@ namespace Aetherwave
         public RawImage imageDisplay;
         
         [Header("Navigation Settings")]
-        public float transitionDuration = 1.0f;
+        public float transitionDuration = 0.5f;
         public KeyCode nextImageKey = KeyCode.Space;
         public KeyCode previousImageKey = KeyCode.Backspace;
         public KeyCode refreshThemeKey = KeyCode.T;
+        public KeyCode fullscreenToggleKey = KeyCode.F;
         
         [Header("API Integration")]
         public string apiBaseUrl = "http://localhost:8000";
@@ -82,6 +83,12 @@ namespace Aetherwave
                 {
                     StartCoroutine(RefreshTheme());
                 }
+            }
+            
+            // Fullscreen toggle (works even during transitions)
+            if (Input.GetKeyDown(fullscreenToggleKey))
+            {
+                ToggleFullscreen();
             }
             
             if (Input.GetKeyDown(KeyCode.Escape))
@@ -198,36 +205,14 @@ namespace Aetherwave
                 yield return null;
             }
             
-            // Change texture
+            // Change texture and fix aspect ratio immediately
             Debug.Log($"🔄 Applying new texture to imageDisplay...");
             imageDisplay.texture = newTexture;
             
-            // Fix aspect ratio to prevent stretching
+            // Apply proper aspect ratio fitting
             if (newTexture != null)
             {
-                RectTransform rectTransform = imageDisplay.GetComponent<RectTransform>();
-                if (rectTransform != null)
-                {
-                    float imageAspect = (float)newTexture.width / newTexture.height;
-                    float containerAspect = rectTransform.rect.width / rectTransform.rect.height;
-                    
-                    if (imageAspect > containerAspect)
-                    {
-                        // Image is wider - fit to width, letterbox top/bottom
-                        rectTransform.anchorMin = new Vector2(0, 0.5f - (containerAspect / imageAspect) / 2f);
-                        rectTransform.anchorMax = new Vector2(1, 0.5f + (containerAspect / imageAspect) / 2f);
-                    }
-                    else
-                    {
-                        // Image is taller - fit to height, pillarbox left/right
-                        rectTransform.anchorMin = new Vector2(0.5f - (imageAspect / containerAspect) / 2f, 0);
-                        rectTransform.anchorMax = new Vector2(0.5f + (imageAspect / containerAspect) / 2f, 1);
-                    }
-                    rectTransform.offsetMin = Vector2.zero;
-                    rectTransform.offsetMax = Vector2.zero;
-                    
-                    Debug.Log($"📐 Fixed aspect ratio: image {newTexture.width}x{newTexture.height} (aspect: {imageAspect:F2}), container aspect: {containerAspect:F2}");
-                }
+                ApplyProperAspectRatio(newTexture);
             }
             
             Debug.Log($"✅ Texture applied. Current texture: {(imageDisplay.texture != null ? $"{imageDisplay.texture.width}x{imageDisplay.texture.height}" : "NULL")}");
@@ -243,6 +228,83 @@ namespace Aetherwave
             }
             
             imageDisplay.color = originalColor;
+        }
+        
+        void ApplyProperAspectRatio(Texture2D texture)
+        {
+            RectTransform rectTransform = imageDisplay.GetComponent<RectTransform>();
+            if (rectTransform == null || texture == null) return;
+            
+            float imageAspect = (float)texture.width / texture.height;
+            float screenAspect = (float)Screen.width / Screen.height;
+            
+            Debug.Log($"📐 Aspect ratio calculation:");
+            Debug.Log($"   - Image: {texture.width}x{texture.height} (aspect: {imageAspect:F3})");
+            Debug.Log($"   - Screen: {Screen.width}x{Screen.height} (aspect: {screenAspect:F3})");
+            
+            // Always reset to full screen first
+            rectTransform.anchorMin = Vector2.zero;
+            rectTransform.anchorMax = Vector2.one;
+            rectTransform.offsetMin = Vector2.zero;
+            rectTransform.offsetMax = Vector2.zero;
+            
+            // Wait one frame to ensure the RectTransform is updated
+            Canvas.ForceUpdateCanvases();
+            
+            if (imageAspect > screenAspect)
+            {
+                // Image is wider than screen - fit to width, letterbox top/bottom
+                float heightRatio = screenAspect / imageAspect;
+                float verticalMargin = (1f - heightRatio) * 0.5f;
+                
+                rectTransform.anchorMin = new Vector2(0f, verticalMargin);
+                rectTransform.anchorMax = new Vector2(1f, 1f - verticalMargin);
+                
+                Debug.Log($"📐 Letterboxing applied: height ratio {heightRatio:F3}, vertical margin {verticalMargin:F3}");
+            }
+            else
+            {
+                // Image is taller than screen - fit to height, pillarbox left/right  
+                float widthRatio = imageAspect / screenAspect;
+                float horizontalMargin = (1f - widthRatio) * 0.5f;
+                
+                rectTransform.anchorMin = new Vector2(horizontalMargin, 0f);
+                rectTransform.anchorMax = new Vector2(1f - horizontalMargin, 1f);
+                
+                Debug.Log($"📐 Pillarboxing applied: width ratio {widthRatio:F3}, horizontal margin {horizontalMargin:F3}");
+            }
+            
+            // Ensure no additional offsets
+            rectTransform.offsetMin = Vector2.zero;
+            rectTransform.offsetMax = Vector2.zero;
+            
+            Debug.Log($"📐 Final anchors: min({rectTransform.anchorMin.x:F3}, {rectTransform.anchorMin.y:F3}) max({rectTransform.anchorMax.x:F3}, {rectTransform.anchorMax.y:F3})");
+        }
+        
+        void ToggleFullscreen()
+        {
+            bool isCurrentlyFullscreen = Screen.fullScreen;
+            Screen.fullScreen = !isCurrentlyFullscreen;
+            
+            Debug.Log($"🖥️ Fullscreen toggled: {isCurrentlyFullscreen} -> {!isCurrentlyFullscreen}");
+            
+            // Re-apply aspect ratio after fullscreen change if we have a current texture
+            if (imageDisplay != null && imageDisplay.texture != null)
+            {
+                StartCoroutine(ReapplyAspectRatioAfterScreenChange());
+            }
+        }
+        
+        IEnumerator ReapplyAspectRatioAfterScreenChange()
+        {
+            // Wait a frame for the screen change to take effect
+            yield return null;
+            
+            if (imageDisplay.texture is Texture2D texture)
+            {
+                Debug.Log("🔄 Reapplying aspect ratio after fullscreen change...");
+                ApplyProperAspectRatio(texture);
+            }
         }
         
         public void NextImage()
@@ -330,7 +392,8 @@ namespace Aetherwave
             string info = $"🎨 Aetherwave Gallery\n";
             info += $"📸 Image: {currentImageIndex + 1}/{imageUrls.Count}\n";
             info += $"🎭 Theme: {currentTheme}\n";
-            info += $"🎮 Controls: SPACE/← →, T=theme, ESC=quit";
+            info += $"🖥️ Fullscreen: {(Screen.fullScreen ? "ON" : "OFF")}\n";
+            info += $"🎮 Controls: SPACE/← →, T=theme, F=fullscreen, ESC=quit";
             
             GUI.Label(new Rect(20, 20, 400, 100), info, style);
         }
