@@ -50,7 +50,7 @@ private:
     SDL_Rect cachedImageRect = {0, 0, 0, 0};
     size_t cachedImageIndex = SIZE_MAX; // Invalid index initially
     bool layoutNeedsRecalc = true;
-    
+
     // Transition layout cache
     SDL_Rect cachedTransitionCurrentRect = {0, 0, 0, 0};
     SDL_Rect cachedTransitionNextRect = {0, 0, 0, 0};
@@ -296,7 +296,7 @@ public:
             cachedImageRect = destRect;
             cachedImageIndex = currentIndex;
             layoutNeedsRecalc = false;
-            
+
             DEBUG_LOG("FALLBACK_CACHED", "Cached layout: " + std::to_string(destRect.w) + "x" + std::to_string(destRect.h) +
                       " at (" + std::to_string(destRect.x) + "," + std::to_string(destRect.y) + ")");
         } else {
@@ -310,39 +310,49 @@ public:
     }
 
     void renderTransition() {
-        size_t nextIndex = (currentIndex + 1) % imageTextures.size();
+        // During transitions, we want to show:
+        // - currentTexture: the image we're transitioning FROM (previous image)
+        // - nextTexture: the image we're transitioning TO (current image)
+
+        // Calculate the previous index (what we're transitioning FROM)
+        size_t previousIndex = (currentIndex == 0) ? imagePaths.size() - 1 : currentIndex - 1;
+        size_t nextIndex = currentIndex; // What we're transitioning TO
 
         // Ensure both textures are valid
-        if (currentIndex >= imageTextures.size() || !imageTextures[currentIndex] ||
+        if (previousIndex >= imageTextures.size() || !imageTextures[previousIndex] ||
             nextIndex >= imageTextures.size() || !imageTextures[nextIndex]) {
             renderCurrentImage();
             return;
         }
 
-        SDL_Texture* currentTexture = imageTextures[currentIndex];
-        SDL_Texture* nextTexture = imageTextures[nextIndex];
+        SDL_Texture* currentTexture = imageTextures[previousIndex]; // FROM
+        SDL_Texture* nextTexture = imageTextures[nextIndex];        // TO
 
         // Use cached layout calculations for transitions to prevent recalculation during animation
         SDL_Rect currentRect, nextRect;
-        
-        // Check if we need to recalculate transition layouts
-        if (layoutNeedsRecalc || 
-            cachedTransitionCurrentIndex != currentIndex || 
-            cachedTransitionNextIndex != nextIndex) {
-            
+
+        // CRITICAL FIX: Only recalculate if we don't have cached values for these specific indices
+        // or if the layout was marked for recalculation (window resize/move)
+        bool needsRecalc = (cachedTransitionCurrentIndex != previousIndex ||
+                           cachedTransitionNextIndex != nextIndex ||
+                           layoutNeedsRecalc);
+
+        if (needsRecalc) {
             // Calculate and cache both layouts
             currentRect = calculateImageRectFallback(currentTexture);
             nextRect = calculateImageRectFallback(nextTexture);
-            
+
             cachedTransitionCurrentRect = currentRect;
             cachedTransitionNextRect = nextRect;
-            cachedTransitionCurrentIndex = currentIndex;
+            cachedTransitionCurrentIndex = previousIndex;
             cachedTransitionNextIndex = nextIndex;
-            
-            DEBUG_LOG("TRANSITION_CACHED", "Cached transition layouts: current=" + std::to_string(currentRect.w) + "x" + std::to_string(currentRect.h) +
-                      " next=" + std::to_string(nextRect.w) + "x" + std::to_string(nextRect.h));
+
+            DEBUG_LOG("TRANSITION_RECALC", "Recalculated transition layouts: from=" + std::to_string(previousIndex) +
+                      " (" + std::to_string(currentRect.w) + "x" + std::to_string(currentRect.h) + ")" +
+                      " to=" + std::to_string(nextIndex) +
+                      " (" + std::to_string(nextRect.w) + "x" + std::to_string(nextRect.h) + ")");
         } else {
-            // Use cached layouts (no recalculation during transition animation)
+            // Use cached layouts (no debug spam during smooth transitions)
             currentRect = cachedTransitionCurrentRect;
             nextRect = cachedTransitionNextRect;
         }
@@ -383,7 +393,7 @@ public:
         }
 
         if (textureWidth <= 0 || textureHeight <= 0 || windowWidth <= 0 || windowHeight <= 0) {
-            DEBUG_LOG("FALLBACK", "ERROR: invalid dimensions - texture:" + std::to_string(textureWidth) + "x" + 
+            DEBUG_LOG("FALLBACK", "ERROR: invalid dimensions - texture:" + std::to_string(textureWidth) + "x" +
                       std::to_string(textureHeight) + " window:" + std::to_string(windowWidth) + "x" + std::to_string(windowHeight));
             return {0, 0, 0, 0};
         }
@@ -391,9 +401,9 @@ public:
         // Calculate aspect-ratio-preserving scaling with improved precision
         float windowAspect = (float)windowWidth / windowHeight;
         float textureAspect = (float)textureWidth / textureHeight;
-        
+
         int scaledWidth, scaledHeight;
-        
+
         if (textureAspect > windowAspect) {
             // Image is wider than window - fit to width
             scaledWidth = windowWidth;
@@ -413,6 +423,11 @@ public:
 
     void renderFadeTransition(SDL_Texture* currentTexture, SDL_Texture* nextTexture,
                              const SDL_Rect& currentRect, const SDL_Rect& nextRect) {
+        // Clear background first to prevent ghosting
+        SDL_Color bgColor = themeManager->getBackgroundColor();
+        SDL_SetRenderDrawColor(renderer, bgColor.r, bgColor.g, bgColor.b, 255);
+        SDL_RenderFillRect(renderer, nullptr);
+
         // Render current image with decreasing alpha
         SDL_SetTextureAlphaMod(currentTexture, (Uint8)((1.0f - fadeAlpha) * 255));
         SDL_RenderCopy(renderer, currentTexture, nullptr, &currentRect);
@@ -760,17 +775,17 @@ public:
                         // Check if window moved to a different display
                         int newDisplayIndex = SDL_GetWindowDisplayIndex(window);
                         static int lastDisplayIndex = 0; // Track display changes
-                        
+
                         if (newDisplayIndex != lastDisplayIndex) {
-                            DEBUG_DISPLAY("DISPLAY_CHANGE", "Window moved from display " + 
-                                         std::to_string(lastDisplayIndex) + " to display " + 
+                            DEBUG_DISPLAY("DISPLAY_CHANGE", "Window moved from display " +
+                                         std::to_string(lastDisplayIndex) + " to display " +
                                          std::to_string(newDisplayIndex));
-                            
+
                             // Get new display bounds for proper layout calculation
                             SDL_Rect displayBounds;
                             if (SDL_GetDisplayBounds(newDisplayIndex, &displayBounds) == 0) {
-                                DEBUG_DISPLAY("NEW_DISPLAY_BOUNDS", "Display " + std::to_string(newDisplayIndex) + 
-                                             " bounds: " + std::to_string(displayBounds.w) + "x" + 
+                                DEBUG_DISPLAY("NEW_DISPLAY_BOUNDS", "Display " + std::to_string(newDisplayIndex) +
+                                             " bounds: " + std::to_string(displayBounds.w) + "x" +
                                              std::to_string(displayBounds.h));
                             }
                             lastDisplayIndex = newDisplayIndex;
@@ -779,13 +794,13 @@ public:
                         // Force layout recalculation on window move to detect monitor changes
                         if (!imageTextures.empty()) {
                             layoutNeedsRecalc = true;
-                            
+
                             // Invalidate all caches for multi-monitor layout changes
                             cachedImageIndex = SIZE_MAX;
                             cachedTransitionCurrentIndex = SIZE_MAX;
                             cachedTransitionNextIndex = SIZE_MAX;
-                            
-                            DEBUG_LAYOUT("RECALC_TRIGGER", "All layout caches invalidated due to multi-monitor window move");
+
+                            DEBUG_LAYOUT("RECALC_TRIGGER", "All layout caches invalidated due to window move");
                         }
                     }
                     break;
@@ -805,12 +820,12 @@ public:
 
             // Mark layout for recalculation since window size changed
             layoutNeedsRecalc = true;
-            
+
             // Also invalidate all caches since window dimensions changed
             cachedImageIndex = SIZE_MAX;
             cachedTransitionCurrentIndex = SIZE_MAX;
             cachedTransitionNextIndex = SIZE_MAX;
-            
+
             DEBUG_LOG("WINDOW_RESIZE", "Window dimensions changed to " + std::to_string(windowWidth) + "x" + std::to_string(windowHeight) + " - all caches invalidated");
 
             // Also update the layout engine with current dimensions
@@ -826,10 +841,20 @@ public:
             return;
         }
 
-        // Don't start new transition if already transitioning
+        // Allow interrupting slow transitions for faster navigation
         if (isTransitioning) {
-            DEBUG_LOG("IMAGE_SWITCH", "nextImage() blocked - already transitioning");
-            return;
+            auto now = std::chrono::steady_clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - transitionStart).count();
+
+            // If transition is more than 50% complete or been running for more than 200ms, allow interrupt
+            if (fadeAlpha > 0.5f || elapsed > 200) {
+                isTransitioning = false;
+                fadeAlpha = 1.0f;
+                DEBUG_LOG("IMAGE_SWITCH", "Interrupted transition for faster navigation");
+            } else {
+                DEBUG_LOG("IMAGE_SWITCH", "nextImage() blocked - already transitioning");
+                return;
+            }
         }
 
         // Update index BEFORE starting transition and calculating layout
@@ -841,10 +866,9 @@ public:
 
         // Mark layout for recalculation since image changed
         layoutNeedsRecalc = true;
-        
-        // Also invalidate transition cache since indexes changed
-        cachedTransitionCurrentIndex = SIZE_MAX;
-        cachedTransitionNextIndex = SIZE_MAX;
+
+        // CRITICAL FIX: Don't invalidate transition cache here - let renderTransition() handle it
+        // The transition cache will be recalculated only if the indices don't match
 
         startTransition();
 
@@ -858,10 +882,20 @@ public:
             return;
         }
 
-        // Don't start new transition if already transitioning
+        // Allow interrupting slow transitions for faster navigation
         if (isTransitioning) {
-            DEBUG_LOG("IMAGE_SWITCH", "previousImage() blocked - already transitioning");
-            return;
+            auto now = std::chrono::steady_clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - transitionStart).count();
+
+            // If transition is more than 50% complete or been running for more than 200ms, allow interrupt
+            if (fadeAlpha > 0.5f || elapsed > 200) {
+                isTransitioning = false;
+                fadeAlpha = 1.0f;
+                DEBUG_LOG("IMAGE_SWITCH", "Interrupted transition for faster navigation");
+            } else {
+                DEBUG_LOG("IMAGE_SWITCH", "previousImage() blocked - already transitioning");
+                return;
+            }
         }
 
         // Move to previous index first, then start transition
@@ -873,10 +907,9 @@ public:
 
         // Mark layout for recalculation since image changed
         layoutNeedsRecalc = true;
-        
-        // Also invalidate transition cache since indexes changed
-        cachedTransitionCurrentIndex = SIZE_MAX;
-        cachedTransitionNextIndex = SIZE_MAX;
+
+        // CRITICAL FIX: Don't invalidate transition cache here - let renderTransition() handle it
+        // The transition cache will be recalculated only if the indices don't match
 
         startTransition();
 
@@ -903,6 +936,11 @@ public:
         } else {
             currentTransitionType = TransitionType::FADE;
         }
+
+        // PERFORMANCE FIX: Reset layoutNeedsRecalc to false after transition starts
+        // This prevents renderTransition() from recalculating every frame
+        // The transition cache logic will handle the initial calculation
+        layoutNeedsRecalc = false;
     }
 
     void updateTransition() {
@@ -911,8 +949,8 @@ public:
         auto now = std::chrono::steady_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - transitionStart).count();
 
-        // Use theme-specific transition duration
-        float transitionDuration = themeManager->getTransitionDuration() * 1000.0f;
+        // Use theme-specific transition duration, but cap it for responsiveness
+        float transitionDuration = std::min(themeManager->getTransitionDuration() * 1000.0f, 500.0f);
         float progress = elapsed / transitionDuration;
 
         if (progress >= 1.0f) {
