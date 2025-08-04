@@ -24,6 +24,7 @@ set(SOURCES
     "src/cpp/visual_sdl.cpp"
     "src/cpp/ThemeManagerSDL.cpp"
     "src/cpp/LayoutEngine.cpp"
+    "src/cpp/DebugLogger.cpp"
     "src/shared/Config.cpp"
 )
 

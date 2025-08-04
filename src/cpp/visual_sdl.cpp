@@ -16,6 +16,7 @@
 #include <SDL2/SDL_image.h>
 #include "ThemeManagerSDL.h"
 #include "LayoutEngine.h"
+#include "DebugLogger.h"
 
 namespace Aetherwave {
 
@@ -69,6 +70,11 @@ private:
 public:
     bool initialize() {
         std::cout << "🌊 Initializing Aetherwave Visual Display Engine..." << std::endl;
+
+        // Initialize debug logging system first
+        DebugLogger::getInstance().setLogFile("aetherwave_debug.log");
+        DebugLogger::getInstance().enableConsoleOutput(true);
+        DEBUG_LOG("SYSTEM", "Aetherwave Visual Display Engine starting up");
 
         // Initialize random number generator
         glitchRng.seed(rd());
@@ -126,13 +132,16 @@ public:
 
         // Enable high-quality texture filtering for better scaling
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "2");  // Apply to renderer
-        
+
         // Set blend mode for alpha transparency
         SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
         // Initialize Phase 4B.1: Dynamic Layout Engine
         layoutEngine = std::make_unique<Aetherwave::LayoutEngine>(window);
         windowManager = std::make_unique<Aetherwave::WindowManager>(window, layoutEngine.get());
+
+        // Ensure initial window dimensions are correct
+        updateWindowDimensions();
 
         std::cout << "✅ SDL2 visual engine initialized successfully!" << std::endl;
         return true;
@@ -222,6 +231,14 @@ public:
 
         if (imagePaths.empty()) {
             std::cout << "💡 Add images to assets/images/ (project root) and restart" << std::endl;
+        } else {
+            // Force layout calculation after loading images to ensure proper initial sizing
+            updateWindowDimensions();
+            if (layoutEngine && !imageTextures.empty()) {
+                std::vector<SDL_Texture*> textures = { imageTextures[0] };
+                layoutEngine->calculateLayout(textures);
+                std::cout << "🎨 Initial layout calculated for first image" << std::endl;
+            }
         }
     }
 
@@ -254,16 +271,22 @@ public:
         if (currentIndex >= imageTextures.size() || !imageTextures[currentIndex]) return;
 
         SDL_Texture* currentTexture = imageTextures[currentIndex];
-        
-        // Use layout engine to calculate optimal positioning
-        std::vector<SDL_Texture*> textures = { currentTexture };
-        layoutEngine->calculateLayout(textures);
-        
+
+        // Use pre-calculated layout from layout engine (no recalculation during rendering)
         SDL_Rect destRect = layoutEngine->getImageRect(0);
         if (destRect.w == 0 || destRect.h == 0) {
             // Fallback if layout engine fails
+            std::cout << "⚠️ Layout engine returned invalid rect, using fallback calculation" << std::endl;
             destRect = calculateImageRectFallback(currentTexture);
         }
+
+        // Debug: Print current layout calculations
+        int textureW, textureH;
+        SDL_QueryTexture(currentTexture, nullptr, nullptr, &textureW, &textureH);
+        std::cout << "🖼️ RENDER DEBUG: texture=" << textureW << "x" << textureH
+                  << " window=" << windowWidth << "x" << windowHeight
+                  << " destRect=" << destRect.w << "x" << destRect.h
+                  << " at (" << destRect.x << "," << destRect.y << ")" << std::endl;
 
         // Reset alpha to full opacity
         SDL_SetTextureAlphaMod(currentTexture, 255);
@@ -283,13 +306,10 @@ public:
         SDL_Texture* currentTexture = imageTextures[currentIndex];
         SDL_Texture* nextTexture = imageTextures[nextIndex];
 
-        // Use layout engine for both textures
-        std::vector<SDL_Texture*> textures = { currentTexture, nextTexture };
-        layoutEngine->calculateLayout(textures);
-        
+        // Use pre-calculated layout from layout engine (no recalculation during rendering)
         SDL_Rect currentRect = layoutEngine->getImageRect(0);
-        SDL_Rect nextRect = layoutEngine->getImageRect(1);
-        
+        SDL_Rect nextRect = layoutEngine->getImageRect(0); // Use same layout for transition
+
         // Fallback to old calculation if layout engine fails
         if (currentRect.w == 0 || currentRect.h == 0) {
             currentRect = calculateImageRectFallback(currentTexture);
@@ -327,6 +347,9 @@ public:
         int textureWidth, textureHeight;
         SDL_QueryTexture(texture, nullptr, nullptr, &textureWidth, &textureHeight);
 
+        std::cout << "🔧 Fallback calculation: window=" << windowWidth << "x" << windowHeight
+                  << " texture=" << textureWidth << "x" << textureHeight << std::endl;
+
         // Calculate aspect-ratio-preserving scaling
         float scaleX = (float)windowWidth / textureWidth;
         float scaleY = (float)windowHeight / textureHeight;
@@ -338,6 +361,9 @@ public:
         // Center the image
         int x = (windowWidth - scaledWidth) / 2;
         int y = (windowHeight - scaledHeight) / 2;
+
+        std::cout << "🔧 Fallback result: " << scaledWidth << "x" << scaledHeight
+                  << " at (" << x << "," << y << ")" << std::endl;
 
         return { x, y, scaledWidth, scaledHeight };
     }
@@ -501,7 +527,7 @@ public:
         if (showThemeDebug) {
             renderThemeDebug();
         }
-        
+
         // Layout debug overlay
         if (showLayoutDebug) {
             renderLayoutDebug();
@@ -580,30 +606,30 @@ public:
 
         // Visualize current layout rectangles
         const auto& layouts = layoutEngine->getImageLayouts();
-        
+
         // Draw layout rectangles with different colors
         SDL_Color layoutColors[] = {
             {255, 100, 100, 100}, // Red
-            {100, 255, 100, 100}, // Green  
+            {100, 255, 100, 100}, // Green
             {100, 100, 255, 100}, // Blue
             {255, 255, 100, 100}, // Yellow
             {255, 100, 255, 100}, // Magenta
             {100, 255, 255, 100}  // Cyan
         };
-        
+
         for (size_t i = 0; i < layouts.size() && i < 6; i++) {
             SDL_Rect layoutRect = layoutEngine->getImageRect(i);
             if (layoutRect.w > 0 && layoutRect.h > 0) {
                 SDL_Color& color = layoutColors[i];
                 SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
                 SDL_RenderFillRect(renderer, &layoutRect);
-                
+
                 // Draw border
                 SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 255);
                 SDL_RenderDrawRect(renderer, &layoutRect);
             }
         }
-        
+
         // Reset draw color
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
     }
@@ -677,13 +703,45 @@ public:
                     break;
 
                 case SDL_WINDOWEVENT:
+                    std::cout << "🪟 Window event: " << e.window.event << std::endl;
+                    DEBUG_WINDOW("SDL_EVENT", "Window event type: " + std::to_string(e.window.event));
+
                     windowManager->handleWindowEvent(e.window);
+                    updateWindowDimensions(); // Always update dimensions on window events
                     if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
-                        windowWidth = e.window.data1;
-                        windowHeight = e.window.data2;
                         std::cout << "🔄 Window resized to: " << windowWidth << "x" << windowHeight << std::endl;
+                        DEBUG_WINDOW("RESIZE", "New size: " + std::to_string(windowWidth) + "x" + std::to_string(windowHeight));
+                    } else if (e.window.event == SDL_WINDOWEVENT_MOVED) {
+                        int x, y;
+                        SDL_GetWindowPosition(window, &x, &y);
+                        std::cout << "🖥️ Window moved, forcing layout recalculation" << std::endl;
+                        DEBUG_WINDOW("MOVE_EVENT", "Window moved to position (" + std::to_string(x) + "," + std::to_string(y) + ")");
+
+                        // Force layout recalculation on window move to detect monitor changes
+                        if (layoutEngine && !imageTextures.empty()) {
+                            std::vector<SDL_Texture*> textures = { imageTextures[currentIndex] };
+                            DEBUG_LAYOUT("RECALC_TRIGGER", "Layout recalculation triggered by window move");
+                            layoutEngine->calculateLayout(textures);
+                        }
                     }
                     break;
+            }
+        }
+    }
+
+    void updateWindowDimensions() {
+        // Get current window size to ensure windowWidth/windowHeight are always accurate
+        int newWidth, newHeight;
+        SDL_GetWindowSize(window, &newWidth, &newHeight);
+
+        // Only update if dimensions have actually changed
+        if (newWidth != windowWidth || newHeight != windowHeight) {
+            windowWidth = newWidth;
+            windowHeight = newHeight;
+
+            // Also update the layout engine with current dimensions
+            if (layoutEngine) {
+                layoutEngine->updateWindowDimensions(windowWidth, windowHeight);
             }
         }
     }
@@ -695,6 +753,13 @@ public:
         if (isTransitioning) return;
 
         startTransition();
+
+        // Calculate layout for the new image once when switching
+        if (layoutEngine && currentIndex < imageTextures.size() && imageTextures[currentIndex]) {
+            std::vector<SDL_Texture*> textures = { imageTextures[currentIndex] };
+            layoutEngine->calculateLayout(textures);
+            std::cout << "🎨 Layout calculated for new image" << std::endl;
+        }
 
         std::string filename = std::filesystem::path(imagePaths[currentIndex]).filename().string();
         std::cout << "➡️ Next: " << filename << " (" << (currentIndex + 1) << "/" << imagePaths.size() << ")" << std::endl;
@@ -709,6 +774,13 @@ public:
         // Move to previous index first, then start transition
         currentIndex = (currentIndex == 0) ? imagePaths.size() - 1 : currentIndex - 1;
         startTransition();
+
+        // Calculate layout for the new image once when switching
+        if (layoutEngine && currentIndex < imageTextures.size() && imageTextures[currentIndex]) {
+            std::vector<SDL_Texture*> textures = { imageTextures[currentIndex] };
+            layoutEngine->calculateLayout(textures);
+            std::cout << "🎨 Layout calculated for new image" << std::endl;
+        }
 
         std::string filename = std::filesystem::path(imagePaths[currentIndex]).filename().string();
         std::cout << "⬅️ Previous: " << filename << " (" << (currentIndex + 1) << "/" << imagePaths.size() << ")" << std::endl;

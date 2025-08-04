@@ -199,6 +199,7 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
 - Use Sequential Thinking to break down complex tasks into manageable steps.
 - Use Memory to keep track of business decisions, technical information, and project context.
 - Use Deepwiki to access detailed documentation and examples for specific libraries or frameworks. Use as backup to Context7.
+- Use GitHub MCP for all agentic workflow automation, including branch creation, PR management, and workflow status checks.
 - Always use the filesystem MCP server for all file and directory operations.
 - For reading files, use:
   - `read_text_file` to get the full contents of a text file (optionally head/tail lines).
@@ -271,6 +272,13 @@ Image Collection → Classification → Theme Detection → Visual Rendering
 ```
 
 ## Development Workflow
+
+### Git and branching
+
+1. **Branch Naming**: Use `feature/`, `bugfix/`, or `hotfix/` prefixes
+2. **Branch Creation**: Use GitHub MCP to create branches for new features or fixes.
+3. **Summary of Work Done**: At the end of the session, summarize the work done for me to check and verify. Let this be a checklist for me to go through and verify that everything is working as expected. I'll review the changes and ensure they meet expectations. Once I give the okay, you can proceed with the PR creation.
+4. **PR Description**: When creating a PR, provide a clear description of the changes made, including any relevant context or links to related issues.
 
 ### **Standard Development Process:**
 
