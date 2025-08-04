@@ -20,62 +20,115 @@ Aetherwave is an immersive media engine for displaying cinematic MidJourney art 
 
 - **C++ / openFrameworks**: Real-time rendering
 - **Python**: Metadata extraction, classification
-- **Electron (React/Svelte)**: Optional lightweight control panel
+- **Docker**: Containerized development environment
 - **YAML / JSON**: Configuration and metadata
 
-## **🚀 Getting Started**
+## **🚀 Quick Start (Recommended)**
 
-### **1\. Setup openFrameworks (macOS, Apple Silicon)**
+### **Option 1: Docker Setup (Easiest)**
 
-- Follow the openFrameworks installation guide
-- Clone this repo into the `apps/myApps/` folder
-- Use `projectGenerator` to create `.xcodeproj`
+```bash
+# Clone and setup
+git clone <repo-url> aetherwave
+cd aetherwave
 
-### **2\. Set up Python Environment**
+# One-command setup
+chmod +x scripts/dev-setup.sh
+./scripts/dev-setup.sh
 
+# Your classification API is now running at http://localhost:8000
+```
+
+**That's it!** The Python classification engine is running. Next:
+
+- Add your images to the `assets/` folder
+- Visit http://localhost:8000/docs for API documentation
+- Continue with C++ setup below for full rendering
+
+### **Option 2: Manual Setup**
+
+If you prefer manual setup or need to modify dependencies:
+
+#### **1. Python Environment**
+
+```bash
 cd src/python
-python3 \-m venv venv
+python3 -m venv venv
 source venv/bin/activate
-pip install \-r requirements.txt
+pip install -r requirements.txt
+python main.py  # Starts FastAPI server
+```
 
-### **3\. Run classification stub**
+#### **2. C++ / openFrameworks Setup**
 
-python classify.py /path/to/image/folder
-
-Outputs to `config/metadata.json`
-
-### **4\. Build the C++ App**
-
+```bash
+# Follow openFrameworks installation guide for macOS
+# Clone this repo into apps/myApps/ folder
+# Use projectGenerator to create .xcodeproj
 cd src/cpp
-make run \# or open in Xcode and run
+make run  # or open in Xcode
+```
 
 ## **📁 Project Layout**
 
 ```text
 ./
-├── assets
-├── config
-├── pbcopy
-├── readme.md
-├── src
-│   ├── cpp
-│   ├── python
-│   ├── shared
-│   └── ui
-└── tests
+├── assets/                 # Your image collections (gitignored)
+├── config/                 # Theme configurations and metadata
+├── scripts/                # Development and deployment scripts
+├── src/
+│   ├── cpp/               # openFrameworks rendering engine
+│   ├── python/            # Classification API server
+│   ├── shared/            # Shared data structures
+│   └── ui/                # Optional control panel
+├── tests/                 # Test suites
+├── docker-compose.yml     # Development environment
+└── Dockerfile            # Container configuration
+```
 
+## **🔧 Development Commands**
+
+### **Docker Workflow (Recommended)**
+
+```bash
+# Start development environment
+./scripts/dev-setup.sh
+
+# View logs
+docker-compose logs -f classification-api
+
+# Stop all services
+./scripts/dev-stop.sh
+
+# Rebuild after code changes
+docker-compose build && docker-compose up -d
+```
+
+### **Manual Workflow**
+
+```bash
+# Python API server
+cd src/python && python main.py
+
+# Run tests
+pytest tests/
+
+# Format code
+black src/python/ && pylint src/python/
 ```
 
 ## **🧼 Contribution Guidelines**
 
-- See `github-instructions.md` for strict coding and contribution standards
+- See `.github/copilot-instructions.md` for strict coding and contribution standards
 - Use `black` and `pylint` (Python), `clang-format` (C++)
 - Submit PRs with focused changes, descriptive titles, and test coverage
+- Docker setup ensures consistent development environments
 
 ## **🔒 Privacy and Asset Handling**
 
 - No cloud upload or syncing by default
 - All assets remain local
+- Docker containers only access mounted asset directories
 - No personally identifying info should be embedded
 
 ---

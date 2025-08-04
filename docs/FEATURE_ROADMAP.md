@@ -16,6 +16,25 @@ Rather than hardcoding cyberfemme aesthetics, **Aetherwave now reads your conten
 
 **This makes Aetherwave universally reusable while staying true to your artistic vision.**
 
+### 🐳 **Development Infrastructure Decision (August 3, 2025)**
+
+**Key Decision**: Docker-first development workflow for simplified onboarding and consistent environments.
+
+**Reasoning**:
+
+- Eliminates Python virtual environment setup complexity
+- Ensures consistent development experience across different machines
+- Simplifies dependency management for OpenCV and image processing libraries
+- Enables easier collaboration with other developers
+- Provides foundation for future deployment scenarios
+
+**Implementation**:
+
+- Multi-stage Dockerfile with development and production configurations
+- One-command setup script (`./scripts/dev-setup.sh`) for instant environment creation
+- Hot reload development with volume mounts for live code editing
+- Manual setup preserved as alternative for developers needing customization
+
 ---
 
 ## 📊 Implementation Status
@@ -27,6 +46,7 @@ Rather than hardcoding cyberfemme aesthetics, **Aetherwave now reads your conten
 - **Computer Vision Pipeline**: ColorThief, OpenCV, sophisticated metadata analysis
 - **API Infrastructure**: FastAPI 2.0 with comprehensive endpoints and analytics
 - **Build & Test System**: Automated setup, comprehensive testing, CI/CD ready
+- **Docker Development Environment**: One-command setup with containerized services
 
 ### 🎨 **Phase 4A: Content-Driven Aesthetic System** ✅ **COMPLETED (August 3, 2025)**
 

@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  classification-api:
+    build:
+      context: .
+      target: development
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src/python:/app/src/python
+      - ./config:/app/config
+      - ./tests:/app/tests
+      - ./assets:/app/assets:ro # Read-only assets
+    environment:
+      - ENVIRONMENT=development
+      - PYTHONPATH=/app
+    networks:
+      - aetherwave-net
+
+  # Future: C++ renderer service (when containerized)
+  # renderer:
+  #   build:
+  #     context: ./src/cpp
+  #     dockerfile: Dockerfile.cpp
+  #   depends_on:
+  #     - classification-api
+  #   networks:
+  #     - aetherwave-net
+
+networks:
+  aetherwave-net:
+    driver: bridge
+
+volumes:
+  config-cache:

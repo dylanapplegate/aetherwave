@@ -155,6 +155,15 @@ Image Collection → Classification → Theme Detection → Visual Rendering
 
 ### **Build Commands:**
 
+**Docker Workflow (Recommended):**
+
+- **One-Command Setup**: `./scripts/dev-setup.sh` (includes Docker build and service startup)
+- **Stop Services**: `./scripts/dev-stop.sh`
+- **Rebuild After Changes**: `docker-compose build && docker-compose up -d`
+- **View Logs**: `docker-compose logs -f classification-api`
+
+**Manual Workflow:**
+
 - **Python Setup**: `python -m venv venv && source venv/bin/activate && pip install -r requirements.txt`
 - **C++ Build**: `make build` (openFrameworks project)
 - **Testing**: `pytest tests/` (90%+ coverage requirement)
@@ -230,8 +239,24 @@ Image Collection → Classification → Theme Detection → Visual Rendering
 ### **Development Environment:**
 
 - **macOS**: Primary development and testing platform
+- **Docker**: Containerized development environment for consistent setup
 - **Multi-Monitor Setup**: Testing environment for gallery installations
 - **Local Asset Management**: Placeholder assets for development testing
+
+### **Development Workflow:**
+
+**Docker-First Approach (Recommended):**
+
+- **Setup**: `./scripts/dev-setup.sh` creates entire development environment
+- **Development**: Hot reload enabled, volume mounts for live code editing
+- **Testing**: Run tests inside containers or locally with pytest
+- **Deployment**: Multi-stage builds support both development and production
+
+**Manual Setup (Alternative):**
+
+- **Python Virtual Environment**: For developers needing custom configurations
+- **Local Dependencies**: Direct installation of OpenCV, FastAPI, etc.
+- **Native C++ Build**: Direct openFrameworks compilation
 
 ### **Production Considerations:**
 
