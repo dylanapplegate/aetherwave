@@ -19,10 +19,11 @@ pkg_check_modules(SDL2_IMAGE REQUIRED SDL2_image)
 # Find additional dependencies for theme management
 find_package(CURL REQUIRED)
 
-# Source files (using real SDL2 visual app)
+# Source files (using real SDL2 visual app with Phase 4B.1 Layout Engine)
 set(SOURCES
     "src/cpp/visual_sdl.cpp"
     "src/cpp/ThemeManagerSDL.cpp"
+    "src/cpp/LayoutEngine.cpp"
     "src/shared/Config.cpp"
 )
 

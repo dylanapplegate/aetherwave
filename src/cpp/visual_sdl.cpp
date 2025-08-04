@@ -15,6 +15,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include "ThemeManagerSDL.h"
+#include "LayoutEngine.h"
 
 namespace Aetherwave {
 
@@ -27,6 +28,11 @@ private:
     // Theme Management
     std::unique_ptr<Aetherwave::ThemeManagerSDL> themeManager;
     bool showThemeDebug = false;
+
+    // Phase 4B.1: Dynamic Layout Engine
+    std::unique_ptr<Aetherwave::LayoutEngine> layoutEngine;
+    std::unique_ptr<Aetherwave::WindowManager> windowManager;
+    bool showLayoutDebug = false;
 
     // Application State
     std::vector<std::string> imagePaths;
@@ -76,6 +82,11 @@ public:
             return false;
         }
 
+        // Set high-quality scaling hints for better image quality
+        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "2");  // Anisotropic filtering
+        SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");     // Use OpenGL for better quality
+        SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "0"); // Prevent screensaver
+
         // Initialize SDL_image
         int imgFlags = IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF;
         if (!(IMG_Init(imgFlags) & imgFlags)) {
@@ -113,8 +124,15 @@ public:
             return false;
         }
 
+        // Enable high-quality texture filtering for better scaling
+        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "2");  // Apply to renderer
+        
         // Set blend mode for alpha transparency
         SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+
+        // Initialize Phase 4B.1: Dynamic Layout Engine
+        layoutEngine = std::make_unique<Aetherwave::LayoutEngine>(window);
+        windowManager = std::make_unique<Aetherwave::WindowManager>(window, layoutEngine.get());
 
         std::cout << "✅ SDL2 visual engine initialized successfully!" << std::endl;
         return true;
@@ -236,7 +254,16 @@ public:
         if (currentIndex >= imageTextures.size() || !imageTextures[currentIndex]) return;
 
         SDL_Texture* currentTexture = imageTextures[currentIndex];
-        SDL_Rect destRect = calculateImageRect(currentTexture);
+        
+        // Use layout engine to calculate optimal positioning
+        std::vector<SDL_Texture*> textures = { currentTexture };
+        layoutEngine->calculateLayout(textures);
+        
+        SDL_Rect destRect = layoutEngine->getImageRect(0);
+        if (destRect.w == 0 || destRect.h == 0) {
+            // Fallback if layout engine fails
+            destRect = calculateImageRectFallback(currentTexture);
+        }
 
         // Reset alpha to full opacity
         SDL_SetTextureAlphaMod(currentTexture, 255);
@@ -256,8 +283,20 @@ public:
         SDL_Texture* currentTexture = imageTextures[currentIndex];
         SDL_Texture* nextTexture = imageTextures[nextIndex];
 
-        SDL_Rect currentRect = calculateImageRect(currentTexture);
-        SDL_Rect nextRect = calculateImageRect(nextTexture);
+        // Use layout engine for both textures
+        std::vector<SDL_Texture*> textures = { currentTexture, nextTexture };
+        layoutEngine->calculateLayout(textures);
+        
+        SDL_Rect currentRect = layoutEngine->getImageRect(0);
+        SDL_Rect nextRect = layoutEngine->getImageRect(1);
+        
+        // Fallback to old calculation if layout engine fails
+        if (currentRect.w == 0 || currentRect.h == 0) {
+            currentRect = calculateImageRectFallback(currentTexture);
+        }
+        if (nextRect.w == 0 || nextRect.h == 0) {
+            nextRect = calculateImageRectFallback(nextTexture);
+        }
 
         // Apply transition effects based on type
         switch (currentTransitionType) {
@@ -282,7 +321,7 @@ public:
         }
     }
 
-    SDL_Rect calculateImageRect(SDL_Texture* texture) {
+    SDL_Rect calculateImageRectFallback(SDL_Texture* texture) {
         if (!texture) return {0, 0, 0, 0};
 
         int textureWidth, textureHeight;
@@ -462,6 +501,11 @@ public:
         if (showThemeDebug) {
             renderThemeDebug();
         }
+        
+        // Layout debug overlay
+        if (showLayoutDebug) {
+            renderLayoutDebug();
+        }
     }
 
     void renderThemeDebug() {
@@ -514,6 +558,56 @@ public:
         SDL_RenderDrawRect(renderer, &bgSwatch);
     }
 
+    void renderLayoutDebug() {
+        // Layout debug panel in top-left
+        int panelWidth = 350;
+        int panelHeight = 250;
+        SDL_Rect debugRect = {
+            10,
+            10,
+            panelWidth,
+            panelHeight
+        };
+
+        // Semi-transparent background
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 180);
+        SDL_RenderFillRect(renderer, &debugRect);
+
+        // Border with accent color
+        SDL_Color accentColor = themeManager->getAccentColor();
+        SDL_SetRenderDrawColor(renderer, accentColor.r, accentColor.g, accentColor.b, 255);
+        SDL_RenderDrawRect(renderer, &debugRect);
+
+        // Visualize current layout rectangles
+        const auto& layouts = layoutEngine->getImageLayouts();
+        
+        // Draw layout rectangles with different colors
+        SDL_Color layoutColors[] = {
+            {255, 100, 100, 100}, // Red
+            {100, 255, 100, 100}, // Green  
+            {100, 100, 255, 100}, // Blue
+            {255, 255, 100, 100}, // Yellow
+            {255, 100, 255, 100}, // Magenta
+            {100, 255, 255, 100}  // Cyan
+        };
+        
+        for (size_t i = 0; i < layouts.size() && i < 6; i++) {
+            SDL_Rect layoutRect = layoutEngine->getImageRect(i);
+            if (layoutRect.w > 0 && layoutRect.h > 0) {
+                SDL_Color& color = layoutColors[i];
+                SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+                SDL_RenderFillRect(renderer, &layoutRect);
+                
+                // Draw border
+                SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 255);
+                SDL_RenderDrawRect(renderer, &layoutRect);
+            }
+        }
+        
+        // Reset draw color
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    }
+
     void handleInput() {
         SDL_Event e;
         while (SDL_PollEvent(&e)) {
@@ -559,10 +653,31 @@ public:
                         case SDLK_u:
                             refreshTheme();
                             break;
+
+                        case SDLK_l:
+                            toggleLayoutDebug();
+                            break;
+
+                        case SDLK_1:
+                            layoutEngine->setLayoutMode(LayoutMode::SINGLE_FULLSCREEN);
+                            break;
+
+                        case SDLK_2:
+                            layoutEngine->setLayoutMode(LayoutMode::DUAL_SPLIT);
+                            break;
+
+                        case SDLK_3:
+                            layoutEngine->setLayoutMode(LayoutMode::GALLERY_MOSAIC);
+                            break;
+
+                        case SDLK_a:
+                            layoutEngine->setLayoutMode(LayoutMode::ADAPTIVE_AUTO);
+                            break;
                     }
                     break;
 
                 case SDL_WINDOWEVENT:
+                    windowManager->handleWindowEvent(e.window);
                     if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
                         windowWidth = e.window.data1;
                         windowHeight = e.window.data2;
@@ -718,6 +833,17 @@ public:
         }
     }
 
+    void toggleLayoutDebug() {
+        showLayoutDebug = !showLayoutDebug;
+        if (showLayoutDebug) {
+            std::cout << "🎨 Layout debug overlay enabled" << std::endl;
+            layoutEngine->printLayoutInfo();
+            layoutEngine->printDisplayInfo();
+        } else {
+            std::cout << "🎨 Layout debug overlay disabled" << std::endl;
+        }
+    }
+
     void showInfo() {
         std::cout << "\n📊 Aetherwave Display Engine Status:" << std::endl;
         std::cout << "   Version: 2.0.0 (SDL2)" << std::endl;
@@ -749,7 +875,10 @@ public:
         std::cout << "   [SPACE/→/N] Next image    [←/P] Previous image" << std::endl;
         std::cout << "   [F] Toggle fullscreen    [R] Reload images" << std::endl;
         std::cout << "   [I] Show info            [T] Theme debug" << std::endl;
-        std::cout << "   [U] Update theme         [ESC/Q] Quit" << std::endl;
+        std::cout << "   [U] Update theme         [L] Layout debug" << std::endl;
+        std::cout << "   [1] Single mode          [2] Dual split" << std::endl;
+        std::cout << "   [3] Gallery mosaic       [A] Adaptive mode" << std::endl;
+        std::cout << "   [ESC/Q] Quit" << std::endl;
 
         // Load initial theme from content
         std::cout << "\n🎨 Analyzing content for theme..." << std::endl;
