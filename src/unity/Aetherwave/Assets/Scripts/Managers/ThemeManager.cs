@@ -1,12 +1,14 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.UI;
 
 namespace Aetherwave
 {
     /// <summary>
     /// Unity theme manager for content-driven aesthetic adaptation
     /// Replaces C++ ThemeManager with Unity's rendering pipeline integration
+    /// Simplified for Unity 6.1 compatibility - URP post-processing to be added later
     /// </summary>
     public class ThemeManager : MonoBehaviour
     {
@@ -15,18 +17,14 @@ namespace Aetherwave
         public Volume postProcessVolume;
         
         [Header("UI Elements")]
-        public UnityEngine.UI.Image backgroundPanel;
-        public UnityEngine.UI.Text themeDebugText;
+        public Image backgroundPanel;
+        public Text themeDebugText;
         
         [Header("Theme Configuration")]
         public bool enableThemeDebug = false;
         public float colorTransitionSpeed = 2f;
         
         private ThemeProfile activeTheme;
-        private Vignette vignette;
-        private Bloom bloom;
-        private ChromaticAberration chromaticAberration;
-        private ColorAdjustments colorAdjustments;
         
         void Start()
         {
@@ -45,14 +43,8 @@ namespace Aetherwave
         {
             Debug.Log("🎨 Initializing Unity Theme System...");
             
-            // Get post-processing components
-            if (postProcessVolume != null && postProcessVolume.profile != null)
-            {
-                postProcessVolume.profile.TryGet(out vignette);
-                postProcessVolume.profile.TryGet(out bloom);
-                postProcessVolume.profile.TryGet(out chromaticAberration);
-                postProcessVolume.profile.TryGet(out colorAdjustments);
-            }
+            // For Unity 6.1, we'll focus on camera and UI theming first
+            // URP post-processing will be added in next development phase
             
             // Set initial cyberfemme theme as fallback
             if (activeTheme == null)
@@ -85,179 +77,42 @@ namespace Aetherwave
                 backgroundPanel.color = bgColor;
             }
             
-            // Apply post-processing effects based on theme
-            ApplyPostProcessingEffects(theme);
+            // Apply camera and UI theming based on theme type
+            ApplyBasicThemeEffects(theme);
             
             // Update debug display
             UpdateThemeDebugDisplay();
         }
         
-        private void ApplyPostProcessingEffects(ThemeProfile theme)
+        private void ApplyBasicThemeEffects(ThemeProfile theme)
         {
-            if (postProcessVolume == null) return;
+            // Basic camera and UI theming for Unity 6.1 compatibility
+            // URP post-processing effects will be added in next development phase
+            
+            if (mainCamera == null) return;
             
             switch (theme.themeName.ToLower())
             {
                 case "cyberfemme":
-                    ApplyCyberfemmeEffects(theme);
+                    mainCamera.backgroundColor = new Color(0.1f, 0.05f, 0.2f, 1f); // Dark purple
                     break;
                     
                 case "organic":
-                    ApplyOrganicEffects(theme);
+                    mainCamera.backgroundColor = new Color(0.05f, 0.15f, 0.1f, 1f); // Dark green
                     break;
                     
                 case "tech":
-                    ApplyTechEffects(theme);
+                    mainCamera.backgroundColor = new Color(0.05f, 0.1f, 0.15f, 1f); // Dark blue
                     break;
                     
                 case "vintage":
-                    ApplyVintageEffects(theme);
+                    mainCamera.backgroundColor = new Color(0.15f, 0.12f, 0.08f, 1f); // Sepia brown
                     break;
                     
                 default:
-                    ApplyDefaultEffects(theme);
+                    mainCamera.backgroundColor = Color.black;
                     break;
             }
-        }
-        
-        private void ApplyCyberfemmeEffects(ThemeProfile theme)
-        {
-            // High-intensity bloom for neon glow
-            if (bloom != null)
-            {
-                bloom.intensity.value = 0.8f * theme.effectIntensity;
-                bloom.threshold.value = 0.7f;
-                bloom.active = true;
-            }
-            
-            // Chromatic aberration for glitch aesthetic
-            if (chromaticAberration != null)
-            {
-                chromaticAberration.intensity.value = 0.3f * theme.effectIntensity;
-                chromaticAberration.active = true;
-            }
-            
-            // Dark vignette for focus
-            if (vignette != null)
-            {
-                vignette.intensity.value = 0.4f;
-                vignette.color.value = Color.black;
-                vignette.active = true;
-            }
-            
-            // Enhanced saturation
-            if (colorAdjustments != null)
-            {
-                colorAdjustments.saturation.value = 20f * theme.effectIntensity;
-                colorAdjustments.contrast.value = 10f;
-                colorAdjustments.active = true;
-            }
-        }
-        
-        private void ApplyOrganicEffects(ThemeProfile theme)
-        {
-            // Subtle bloom for soft glow
-            if (bloom != null)
-            {
-                bloom.intensity.value = 0.3f * theme.effectIntensity;
-                bloom.threshold.value = 0.9f;
-                bloom.active = true;
-            }
-            
-            // No chromatic aberration for natural feel
-            if (chromaticAberration != null)
-            {
-                chromaticAberration.active = false;
-            }
-            
-            // Soft vignette
-            if (vignette != null)
-            {
-                vignette.intensity.value = 0.2f;
-                vignette.color.value = new Color(0.8f, 0.7f, 0.6f, 1f); // Warm tone
-                vignette.active = true;
-            }
-            
-            // Slightly desaturated, warm tone
-            if (colorAdjustments != null)
-            {
-                colorAdjustments.saturation.value = -10f;
-                colorAdjustments.hueShift.value = 15f; // Warm shift
-                colorAdjustments.active = true;
-            }
-        }
-        
-        private void ApplyTechEffects(ThemeProfile theme)
-        {
-            // Minimal bloom for clean look
-            if (bloom != null)
-            {
-                bloom.intensity.value = 0.1f * theme.effectIntensity;
-                bloom.active = theme.effectIntensity > 0.5f;
-            }
-            
-            // Slight chromatic aberration for digital feel
-            if (chromaticAberration != null)
-            {
-                chromaticAberration.intensity.value = 0.1f * theme.effectIntensity;
-                chromaticAberration.active = theme.effectIntensity > 0.3f;
-            }
-            
-            // High contrast, no vignette
-            if (vignette != null)
-            {
-                vignette.active = false;
-            }
-            
-            // High contrast, cooler tones
-            if (colorAdjustments != null)
-            {
-                colorAdjustments.contrast.value = 20f;
-                colorAdjustments.saturation.value = 0f;
-                colorAdjustments.hueShift.value = -20f; // Cool shift
-                colorAdjustments.active = true;
-            }
-        }
-        
-        private void ApplyVintageEffects(ThemeProfile theme)
-        {
-            // No bloom for vintage look
-            if (bloom != null)
-            {
-                bloom.active = false;
-            }
-            
-            // No chromatic aberration
-            if (chromaticAberration != null)
-            {
-                chromaticAberration.active = false;
-            }
-            
-            // Warm vignette
-            if (vignette != null)
-            {
-                vignette.intensity.value = 0.3f;
-                vignette.color.value = new Color(0.9f, 0.8f, 0.6f, 1f); // Sepia tone
-                vignette.active = true;
-            }
-            
-            // Desaturated, warm, lower contrast
-            if (colorAdjustments != null)
-            {
-                colorAdjustments.saturation.value = -30f;
-                colorAdjustments.contrast.value = -15f;
-                colorAdjustments.hueShift.value = 30f; // Warm/sepia shift
-                colorAdjustments.active = true;
-            }
-        }
-        
-        private void ApplyDefaultEffects(ThemeProfile theme)
-        {
-            // Disable all effects for clean display
-            if (bloom != null) bloom.active = false;
-            if (chromaticAberration != null) chromaticAberration.active = false;
-            if (vignette != null) vignette.active = false;
-            if (colorAdjustments != null) colorAdjustments.active = false;
         }
         
         private void ApplyFallbackTheme()
