@@ -17,7 +17,7 @@ bool ConfigManager::loadConfig(const std::string& configPath) {
         // Config file doesn't exist, use defaults
         return false;
     }
-    
+
     // Future: Parse YAML configuration
     // For now, just return success if file exists
     return true;
@@ -29,10 +29,10 @@ std::vector<std::string> ConfigManager::getSupportedFormats() {
 
 bool ConfigManager::isValidImageFile(const std::string& filename) {
     std::string ext = FileUtils::getExtension(filename);
-    
+
     // Convert to lowercase for comparison
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-    
+
     auto formats = getSupportedFormats();
     return std::find(formats.begin(), formats.end(), ext) != formats.end();
 }
@@ -50,11 +50,11 @@ std::string getExtension(const std::string& filepath) {
 std::string getBasename(const std::string& filepath) {
     size_t slashPos = filepath.find_last_of("/\\");
     size_t dotPos = filepath.find_last_of('.');
-    
+
     size_t start = (slashPos == std::string::npos) ? 0 : slashPos + 1;
-    size_t length = (dotPos == std::string::npos) ? 
+    size_t length = (dotPos == std::string::npos) ?
         std::string::npos : dotPos - start;
-    
+
     return filepath.substr(start, length);
 }
 

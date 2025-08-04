@@ -56,12 +56,12 @@ class ClassificationResponse(BaseModel):
 async def root() -> Dict[str, str]:
     """
     Root endpoint for service health check.
-    
+
     Returns:
         Dict containing service status and version info.
     """
     return {
-        "service": "Aetherwave Classification Service", 
+        "service": "Aetherwave Classification Service",
         "version": "1.0.0",
         "status": "running"
     }
@@ -70,7 +70,7 @@ async def root() -> Dict[str, str]:
 async def health_check() -> Dict[str, bool]:
     """
     Health check endpoint for monitoring.
-    
+
     Returns:
         Dict indicating service health status.
     """
@@ -80,20 +80,20 @@ async def health_check() -> Dict[str, bool]:
 async def classify_image(request: ClassificationRequest) -> ClassificationResponse:
     """
     Classify an image and return metadata.
-    
+
     This is a stub implementation that returns sample metadata.
     Future implementation will use colorthief, OpenCV, and other
     libraries for actual image analysis.
-    
+
     Args:
         request: Classification request with image path and options.
-        
+
     Returns:
         ClassificationResponse with metadata or error information.
     """
     try:
         logger.info(f"Classification requested for: {request.image_path}")
-        
+
         # Stub implementation - return sample metadata
         sample_metadata = ImageMetadata(
             filename=Path(request.image_path).name,
@@ -104,22 +104,22 @@ async def classify_image(request: ClassificationRequest) -> ClassificationRespon
             complexity=0.7,
             classification_confidence=0.95
         )
-        
+
         # Write sample metadata to config directory
         config_dir = Path("config")
         config_dir.mkdir(exist_ok=True)
-        
+
         metadata_file = config_dir / "sample_metadata.json"
         async with aiofiles.open(metadata_file, "w") as f:
             await f.write(json.dumps(sample_metadata.dict(), indent=2))
-        
+
         logger.info(f"Sample metadata written to: {metadata_file}")
-        
+
         return ClassificationResponse(
             ok=True,
             metadata=sample_metadata
         )
-        
+
     except Exception as e:
         logger.error(f"Classification error: {str(e)}")
         return ClassificationResponse(
@@ -131,10 +131,10 @@ async def classify_image(request: ClassificationRequest) -> ClassificationRespon
 async def get_metadata(filename: str) -> Dict[str, Any]:
     """
     Retrieve cached metadata for a specific image.
-    
+
     Args:
         filename: Name of the image file.
-        
+
     Returns:
         Cached metadata dictionary or error.
     """
@@ -156,9 +156,9 @@ async def get_metadata(filename: str) -> Dict[str, Any]:
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
-        "main:app", 
-        host="127.0.0.1", 
-        port=8000, 
+        "main:app",
+        host="127.0.0.1",
+        port=8000,
         reload=True,
         log_level="info"
     )

@@ -12,7 +12,7 @@ from .main import app, ClassificationRequest, ClassificationResponse, ImageMetad
 
 __all__ = [
     "app",
-    "ClassificationRequest", 
+    "ClassificationRequest",
     "ClassificationResponse",
     "ImageMetadata"
 ]

@@ -25,7 +25,7 @@ if(EXISTS ${OF_ROOT})
 endif()
 
 # Source files
-file(GLOB_RECURSE SOURCES 
+file(GLOB_RECURSE SOURCES
     "src/cpp/*.cpp"
     "src/cpp/*.h"
     "src/shared/*.cpp"

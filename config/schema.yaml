@@ -14,13 +14,13 @@ display:
     fullscreen: true
     vsync: true
     target_fps: 60
-  
+
   # Visual effects and transitions
   effects:
     fade_duration: 2.0
-    transition_type: "fade"  # fade, slide, dissolve
+    transition_type: "fade" # fade, slide, dissolve
     background_color: "#000000"
-  
+
   # Multi-monitor support (future)
   monitors:
     primary_display: 0
@@ -33,17 +33,17 @@ classification:
     include_mood: true
     include_complexity: true
     confidence_threshold: 0.8
-  
+
   # Color analysis
   colors:
     max_dominant_colors: 5
     color_tolerance: 10
-  
+
   # Mood classification
   mood:
     categories:
       - "cinematic"
-      - "vibrant" 
+      - "vibrant"
       - "serene"
       - "dramatic"
       - "minimal"
@@ -54,11 +54,11 @@ assets:
     images: "assets/images"
     metadata: "config/metadata"
     cache: "config/cache"
-  
+
   # Supported formats
   supported_formats:
     - ".jpg"
-    - ".jpeg" 
+    - ".jpeg"
     - ".png"
     - ".tiff"
     - ".webp"
@@ -69,7 +69,7 @@ api:
     host: "127.0.0.1"
     port: 8000
     timeout: 30
-  
+
   # Endpoints
   endpoints:
     classify: "/classify"
@@ -78,7 +78,7 @@ api:
 
 logging:
   # Logging configuration
-  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  level: "INFO" # DEBUG, INFO, WARNING, ERROR
   output:
     console: true
     file: false

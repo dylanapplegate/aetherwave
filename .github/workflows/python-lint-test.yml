@@ -2,17 +2,17 @@ name: Python Lint and Test
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
-      - 'src/python/**'
-      - 'tests/python/**'
-      - '.github/workflows/python-lint-test.yml'
+      - "src/python/**"
+      - "tests/python/**"
+      - ".github/workflows/python-lint-test.yml"
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
-      - 'src/python/**'
-      - 'tests/python/**'
-      - '.github/workflows/python-lint-test.yml'
+      - "src/python/**"
+      - "tests/python/**"
+      - ".github/workflows/python-lint-test.yml"
 
 jobs:
   lint:
@@ -20,147 +20,147 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-        
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r src/python/requirements.txt
-        
-    - name: Run Black formatting check
-      run: |
-        black --check --diff src/python/
-        
-    - name: Run Pylint
-      run: |
-        pylint src/python/ --output-format=colorized --score=yes
-        
-    - name: Run MyPy type checking
-      run: |
-        mypy src/python/ --strict
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r src/python/requirements.txt
+
+      - name: Run Black formatting check
+        run: |
+          black --check --diff src/python/
+
+      - name: Run Pylint
+        run: |
+          pylint src/python/ --output-format=colorized --score=yes
+
+      - name: Run MyPy type checking
+        run: |
+          mypy src/python/ --strict
 
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-        
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r src/python/requirements.txt
-        
-    - name: Create config directories
-      run: |
-        mkdir -p config/metadata
-        mkdir -p config/cache
-        
-    - name: Run pytest
-      run: |
-        pytest tests/python/ -v --cov=src/python --cov-report=xml --cov-report=html
-        
-    - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        flags: python
-        name: python-coverage
-        fail_ci_if_error: false
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r src/python/requirements.txt
+
+      - name: Create config directories
+        run: |
+          mkdir -p config/metadata
+          mkdir -p config/cache
+
+      - name: Run pytest
+        run: |
+          pytest tests/python/ -v --cov=src/python --cov-report=xml --cov-report=html
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: python
+          name: python-coverage
+          fail_ci_if_error: false
 
   api-test:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
-        
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r src/python/requirements.txt
-        
-    - name: Start FastAPI service
-      run: |
-        cd src/python
-        uvicorn main:app --host 127.0.0.1 --port 8000 &
-        sleep 5
-        
-    - name: Test API endpoints
-      run: |
-        # Test health endpoint
-        curl -f http://127.0.0.1:8000/health
-        
-        # Test root endpoint
-        curl -f http://127.0.0.1:8000/
-        
-        # Test classify endpoint
-        curl -f -X POST "http://127.0.0.1:8000/classify" \
-          -H "Content-Type: application/json" \
-          -d '{"image_path": "test.jpg", "include_colors": true, "include_mood": true}'
-          
-    - name: Verify response format
-      run: |
-        # Test that classify endpoint returns expected JSON structure
-        response=$(curl -s -X POST "http://127.0.0.1:8000/classify" \
-          -H "Content-Type: application/json" \
-          -d '{"image_path": "test.jpg"}')
-        
-        echo "$response" | jq '.ok' | grep -q true
-        echo "✓ API response format validated"
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r src/python/requirements.txt
+
+      - name: Start FastAPI service
+        run: |
+          cd src/python
+          uvicorn main:app --host 127.0.0.1 --port 8000 &
+          sleep 5
+
+      - name: Test API endpoints
+        run: |
+          # Test health endpoint
+          curl -f http://127.0.0.1:8000/health
+
+          # Test root endpoint
+          curl -f http://127.0.0.1:8000/
+
+          # Test classify endpoint
+          curl -f -X POST "http://127.0.0.1:8000/classify" \
+            -H "Content-Type: application/json" \
+            -d '{"image_path": "test.jpg", "include_colors": true, "include_mood": true}'
+
+      - name: Verify response format
+        run: |
+          # Test that classify endpoint returns expected JSON structure
+          response=$(curl -s -X POST "http://127.0.0.1:8000/classify" \
+            -H "Content-Type: application/json" \
+            -d '{"image_path": "test.jpg"}')
+
+          echo "$response" | jq '.ok' | grep -q true
+          echo "✓ API response format validated"
 
   security-scan:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
-        
-    - name: Install security tools
-      run: |
-        python -m pip install --upgrade pip
-        pip install bandit safety
-        
-    - name: Run Bandit security scan
-      run: |
-        bandit -r src/python/ -f json -o bandit-report.json || true
-        
-    - name: Check dependencies for vulnerabilities
-      run: |
-        safety check --json --output safety-report.json || true
-        
-    - name: Display security scan results
-      run: |
-        echo "Security scans completed"
-        if [ -f bandit-report.json ]; then
-          echo "Bandit report generated"
-        fi
-        if [ -f safety-report.json ]; then
-          echo "Safety report generated"
-        fi
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install security tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit safety
+
+      - name: Run Bandit security scan
+        run: |
+          bandit -r src/python/ -f json -o bandit-report.json || true
+
+      - name: Check dependencies for vulnerabilities
+        run: |
+          safety check --json --output safety-report.json || true
+
+      - name: Display security scan results
+        run: |
+          echo "Security scans completed"
+          if [ -f bandit-report.json ]; then
+            echo "Bandit report generated"
+          fi
+          if [ -f safety-report.json ]; then
+            echo "Safety report generated"
+          fi
