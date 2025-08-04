@@ -42,21 +42,21 @@ private:
     // Enhanced Transition State
     enum class TransitionType {
         FADE,
-        GLITCH, 
+        GLITCH,
         SOFT_FADE,
         PIXEL,
         DISSOLVE
     };
-    
+
     TransitionType currentTransitionType = TransitionType::FADE;
     float fadeAlpha = 1.0f;
     bool isTransitioning = false;
     std::chrono::steady_clock::time_point transitionStart;
-    
+
     // Glitch effect state
     std::mt19937 glitchRng;
     float glitchIntensity = 0.0f;
-    
+
     // Random number generator
     std::random_device rd;
 
@@ -66,7 +66,7 @@ public:
 
         // Initialize random number generator
         glitchRng.seed(rd());
-        
+
         // Initialize theme manager
         themeManager = std::make_unique<Aetherwave::ThemeManagerSDL>();
 
@@ -295,11 +295,11 @@ public:
         // Theme debug panel in top-right
         int panelWidth = 300;
         int panelHeight = 200;
-        SDL_Rect debugRect = { 
-            windowWidth - panelWidth - 10, 
-            10, 
-            panelWidth, 
-            panelHeight 
+        SDL_Rect debugRect = {
+            windowWidth - panelWidth - 10,
+            10,
+            panelWidth,
+            panelHeight
         };
 
         // Semi-transparent background
@@ -333,7 +333,7 @@ public:
         SDL_Rect bgSwatch = { x + (swatchSize + 5) * 2, y, swatchSize, swatchSize };
         SDL_SetRenderDrawColor(renderer, bgColor.r, bgColor.g, bgColor.b, 255);
         SDL_RenderFillRect(renderer, &bgSwatch);
-        
+
         // White borders for swatches
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderDrawRect(renderer, &primarySwatch);
@@ -378,11 +378,11 @@ public:
                         case SDLK_i:
                             showInfo();
                             break;
-                            
+
                         case SDLK_t:
                             toggleThemeDebug();
                             break;
-                            
+
                         case SDLK_u:
                             refreshTheme();
                             break;
@@ -424,7 +424,7 @@ public:
         isTransitioning = true;
         transitionStart = std::chrono::steady_clock::now();
         fadeAlpha = 0.0f;
-        
+
         // Set transition type based on current theme
         std::string themeTransition = themeManager->getTransitionType();
         if (themeTransition == "glitch") {
@@ -476,29 +476,29 @@ public:
             }
         }
     }
-    
+
     void applyGlitchEffect(SDL_Texture* texture, int x, int y, int w, int h) {
         if (currentTransitionType != TransitionType::GLITCH || glitchIntensity <= 0.0f) {
             return;
         }
-        
+
         // Simple glitch effect with random offset strips
         std::uniform_int_distribution<int> offsetDist(-10, 10);
         std::uniform_int_distribution<int> heightDist(5, 20);
-        
+
         for (int i = 0; i < 5; ++i) {
             int stripY = glitchRng() % h;
             int stripHeight = heightDist(glitchRng);
             int offsetX = offsetDist(glitchRng) * glitchIntensity;
-            
+
             SDL_Rect srcRect = {0, stripY, w, stripHeight};
             SDL_Rect dstRect = {x + offsetX, y + stripY, w, stripHeight};
-            
+
             // Render with color modulation for chromatic aberration
             SDL_SetTextureColorMod(texture, 255, (Uint8)(255 * (1 - glitchIntensity * 0.3)), 255);
             SDL_RenderCopy(renderer, texture, &srcRect, &dstRect);
         }
-        
+
         // Reset color modulation
         SDL_SetTextureColorMod(texture, 255, 255, 255);
     }
@@ -567,11 +567,11 @@ public:
         std::cout << "   [F] Toggle fullscreen    [R] Reload images" << std::endl;
         std::cout << "   [I] Show info            [T] Theme debug" << std::endl;
         std::cout << "   [U] Update theme         [ESC/Q] Quit" << std::endl;
-        
+
         // Load initial theme from content
         std::cout << "\n🎨 Analyzing content for theme..." << std::endl;
         refreshTheme();
-        
+
         std::cout << "\n🚀 Visual display engine starting..." << std::endl;
 
         // Main render loop

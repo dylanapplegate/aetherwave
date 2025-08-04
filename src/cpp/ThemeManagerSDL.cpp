@@ -24,9 +24,9 @@ SDL_Color hexToSDL(const std::string& hex) {
 
 std::string sdlToHex(const SDL_Color& color) {
     std::ostringstream oss;
-    oss << "#" << std::hex << std::setfill('0') 
+    oss << "#" << std::hex << std::setfill('0')
         << std::setw(2) << (int)color.r
-        << std::setw(2) << (int)color.g  
+        << std::setw(2) << (int)color.g
         << std::setw(2) << (int)color.b;
     return oss.str();
 }
@@ -49,7 +49,7 @@ AestheticColor::AestheticColor(const SDL_Color& sdlColor) : color(sdlColor) {
 }
 
 // AestheticTheme implementation
-AestheticTheme::AestheticTheme() 
+AestheticTheme::AestheticTheme()
     : name("default")
     , confidence(1.0f)
     , backgroundColor(AestheticColor("#1a1a2e"))
@@ -59,7 +59,7 @@ AestheticTheme::AestheticTheme()
     , transitionType("fade")
     , transitionDuration(1.0f)
     , effectIntensity(0.5f) {
-    
+
     primaryColors.push_back(AestheticColor("#2d2d4d"));
     accentColors.push_back(AestheticColor("#ffffff"));
 }
@@ -69,17 +69,17 @@ AestheticTheme AestheticTheme::getDefaultTheme() {
 }
 
 // ThemeManagerSDL implementation
-ThemeManagerSDL::ThemeManagerSDL(const std::string& apiUrl) 
+ThemeManagerSDL::ThemeManagerSDL(const std::string& apiUrl)
     : apiBaseUrl(apiUrl)
     , apiAvailable(false)
     , currentTheme(AestheticTheme::getDefaultTheme()) {
-    
+
     // Initialize curl
     curl_global_init(CURL_GLOBAL_DEFAULT);
-    
+
     // Test API connection
     apiAvailable = testAPIConnection();
-    
+
     if (apiAvailable) {
         std::cout << "✅ Python API connected: " << apiBaseUrl << std::endl;
     } else {
@@ -100,31 +100,31 @@ std::string ThemeManagerSDL::makeHttpRequest(const std::string& url, const std::
     CURL* curl;
     CURLcode res;
     std::string readBuffer;
-    
+
     curl = curl_easy_init();
     if (curl) {
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
-        
+
         if (!postData.empty()) {
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postData.c_str());
-            
+
             struct curl_slist* headers = NULL;
             headers = curl_slist_append(headers, "Content-Type: application/json");
             curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
         }
-        
+
         res = curl_easy_perform(curl);
         curl_easy_cleanup(curl);
-        
+
         if (res != CURLE_OK) {
             std::cerr << "❌ HTTP request failed: " << curl_easy_strerror(res) << std::endl;
             return "";
         }
     }
-    
+
     return readBuffer;
 }
 
@@ -138,11 +138,11 @@ bool ThemeManagerSDL::loadThemeFromAPI(const std::vector<std::string>& imagePath
         std::cout << "⚠️ API unavailable, keeping current theme" << std::endl;
         return false;
     }
-    
+
     ThemeResponse result = analyzeCollectionTheme(imagePaths);
     if (result.success) {
         currentTheme = result.theme;
-        std::cout << "🎨 Loaded theme: " << currentTheme.name 
+        std::cout << "🎨 Loaded theme: " << currentTheme.name
                   << " (confidence: " << currentTheme.confidence << ")" << std::endl;
         return true;
     } else {
@@ -154,12 +154,12 @@ bool ThemeManagerSDL::loadThemeFromAPI(const std::vector<std::string>& imagePath
 ThemeResponse ThemeManagerSDL::analyzeCollectionTheme(const std::vector<std::string>& imagePaths) {
     ThemeResponse response;
     response.success = false;
-    
+
     if (!apiAvailable) {
         response.error = "API not available";
         return response;
     }
-    
+
     // Build JSON request
     std::ostringstream json;
     json << "{\"images\":[";
@@ -168,18 +168,18 @@ ThemeResponse ThemeManagerSDL::analyzeCollectionTheme(const std::vector<std::str
         if (i < imagePaths.size() - 1) json << ",";
     }
     json << "]}";
-    
+
     std::string apiResponse = makeHttpRequest(apiBaseUrl + "/analyze/collection-theme", json.str());
-    
+
     if (apiResponse.empty()) {
         response.error = "Empty API response";
         return response;
     }
-    
+
     // Parse JSON response (simplified - in production would use proper JSON parser)
     if (apiResponse.find("\"ok\":true") != std::string::npos) {
         response.success = true;
-        
+
         // Extract theme name
         size_t namePos = apiResponse.find("\"theme_name\":\"");
         if (namePos != std::string::npos) {
@@ -189,7 +189,7 @@ ThemeResponse ThemeManagerSDL::analyzeCollectionTheme(const std::vector<std::str
                 response.theme.name = apiResponse.substr(namePos, nameEnd - namePos);
             }
         }
-        
+
         // Extract confidence
         size_t confPos = apiResponse.find("\"confidence\":");
         if (confPos != std::string::npos) {
@@ -204,7 +204,7 @@ ThemeResponse ThemeManagerSDL::analyzeCollectionTheme(const std::vector<std::str
                 }
             }
         }
-        
+
         // Set theme-specific properties
         if (response.theme.name == "cyberfemme") {
             response.theme.primaryColors.clear();
@@ -237,11 +237,11 @@ ThemeResponse ThemeManagerSDL::analyzeCollectionTheme(const std::vector<std::str
             response.theme.effectIntensity = 0.5f;
             response.theme.energyLevel = "medium";
         }
-        
+
     } else {
         response.error = "API returned error";
     }
-    
+
     return response;
 }
 
