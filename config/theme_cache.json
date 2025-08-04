@@ -465,5 +465,121 @@
       "triadic",
       "analogous"
     ]
+  },
+  "c1346a5b95420dbaa0fb36212d08da43": {
+    "theme_name": "organic",
+    "confidence": 0.4,
+    "primary_colors": [
+      "#343e4a",
+      "#d3c9c6",
+      "#cac4ca",
+      "#c3a1a6"
+    ],
+    "accent_colors": [
+      "#8fbc8f",
+      "#daa520",
+      "#f4a460",
+      "#90ee90"
+    ],
+    "temperature_bias": "neutral",
+    "mood_profile": {
+      "balanced": 0.16666666666666666,
+      "mysterious": 0.3888888888888889,
+      "peaceful": 0.4444444444444444
+    },
+    "energy_level": "low",
+    "complexity_preference": 0.32605555555555554,
+    "harmony_types": [
+      "monochromatic",
+      "analogous",
+      "triadic"
+    ]
+  },
+  "eff831a4502d4f154a36cf53023c52f8": {
+    "theme_name": "organic",
+    "confidence": 0.4,
+    "primary_colors": [
+      "#6c6a6a",
+      "#e1dce3",
+      "#d3c9c6",
+      "#302532"
+    ],
+    "accent_colors": [
+      "#8fbc8f",
+      "#daa520",
+      "#f4a460",
+      "#90ee90"
+    ],
+    "temperature_bias": "neutral",
+    "mood_profile": {
+      "peaceful": 0.5714285714285714,
+      "mysterious": 0.2857142857142857,
+      "balanced": 0.14285714285714285
+    },
+    "energy_level": "low",
+    "complexity_preference": 0.3521964285714286,
+    "harmony_types": [
+      "monochromatic",
+      "analogous",
+      "triadic"
+    ]
+  },
+  "5ca1a3310a4316596406449431c665a3": {
+    "theme_name": "organic",
+    "confidence": 0.4,
+    "primary_colors": [
+      "#d6ced7",
+      "#291e2b",
+      "#545256",
+      "#6c6a6a"
+    ],
+    "accent_colors": [
+      "#8fbc8f",
+      "#daa520",
+      "#f4a460",
+      "#90ee90"
+    ],
+    "temperature_bias": "neutral",
+    "mood_profile": {
+      "peaceful": 0.5714285714285714,
+      "mysterious": 0.2727272727272727,
+      "balanced": 0.15584415584415584
+    },
+    "energy_level": "low",
+    "complexity_preference": 0.3644545454545455,
+    "harmony_types": [
+      "monochromatic",
+      "analogous",
+      "triadic"
+    ]
+  },
+  "f866150aa8b1cacc6d652c1191007334": {
+    "theme_name": "organic",
+    "confidence": 0.4,
+    "primary_colors": [
+      "#706d6b",
+      "#ccc3c4",
+      "#d6ced7",
+      "#291e2b"
+    ],
+    "accent_colors": [
+      "#8fbc8f",
+      "#daa520",
+      "#f4a460",
+      "#90ee90"
+    ],
+    "temperature_bias": "neutral",
+    "mood_profile": {
+      "balanced": 0.15853658536585366,
+      "peaceful": 0.573170731707317,
+      "mysterious": 0.2682926829268293
+    },
+    "energy_level": "low",
+    "complexity_preference": 0.35954878048780486,
+    "harmony_types": [
+      "monochromatic",
+      "analogous",
+      "triadic"
+    ]
   }
 }
