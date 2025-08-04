@@ -69,6 +69,9 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
 3. **Terminate All Background Processes:**
 
    ```bash
+   # TERMINAL TIMING: Allow 10+ seconds for new terminal initialization
+   # oh-my-zsh requires startup time before command execution
+
    # Kill any running development servers
    pkill -f "python.*main.py"
    pkill -f "fastapi"
@@ -83,6 +86,9 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
 4. **Clean Terminal State:**
 
    ```bash
+   # TERMINAL TIMING: Ensure terminal is fully loaded before checking
+   # Wait for oh-my-zsh prompt to appear before executing commands
+
    # Ensure no hanging background jobs
    jobs -l
    # Kill any background jobs if present
@@ -346,6 +352,12 @@ Image Collection → Classification → Theme Detection → Visual Rendering
 ### **Mandatory Verification Steps:**
 
 **For ANY code changes, autonomous agents must verify:**
+
+**Terminal Startup Considerations:**
+
+- Allow 10+ seconds for terminal initialization when starting new terminal sessions
+- oh-my-zsh and similar shell configurations require startup time before command execution
+- Wait for prompt to appear before executing commands in new terminals
 
 1. **Python API Verification:**
 
