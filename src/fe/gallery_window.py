@@ -245,17 +245,21 @@ class GalleryWindow(QMainWindow):
         self.update_timer.start(100)  # Update every 100ms
     
     def apply_cyberfemme_theme(self) -> None:
-        """Apply cyberfemme visual theme to the window."""
-        theme_config = self.config.get_theme_config('cyberfemme')
+        """Apply cyberfemme visual theme optimized for monochromatic purple/pink/blue artwork."""
+        # Set a sophisticated dark background that complements cyberfemme artwork
+        # Using deep purple-blue that enhances without competing with the art
+        cyberfemme_bg = [25, 20, 35]  # Deep purple-blue background
         
-        # Main window styling
         self.setStyleSheet(f"""
             QMainWindow {{
-                background-color: rgb({theme_config.get('background_color', [0, 0, 0])[0]},
-                                     {theme_config.get('background_color', [0, 0, 0])[1]},
-                                     {theme_config.get('background_color', [0, 0, 0])[2]});
+                background-color: rgb({cyberfemme_bg[0]}, {cyberfemme_bg[1]}, {cyberfemme_bg[2]});
+            }}
+            QLabel#image_label {{
+                background-color: rgb({cyberfemme_bg[0]}, {cyberfemme_bg[1]}, {cyberfemme_bg[2]});
             }}
         """)
+        
+        self.logger.debug(f"🎭 Applied cyberfemme theme background: rgb({cyberfemme_bg[0]}, {cyberfemme_bg[1]}, {cyberfemme_bg[2]})")
         
         # Set cursor style
         self.setCursor(Qt.BlankCursor if self.config.is_fullscreen() else Qt.ArrowCursor)
@@ -434,17 +438,32 @@ class GalleryWindow(QMainWindow):
                     self.logger.debug(f"📋 Using RGB array: ({r}, {g}, {b})")
                 
                 if r is not None and g is not None and b is not None:
-                    # Create a darker, desaturated version for background
-                    # Reduce brightness and saturation for better readability
-                    bg_r = max(10, int(r * 0.2))  # 20% of original brightness, minimum 10
-                    bg_g = max(10, int(g * 0.2))
-                    bg_b = max(10, int(b * 0.2))
+                    # Calculate perceived brightness using luminance formula
+                    luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
                     
-                    self.logger.debug(f"✨ Calculated background RGB: ({bg_r}, {bg_g}, {bg_b}) at 20% brightness")
+                    # Adaptive background based on image brightness
+                    if luminance > 0.7:  # Light images -> light background
+                        bg_r = max(240, int(r * 0.95))  # Keep it very light
+                        bg_g = max(240, int(g * 0.95))
+                        bg_b = max(240, int(b * 0.95))
+                        brightness_desc = "light (95%)"
+                    elif luminance > 0.4:  # Medium images -> medium background  
+                        bg_r = max(80, int(r * 0.4))
+                        bg_g = max(80, int(g * 0.4))
+                        bg_b = max(80, int(b * 0.4))
+                        brightness_desc = "medium (40%)"
+                    else:  # Dark images -> dark background
+                        bg_r = max(15, int(r * 0.15))
+                        bg_g = max(15, int(g * 0.15))
+                        bg_b = max(15, int(b * 0.15))
+                        brightness_desc = "dark (15%)"
+                    
+                    self.logger.debug(f"✨ Luminance: {luminance:.2f} → {brightness_desc} background RGB: ({bg_r}, {bg_g}, {bg_b})")
                     
                     # METHOD 1: Clear existing styles first
                     self.setStyleSheet("")
-                    self.image_label.setStyleSheet("")
+                    if self.image_label is not None:
+                        self.image_label.setStyleSheet("")
                     self.logger.debug("🧹 Cleared existing styles")
                     
                     # METHOD 2: Apply via stylesheet
@@ -460,9 +479,10 @@ class GalleryWindow(QMainWindow):
                     self.logger.debug(f"🎨 Applied main window style: rgb({bg_r}, {bg_g}, {bg_b})")
                     
                     # METHOD 3: Set image label directly
-                    label_style = f"background-color: rgb({bg_r}, {bg_g}, {bg_b});"
-                    self.image_label.setStyleSheet(label_style)
-                    self.logger.debug(f"🏷️  Applied image label style: {label_style}")
+                    if self.image_label is not None:
+                        label_style = f"background-color: rgb({bg_r}, {bg_g}, {bg_b});"
+                        self.image_label.setStyleSheet(label_style)
+                        self.logger.debug(f"🏷️  Applied image label style: {label_style}")
                     
                     # METHOD 4: Use Qt palette (more direct approach)
                     try:

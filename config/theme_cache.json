@@ -581,5 +581,92 @@
       "analogous",
       "triadic"
     ]
+  },
+  "9735dd2ed201d32ceb58afc3794f3ad2": {
+    "theme_name": "organic",
+    "confidence": 0.4,
+    "primary_colors": [
+      "#706d6b",
+      "#ccc3c4",
+      "#d6ced7",
+      "#291e2b"
+    ],
+    "accent_colors": [
+      "#8fbc8f",
+      "#daa520",
+      "#f4a460",
+      "#90ee90"
+    ],
+    "temperature_bias": "neutral",
+    "mood_profile": {
+      "balanced": 0.15853658536585366,
+      "peaceful": 0.573170731707317,
+      "mysterious": 0.2682926829268293
+    },
+    "energy_level": "low",
+    "complexity_preference": 0.35954878048780486,
+    "harmony_types": [
+      "monochromatic",
+      "analogous",
+      "triadic"
+    ]
+  },
+  "d1e75b6b8e0fb8ca4a042f5889634750": {
+    "theme_name": "organic",
+    "confidence": 0.4,
+    "primary_colors": [
+      "#706d6b",
+      "#ccc3c4",
+      "#d6ced7",
+      "#291e2b"
+    ],
+    "accent_colors": [
+      "#8fbc8f",
+      "#daa520",
+      "#f4a460",
+      "#90ee90"
+    ],
+    "temperature_bias": "neutral",
+    "mood_profile": {
+      "balanced": 0.15853658536585366,
+      "peaceful": 0.573170731707317,
+      "mysterious": 0.2682926829268293
+    },
+    "energy_level": "low",
+    "complexity_preference": 0.35954878048780486,
+    "harmony_types": [
+      "monochromatic",
+      "analogous",
+      "triadic"
+    ]
+  },
+  "fafe8f7f69c94b938bbd45c4368451d9": {
+    "theme_name": "organic",
+    "confidence": 0.4,
+    "primary_colors": [
+      "#706d6b",
+      "#ccc3c4",
+      "#d6ced7",
+      "#291e2b"
+    ],
+    "accent_colors": [
+      "#8fbc8f",
+      "#daa520",
+      "#f4a460",
+      "#90ee90"
+    ],
+    "temperature_bias": "neutral",
+    "mood_profile": {
+      "balanced": 0.15853658536585366,
+      "peaceful": 0.573170731707317,
+      "mysterious": 0.2682926829268293
+    },
+    "energy_level": "low",
+    "complexity_preference": 0.35954878048780486,
+    "harmony_types": [
+      "monochromatic",
+      "analogous",
+      "triadic"
+    ]
   }
 }
