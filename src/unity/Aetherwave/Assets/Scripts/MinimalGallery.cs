@@ -12,6 +12,9 @@ namespace Aetherwave
             Debug.Log("🎨 Aetherwave Gallery Started!");
             Debug.Log($"📡 API should be running on http://localhost:8000");
             Debug.Log($"🎮 Controls: ESC to quit");
+            
+            // Add the API test component to this GameObject
+            gameObject.AddComponent<APITestGallery>();
         }
 
         void Update()
@@ -37,8 +40,8 @@ namespace Aetherwave
             GUI.Label(new Rect(50, 250, 800, 200),
                 "✅ Unity Build Working\n" +
                 "✅ Python API Running (82 images available)\n" +
-                "🔄 Image Display: Coming in Phase 2\n" +
-                "📝 This proves the automated build pipeline works!", style);
+                "🔄 API Connectivity Test: Check Console\n" +
+                "📝 This tests the complete Unity↔Python integration!", style);
         }
     }
 }
