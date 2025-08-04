@@ -46,6 +46,17 @@ private:
     int windowWidth = 1920;
     int windowHeight = 1080;
 
+    // Cached Layout System
+    SDL_Rect cachedImageRect = {0, 0, 0, 0};
+    size_t cachedImageIndex = SIZE_MAX; // Invalid index initially
+    bool layoutNeedsRecalc = true;
+    
+    // Transition layout cache
+    SDL_Rect cachedTransitionCurrentRect = {0, 0, 0, 0};
+    SDL_Rect cachedTransitionNextRect = {0, 0, 0, 0};
+    size_t cachedTransitionCurrentIndex = SIZE_MAX;
+    size_t cachedTransitionNextIndex = SIZE_MAX;
+
     // Enhanced Transition State
     enum class TransitionType {
         FADE,
@@ -234,10 +245,11 @@ public:
         } else {
             // Force layout calculation after loading images to ensure proper initial sizing
             updateWindowDimensions();
-            if (layoutEngine && !imageTextures.empty()) {
-                std::vector<SDL_Texture*> textures = { imageTextures[0] };
-                layoutEngine->calculateLayout(textures);
-                std::cout << "🎨 Initial layout calculated for first image" << std::endl;
+            if (!imageTextures.empty()) {
+                // Mark layout for initial calculation
+                layoutNeedsRecalc = true;
+                DEBUG_LAYOUT("FALLBACK_INIT", "Initial layout will be calculated on first render");
+                std::cout << "🎨 Initial layout marked for calculation (using fallback)" << std::endl;
             }
         }
     }
@@ -275,35 +287,22 @@ public:
 
         SDL_Texture* currentTexture = imageTextures[currentIndex];
 
-        // Use pre-calculated layout from layout engine (no recalculation during rendering)
-        SDL_Rect destRect = layoutEngine->getImageRect(0);
-        if (destRect.w == 0 || destRect.h == 0) {
-            // Fallback if layout engine fails
-            DEBUG_LOG("RENDER", "Layout engine returned invalid rect - using fallback");
-            std::cout << "⚠️ Layout engine returned invalid rect, using fallback calculation" << std::endl;
+        // Use cached layout if available, or calculate and cache it
+        SDL_Rect destRect;
+        if (layoutNeedsRecalc || cachedImageIndex != currentIndex) {
+            // Calculate layout and cache it
+            DEBUG_LOG("LAYOUT_FALLBACK", "Calculating and caching layout for image " + std::to_string(currentIndex));
             destRect = calculateImageRectFallback(currentTexture);
+            cachedImageRect = destRect;
+            cachedImageIndex = currentIndex;
+            layoutNeedsRecalc = false;
+            
+            DEBUG_LOG("FALLBACK_CACHED", "Cached layout: " + std::to_string(destRect.w) + "x" + std::to_string(destRect.h) +
+                      " at (" + std::to_string(destRect.x) + "," + std::to_string(destRect.y) + ")");
+        } else {
+            // Use cached layout (no debug spam)
+            destRect = cachedImageRect;
         }
-
-        // Get texture dimensions for comprehensive logging
-        int textureW, textureH;
-        SDL_QueryTexture(currentTexture, nullptr, nullptr, &textureW, &textureH);
-
-        // Calculate proportions for debugging
-        float textureAspect = (float)textureW / textureH;
-        float destAspect = (float)destRect.w / destRect.h;
-        float windowAspect = (float)windowWidth / windowHeight;
-
-        // Log comprehensive render info
-        DEBUG_LOG("RENDER", "INDEX=" + std::to_string(currentIndex) +
-                  " TEXTURE=" + std::to_string(textureW) + "x" + std::to_string(textureH) +
-                  " DEST=" + std::to_string(destRect.w) + "x" + std::to_string(destRect.h) +
-                  " POS=(" + std::to_string(destRect.x) + "," + std::to_string(destRect.y) + ")" +
-                  " ASPECTS: tex=" + std::to_string(textureAspect) + " dest=" + std::to_string(destAspect) + " win=" + std::to_string(windowAspect));
-
-        std::cout << "🖼️ RENDER DEBUG: texture=" << textureW << "x" << textureH
-                  << " window=" << windowWidth << "x" << windowHeight
-                  << " destRect=" << destRect.w << "x" << destRect.h
-                  << " at (" << destRect.x << "," << destRect.y << ")" << std::endl;
 
         // Reset alpha to full opacity
         SDL_SetTextureAlphaMod(currentTexture, 255);
@@ -323,16 +322,29 @@ public:
         SDL_Texture* currentTexture = imageTextures[currentIndex];
         SDL_Texture* nextTexture = imageTextures[nextIndex];
 
-        // Use pre-calculated layout from layout engine (no recalculation during rendering)
-        SDL_Rect currentRect = layoutEngine->getImageRect(0);
-        SDL_Rect nextRect = layoutEngine->getImageRect(0); // Use same layout for transition
-
-        // Fallback to old calculation if layout engine fails
-        if (currentRect.w == 0 || currentRect.h == 0) {
+        // Use cached layout calculations for transitions to prevent recalculation during animation
+        SDL_Rect currentRect, nextRect;
+        
+        // Check if we need to recalculate transition layouts
+        if (layoutNeedsRecalc || 
+            cachedTransitionCurrentIndex != currentIndex || 
+            cachedTransitionNextIndex != nextIndex) {
+            
+            // Calculate and cache both layouts
             currentRect = calculateImageRectFallback(currentTexture);
-        }
-        if (nextRect.w == 0 || nextRect.h == 0) {
             nextRect = calculateImageRectFallback(nextTexture);
+            
+            cachedTransitionCurrentRect = currentRect;
+            cachedTransitionNextRect = nextRect;
+            cachedTransitionCurrentIndex = currentIndex;
+            cachedTransitionNextIndex = nextIndex;
+            
+            DEBUG_LOG("TRANSITION_CACHED", "Cached transition layouts: current=" + std::to_string(currentRect.w) + "x" + std::to_string(currentRect.h) +
+                      " next=" + std::to_string(nextRect.w) + "x" + std::to_string(nextRect.h));
+        } else {
+            // Use cached layouts (no recalculation during transition animation)
+            currentRect = cachedTransitionCurrentRect;
+            nextRect = cachedTransitionNextRect;
         }
 
         // Apply transition effects based on type
@@ -359,28 +371,42 @@ public:
     }
 
     SDL_Rect calculateImageRectFallback(SDL_Texture* texture) {
-        if (!texture) return {0, 0, 0, 0};
+        if (!texture) {
+            DEBUG_LOG("FALLBACK", "ERROR: null texture provided");
+            return {0, 0, 0, 0};
+        }
 
         int textureWidth, textureHeight;
-        SDL_QueryTexture(texture, nullptr, nullptr, &textureWidth, &textureHeight);
+        if (SDL_QueryTexture(texture, nullptr, nullptr, &textureWidth, &textureHeight) != 0) {
+            DEBUG_LOG("FALLBACK", "ERROR: failed to query texture dimensions");
+            return {0, 0, 0, 0};
+        }
 
-        std::cout << "🔧 Fallback calculation: window=" << windowWidth << "x" << windowHeight
-                  << " texture=" << textureWidth << "x" << textureHeight << std::endl;
+        if (textureWidth <= 0 || textureHeight <= 0 || windowWidth <= 0 || windowHeight <= 0) {
+            DEBUG_LOG("FALLBACK", "ERROR: invalid dimensions - texture:" + std::to_string(textureWidth) + "x" + 
+                      std::to_string(textureHeight) + " window:" + std::to_string(windowWidth) + "x" + std::to_string(windowHeight));
+            return {0, 0, 0, 0};
+        }
 
-        // Calculate aspect-ratio-preserving scaling
-        float scaleX = (float)windowWidth / textureWidth;
-        float scaleY = (float)windowHeight / textureHeight;
-        float scale = std::min(scaleX, scaleY);
-
-        int scaledWidth = (int)(textureWidth * scale);
-        int scaledHeight = (int)(textureHeight * scale);
+        // Calculate aspect-ratio-preserving scaling with improved precision
+        float windowAspect = (float)windowWidth / windowHeight;
+        float textureAspect = (float)textureWidth / textureHeight;
+        
+        int scaledWidth, scaledHeight;
+        
+        if (textureAspect > windowAspect) {
+            // Image is wider than window - fit to width
+            scaledWidth = windowWidth;
+            scaledHeight = (int)round(windowWidth / textureAspect);
+        } else {
+            // Image is taller than window - fit to height
+            scaledHeight = windowHeight;
+            scaledWidth = (int)round(windowHeight * textureAspect);
+        }
 
         // Center the image
         int x = (windowWidth - scaledWidth) / 2;
         int y = (windowHeight - scaledHeight) / 2;
-
-        std::cout << "🔧 Fallback result: " << scaledWidth << "x" << scaledHeight
-                  << " at (" << x << "," << y << ")" << std::endl;
 
         return { x, y, scaledWidth, scaledHeight };
     }
@@ -532,13 +558,8 @@ public:
     void renderUI() {
         if (imagePaths.empty()) return;
 
-        // Simple UI overlay showing current image info
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 128);
-        SDL_Rect uiRect = { 10, windowHeight - 60, 400, 50 };
-        SDL_RenderFillRect(renderer, &uiRect);
-
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-        SDL_RenderDrawRect(renderer, &uiRect);
+        // Minimal UI - only show debug overlays when explicitly enabled
+        // Remove the persistent info bar that was causing visual artifacts
 
         // Theme debug overlay
         if (showThemeDebug) {
@@ -669,11 +690,14 @@ public:
                         case SDLK_SPACE:
                         case SDLK_RIGHT:
                         case SDLK_n:
+                            DEBUG_LOG("INPUT", "Next image key pressed (SPACE/RIGHT/N)");
                             nextImage();
                             break;
 
                         case SDLK_LEFT:
+                        case SDLK_BACKSPACE:
                         case SDLK_p:
+                            DEBUG_LOG("INPUT", "Previous image key pressed (LEFT/BACKSPACE/P)");
                             previousImage();
                             break;
 
@@ -731,14 +755,37 @@ public:
                     } else if (e.window.event == SDL_WINDOWEVENT_MOVED) {
                         int x, y;
                         SDL_GetWindowPosition(window, &x, &y);
-                        std::cout << "🖥️ Window moved, forcing layout recalculation" << std::endl;
                         DEBUG_WINDOW("MOVE_EVENT", "Window moved to position (" + std::to_string(x) + "," + std::to_string(y) + ")");
 
+                        // Check if window moved to a different display
+                        int newDisplayIndex = SDL_GetWindowDisplayIndex(window);
+                        static int lastDisplayIndex = 0; // Track display changes
+                        
+                        if (newDisplayIndex != lastDisplayIndex) {
+                            DEBUG_DISPLAY("DISPLAY_CHANGE", "Window moved from display " + 
+                                         std::to_string(lastDisplayIndex) + " to display " + 
+                                         std::to_string(newDisplayIndex));
+                            
+                            // Get new display bounds for proper layout calculation
+                            SDL_Rect displayBounds;
+                            if (SDL_GetDisplayBounds(newDisplayIndex, &displayBounds) == 0) {
+                                DEBUG_DISPLAY("NEW_DISPLAY_BOUNDS", "Display " + std::to_string(newDisplayIndex) + 
+                                             " bounds: " + std::to_string(displayBounds.w) + "x" + 
+                                             std::to_string(displayBounds.h));
+                            }
+                            lastDisplayIndex = newDisplayIndex;
+                        }
+
                         // Force layout recalculation on window move to detect monitor changes
-                        if (layoutEngine && !imageTextures.empty()) {
-                            std::vector<SDL_Texture*> textures = { imageTextures[currentIndex] };
-                            DEBUG_LAYOUT("RECALC_TRIGGER", "Layout recalculation triggered by window move");
-                            layoutEngine->calculateLayout(textures);
+                        if (!imageTextures.empty()) {
+                            layoutNeedsRecalc = true;
+                            
+                            // Invalidate all caches for multi-monitor layout changes
+                            cachedImageIndex = SIZE_MAX;
+                            cachedTransitionCurrentIndex = SIZE_MAX;
+                            cachedTransitionNextIndex = SIZE_MAX;
+                            
+                            DEBUG_LAYOUT("RECALC_TRIGGER", "All layout caches invalidated due to multi-monitor window move");
                         }
                     }
                     break;
@@ -755,6 +802,16 @@ public:
         if (newWidth != windowWidth || newHeight != windowHeight) {
             windowWidth = newWidth;
             windowHeight = newHeight;
+
+            // Mark layout for recalculation since window size changed
+            layoutNeedsRecalc = true;
+            
+            // Also invalidate all caches since window dimensions changed
+            cachedImageIndex = SIZE_MAX;
+            cachedTransitionCurrentIndex = SIZE_MAX;
+            cachedTransitionNextIndex = SIZE_MAX;
+            
+            DEBUG_LOG("WINDOW_RESIZE", "Window dimensions changed to " + std::to_string(windowWidth) + "x" + std::to_string(windowHeight) + " - all caches invalidated");
 
             // Also update the layout engine with current dimensions
             if (layoutEngine) {
@@ -782,14 +839,14 @@ public:
         DEBUG_LOG("IMAGE_SWITCH", "nextImage() from index " + std::to_string(previousIndex) +
                   " to " + std::to_string(currentIndex));
 
-        startTransition();
+        // Mark layout for recalculation since image changed
+        layoutNeedsRecalc = true;
+        
+        // Also invalidate transition cache since indexes changed
+        cachedTransitionCurrentIndex = SIZE_MAX;
+        cachedTransitionNextIndex = SIZE_MAX;
 
-        // Calculate layout for the new image once when switching
-        if (layoutEngine && currentIndex < imageTextures.size() && imageTextures[currentIndex]) {
-            std::vector<SDL_Texture*> textures = { imageTextures[currentIndex] };
-            layoutEngine->calculateLayout(textures);
-            DEBUG_LOG("LAYOUT", "Layout calculated for new image at index " + std::to_string(currentIndex));
-        }
+        startTransition();
 
         std::string filename = std::filesystem::path(imagePaths[currentIndex]).filename().string();
         std::cout << "➡️ Next: " << filename << " (" << (currentIndex + 1) << "/" << imagePaths.size() << ")" << std::endl;
@@ -814,14 +871,14 @@ public:
         DEBUG_LOG("IMAGE_SWITCH", "previousImage() from index " + std::to_string(previousIndex) +
                   " to " + std::to_string(currentIndex));
 
-        startTransition();
+        // Mark layout for recalculation since image changed
+        layoutNeedsRecalc = true;
+        
+        // Also invalidate transition cache since indexes changed
+        cachedTransitionCurrentIndex = SIZE_MAX;
+        cachedTransitionNextIndex = SIZE_MAX;
 
-        // Calculate layout for the new image once when switching
-        if (layoutEngine && currentIndex < imageTextures.size() && imageTextures[currentIndex]) {
-            std::vector<SDL_Texture*> textures = { imageTextures[currentIndex] };
-            layoutEngine->calculateLayout(textures);
-            DEBUG_LOG("LAYOUT", "Layout calculated for new image at index " + std::to_string(currentIndex));
-        }
+        startTransition();
 
         std::string filename = std::filesystem::path(imagePaths[currentIndex]).filename().string();
         std::cout << "⬅️ Previous: " << filename << " (" << (currentIndex + 1) << "/" << imagePaths.size() << ")" << std::endl;
@@ -863,8 +920,8 @@ public:
             isTransitioning = false;
             glitchIntensity = 0.0f;
 
-            // Update to next image after transition completes
-            currentIndex = (currentIndex + 1) % imagePaths.size();
+            // DO NOT update currentIndex here - it was already updated in nextImage()/previousImage()
+            // The index jumping bug was caused by double-incrementing the index
         } else {
             // Apply different easing based on transition type
             switch (currentTransitionType) {
@@ -985,7 +1042,7 @@ public:
         loadImages();
 
         std::cout << "\n🎮 Controls:" << std::endl;
-        std::cout << "   [SPACE/→/N] Next image    [←/P] Previous image" << std::endl;
+        std::cout << "   [SPACE/→/N] Next image    [←/BACKSPACE/P] Previous image" << std::endl;
         std::cout << "   [F] Toggle fullscreen    [R] Reload images" << std::endl;
         std::cout << "   [I] Show info            [T] Theme debug" << std::endl;
         std::cout << "   [U] Update theme         [L] Layout debug" << std::endl;
