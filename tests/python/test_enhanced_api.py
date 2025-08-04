@@ -11,7 +11,7 @@ import sys
 import os
 
 # Add src path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src", "python"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src", "api"))
 
 from main import app
 

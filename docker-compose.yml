@@ -8,7 +8,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./src/python:/app/src/python
+      - ./src/api:/app/src/api
       - ./config:/app/config
       - ./tests:/app/tests
       - ./assets:/app/assets:ro # Read-only assets
@@ -17,16 +17,6 @@ services:
       - PYTHONPATH=/app
     networks:
       - aetherwave-net
-
-  # Future: C++ renderer service (when containerized)
-  # renderer:
-  #   build:
-  #     context: ./src/cpp
-  #     dockerfile: Dockerfile.cpp
-  #   depends_on:
-  #     - classification-api
-  #   networks:
-  #     - aetherwave-net
 
 networks:
   aetherwave-net:

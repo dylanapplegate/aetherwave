@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy Python requirements and install dependencies
-COPY src/python/requirements.txt ./
+COPY src/api/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Stage 2: Development environment with hot reload
@@ -26,7 +26,7 @@ FROM python-base as development
 RUN pip install --no-cache-dir pytest black pylint watchdog
 
 # Copy source code
-COPY src/python/ ./src/python/
+COPY src/api/ ./src/api/
 COPY config/ ./config/
 COPY tests/ ./tests/
 
@@ -34,13 +34,13 @@ COPY tests/ ./tests/
 EXPOSE 8000
 
 # Default command for development
-CMD ["python", "src/python/main.py"]
+CMD ["python", "src/api/main.py"]
 
 # Stage 3: Production environment
 FROM python-base as production
 
 # Copy only necessary files
-COPY src/python/ ./src/python/
+COPY src/api/ ./src/api/
 COPY config/ ./config/
 
 # Create non-root user for security
@@ -50,4 +50,4 @@ USER aetherwave
 EXPOSE 8000
 
 # Production command
-CMD ["python", "src/python/main.py"]
+CMD ["python", "src/api/main.py"]

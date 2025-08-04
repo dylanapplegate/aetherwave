@@ -19,8 +19,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Check if we're in the right directory
-if [[ ! -f "$PROJECT_ROOT/src/qt/main.py" ]]; then
-    echo -e "${RED}❌ Error: Qt frontend not found at $PROJECT_ROOT/src/qt/main.py${NC}"
+if [[ ! -f "$PROJECT_ROOT/src/fe/main.py" ]]; then
+    echo -e "${RED}❌ Error: Qt frontend not found at $PROJECT_ROOT/src/fe/main.py${NC}"
     exit 1
 fi
 
@@ -43,7 +43,7 @@ if ! curl -s http://localhost:8000/health > /dev/null; then
         ./scripts/dev-setup.sh
     else
         echo -e "${BLUE}🐍 Starting Python backend...${NC}"
-        python -m uvicorn src.python.main:app --host 0.0.0.0 --port 8000 --reload &
+        python -m uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload &
         BACKEND_PID=$!
         
         # Wait for backend to start
@@ -70,7 +70,7 @@ mkdir -p "$PROJECT_ROOT/build/logs"
 
 # Start the Qt application
 echo -e "${BLUE}🎨 Starting Qt Gallery...${NC}"
-cd "$PROJECT_ROOT/src/qt"
+cd "$PROJECT_ROOT/src/fe"
 
 # Set Qt environment variables for better rendering
 export QT_AUTO_SCREEN_SCALE_FACTOR=1
