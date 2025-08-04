@@ -64,3 +64,4 @@ PlayerSettings:
   captureSingleScreen: 0
   muteOtherAudioSources: 0
   runInBackground: 1
+  activeInputHandler: 2
