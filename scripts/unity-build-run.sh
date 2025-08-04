@@ -54,7 +54,7 @@ echo -e "${BLUE}📦 Starting Unity build...${NC}"
 
 if [[ $? -eq 0 ]]; then
     echo -e "${GREEN}✅ Unity build completed successfully${NC}"
-    
+
     # Check if app was created
     if [[ -d "$BUILD_PATH/Aetherwave.app" ]]; then
         echo -e "${GREEN}🎮 Launching Aetherwave Gallery...${NC}"

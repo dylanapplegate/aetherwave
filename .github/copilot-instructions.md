@@ -35,19 +35,19 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
    source venv/bin/activate
    python -m uvicorn src.python.main:app --host 0.0.0.0 --port 8000 --reload &
    sleep 3
-   
+
    # Test individual image classification (should complete <1 second)
    curl -X POST "http://localhost:8000/classify" \
      -H "Content-Type: application/json" \
      -d '{"image_path": "assets/images/06201422-D51B-414B-89DA-E12CACAB28CE.png", "include_metadata": true}' \
      | jq '.metadata.dominant_color'
-   
+
    # Test collection theme analysis (should complete <0.1 seconds)
    curl -X POST "http://localhost:8000/analyze/collection-theme" \
      -H "Content-Type: application/json" \
      -d '{"collection_path": "assets/images", "sample_size": 5}' \
      | jq '.theme.theme_name'
-   
+
    # EXPECTED: API responses with valid color/theme data, not error messages
    pkill -f "uvicorn"
    ```
@@ -58,7 +58,7 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
    # MANDATORY: Test Unity compilation
    ./scripts/unity-build-verify.sh
    # EXPECTED: "🎉 Unity Build Verification PASSED"
-   
+
    # Test Unity Input System configuration
    # EXPECTED: Unity editor launches without ArgumentException errors
    # EXPECTED: activeInputHandler: 2 in ProjectSettings.asset

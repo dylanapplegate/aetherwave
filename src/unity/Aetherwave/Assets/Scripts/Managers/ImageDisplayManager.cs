@@ -1,14 +1,16 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Networking;
 using System.Collections.Generic;
-using System.IO;
 using System.Collections;
+using System;
 
 namespace Aetherwave
 {
     /// <summary>
     /// Unity replacement for C++ DisplayEngine and ImageManager
-    /// Handles image loading, display, and transitions with hardware acceleration
+    /// Loads images from Python API server instead of local files
+    /// Handles image display and transitions with hardware acceleration
     /// </summary>
     public class ImageDisplayManager : MonoBehaviour
     {
@@ -16,39 +18,204 @@ namespace Aetherwave
         public RawImage imageDisplay;
         public float transitionDuration = 1.0f;
 
-        [Header("Image Sources")]
-        public string imageDirectory = "Images";
+        [Header("API Configuration")]
+        public string apiBaseUrl = "http://localhost:8000";
 
-        private List<Texture2D> images = new List<Texture2D>();
+        [System.Serializable]
+        public class ImageListResponse
+        {
+            public string[] images;
+            public int count;
+            public string base_url;
+        }
+
+        private List<string> imageFilenames = new List<string>();
+        private Dictionary<string, Texture2D> imageCache = new Dictionary<string, Texture2D>();
         private int currentImageIndex = 0;
         private bool isTransitioning = false;
+        private bool imagesLoaded = false;
 
         private PythonAPIClient apiClient;
 
         void Start()
         {
             apiClient = FindFirstObjectByType<PythonAPIClient>();
-            LoadImages();
 
-            if (images.Count > 0)
+            if (imageDisplay == null)
             {
-                ShowImage(0);
-            }
-        }
-
-        private void LoadImages()
-        {
-            string imagePath = Path.Combine(Application.streamingAssetsPath, imageDirectory);
-
-            if (!Directory.Exists(imagePath))
-            {
-                Debug.LogWarning($"Image directory not found: {imagePath}");
+                Debug.LogError("ImageDisplayManager: No RawImage component assigned!");
                 return;
             }
 
-            string[] supportedExtensions = { "*.jpg", "*.jpeg", "*.png", "*.bmp" };
+            StartCoroutine(LoadImageList());
+        }
 
-            foreach (string extension in supportedExtensions)
+        private IEnumerator LoadImageList()
+        {
+            Debug.Log("🔍 Loading image list from API...");
+
+            string url = $"{apiBaseUrl}/images/list";
+
+            using (UnityWebRequest www = UnityWebRequest.Get(url))
+            {
+                yield return www.SendWebRequest();
+
+                if (www.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogError($"Failed to load image list: {www.error}");
+                    yield break;
+                }
+
+                try
+                {
+                    ImageListResponse response = JsonUtility.FromJson<ImageListResponse>(www.downloadHandler.text);
+                    imageFilenames.Clear();
+                    imageFilenames.AddRange(response.images);
+
+                    Debug.Log($"📸 Loaded {imageFilenames.Count} images from API");
+
+                    if (imageFilenames.Count > 0)
+                    {
+                        imagesLoaded = true;
+                        yield return StartCoroutine(LoadAndShowImage(0));
+                    }
+                    else
+                    {
+                        Debug.LogWarning("No images found in API response");
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Failed to parse image list response: {e.Message}");
+                }
+            }
+        }
+
+        private IEnumerator LoadAndShowImage(int index)
+        {
+            if (index < 0 || index >= imageFilenames.Count)
+            {
+                Debug.LogWarning($"Invalid image index: {index}");
+                yield break;
+            }
+
+            string filename = imageFilenames[index];
+
+            // Check cache first
+            if (imageCache.ContainsKey(filename))
+            {
+                imageDisplay.texture = imageCache[filename];
+                currentImageIndex = index;
+                Debug.Log($"🖼️  Showing cached image {index + 1}/{imageFilenames.Count}: {filename}");
+                yield break;
+            }
+
+            Debug.Log($"⬇️  Loading image {index + 1}/{imageFilenames.Count}: {filename}");
+
+            string url = $"{apiBaseUrl}/images/{filename}";
+
+            using (UnityWebRequest www = UnityWebRequestTexture.GetTexture(url))
+            {
+                yield return www.SendWebRequest();
+
+                if (www.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogError($"Failed to load image {filename}: {www.error}");
+                    yield break;
+                }
+
+                Texture2D texture = DownloadHandlerTexture.GetContent(www);
+                if (texture != null)
+                {
+                    // Cache the texture
+                    imageCache[filename] = texture;
+
+                    // Display the image
+                    imageDisplay.texture = texture;
+                    currentImageIndex = index;
+
+                    Debug.Log($"✅ Loaded and showing image {index + 1}/{imageFilenames.Count}: {filename} ({texture.width}x{texture.height})");
+                }
+                else
+                {
+                    Debug.LogError($"Failed to create texture from {filename}");
+                }
+            }
+        }
+
+        // Navigation methods equivalent to C++ implementation
+        public void NextImage()
+        {
+            if (!imagesLoaded || isTransitioning || imageFilenames.Count == 0)
+                return;
+
+            int nextIndex = (currentImageIndex + 1) % imageFilenames.Count;
+            StartCoroutine(LoadAndShowImage(nextIndex));
+        }
+
+        public void PreviousImage()
+        {
+            if (!imagesLoaded || isTransitioning || imageFilenames.Count == 0)
+                return;
+
+            int prevIndex = (currentImageIndex - 1 + imageFilenames.Count) % imageFilenames.Count;
+            StartCoroutine(LoadAndShowImage(prevIndex));
+        }
+
+        public void ShowRandomImage()
+        {
+            if (!imagesLoaded || isTransitioning || imageFilenames.Count == 0)
+                return;
+
+            int randomIndex = UnityEngine.Random.Range(0, imageFilenames.Count);
+            StartCoroutine(LoadAndShowImage(randomIndex));
+        }
+
+        // Input handling equivalent to C++ SDL2 input
+        void Update()
+        {
+            if (!imagesLoaded)
+                return;
+
+            // Keyboard navigation (equivalent to C++ SDL2 key handling)
+            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.RightArrow))
+            {
+                NextImage();
+            }
+            else if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.LeftArrow))
+            {
+                PreviousImage();
+            }
+            else if (Input.GetKeyDown(KeyCode.R))
+            {
+                ShowRandomImage();
+            }
+            else if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                Application.Quit();
+            }
+        }
+
+        // Utility methods
+        public int GetCurrentImageIndex() => currentImageIndex;
+        public int GetImageCount() => imageFilenames.Count;
+        public string GetCurrentImageName() =>
+            imageFilenames.Count > 0 ? imageFilenames[currentImageIndex] : "None";
+
+        // Cleanup cached textures when destroyed
+        void OnDestroy()
+        {
+            foreach (var texture in imageCache.Values)
+            {
+                if (texture != null)
+                {
+                    Destroy(texture);
+                }
+            }
+            imageCache.Clear();
+        }
+    }
+}
             {
                 string[] files = Directory.GetFiles(imagePath, extension, SearchOption.AllDirectories);
 

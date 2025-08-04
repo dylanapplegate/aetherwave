@@ -20,6 +20,20 @@ import glob
 from .advanced_classifier import AdvancedImageClassifier
 from .content_theme_analyzer import CollectionAnalyzer, ThemeProfile, ContentThemeCache
 
+# Constants
+ASSETS_PATH = Path("assets/images")
+METADATA_DIR = "config/metadata"
+VALID_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tiff", ".tif"}
+IMAGE_MEDIA_TYPES = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".bmp": "image/bmp",
+    ".tiff": "image/tiff",
+    ".tif": "image/tiff"
+}
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -603,6 +617,132 @@ async def save_classification_metadata(filename: str, classification_data: Dict[
 
     except Exception as e:
         logger.error(f"Failed to save metadata for {filename}: {str(e)}")
+
+# ============================================================================
+# Image Serving Endpoints
+# ============================================================================
+
+@app.get("/images/list")
+async def list_images():
+    """
+    List all available images for the gallery.
+    Returns list of image filenames that can be requested via /images/{filename}
+    """
+    try:
+        if not ASSETS_PATH.exists():
+            raise HTTPException(status_code=404, detail="Assets directory not found")
+
+        # Get all image files
+        image_extensions = ["*.png", "*.jpg", "*.jpeg", "*.gif", "*.bmp", "*.tiff"]
+        image_files = []
+
+        for ext in image_extensions:
+            image_files.extend(glob.glob(str(ASSETS_PATH / ext)))
+
+        # Return just filenames, not full paths
+        filenames = [Path(f).name for f in image_files]
+        filenames.sort()  # Consistent ordering
+
+        logger.info(f"Listed {len(filenames)} images for gallery")
+        return {
+            "images": filenames,
+            "count": len(filenames),
+            "base_url": "/images/"
+        }
+    except Exception as e:
+        logger.error(f"Error listing images: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to list images: {str(e)}")
+
+@app.get("/images/{filename}")
+async def serve_image(filename: str):
+    """
+    Serve an image file from the assets directory.
+    Supports PNG, JPG, JPEG, GIF, BMP, TIFF formats.
+    """
+    try:
+        # Security: ensure filename doesn't contain path traversal
+        if ".." in filename or "/" in filename or "\\" in filename:
+            raise HTTPException(status_code=400, detail="Invalid filename")
+
+        image_path = ASSETS_PATH / filename
+
+        if not image_path.exists():
+            raise HTTPException(status_code=404, detail=f"Image {filename} not found")
+
+        # Check if it's actually an image file
+        if image_path.suffix.lower() not in VALID_IMAGE_EXTENSIONS:
+            raise HTTPException(status_code=400, detail="Invalid image format")
+
+        media_type = IMAGE_MEDIA_TYPES.get(image_path.suffix.lower(), "application/octet-stream")
+
+        logger.info(f"Serving image: {filename} ({media_type})")
+        return FileResponse(
+            path=str(image_path),
+            media_type=media_type,
+            filename=filename
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error serving image {filename}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to serve image: {str(e)}")
+
+@app.get("/images/preprocessed/{filename}")
+async def serve_preprocessed_image(filename: str, max_width: int = 1920, max_height: int = 1080):
+    """
+    Serve a preprocessed/resized image optimized for display.
+    Automatically resizes large images to specified dimensions while maintaining aspect ratio.
+    """
+    try:
+        # Security check
+        if ".." in filename or "/" in filename or "\\" in filename:
+            raise HTTPException(status_code=400, detail="Invalid filename")
+
+        from .advanced_classifier import ColorAnalyzer
+        analyzer = ColorAnalyzer()
+
+        assets_path = Path("assets/images")
+        original_path = assets_path / filename
+
+        if not original_path.exists():
+            raise HTTPException(status_code=404, detail=f"Image {filename} not found")
+
+        # Use the preprocessing method from ColorAnalyzer
+        processed_path = analyzer._preprocess_image_for_analysis(str(original_path))
+
+        # If preprocessing created a temp file, serve it and clean up
+        if processed_path != str(original_path):
+            def cleanup():
+                try:
+                    if os.path.exists(processed_path):
+                        os.unlink(processed_path)
+                except OSError:
+                    pass
+
+            # Create background task properly
+            background_tasks = BackgroundTasks()
+            background_tasks.add_task(cleanup)
+
+            return FileResponse(
+                path=processed_path,
+                media_type=IMAGE_MEDIA_TYPES.get(".png", "image/png"),
+                filename=f"optimized_{filename}",
+                background=background_tasks
+            )
+        else:
+            # Original was small enough, serve as-is
+            return FileResponse(
+                path=str(original_path),
+                media_type="image/png",
+                filename=filename
+            )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error serving preprocessed image {filename}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to serve preprocessed image: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

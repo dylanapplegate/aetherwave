@@ -41,7 +41,7 @@ class ColorAnalyzer:
         try:
             # Preprocess image for faster analysis if it's very large
             processed_image_path = self._preprocess_image_for_analysis(image_path)
-            
+
             # Use ColorThief for dominant color extraction
             color_thief = ColorThief(processed_image_path)
 
@@ -208,23 +208,23 @@ class ColorAnalyzer:
         import os
         import tempfile
         from PIL import Image
-        
+
         # Check file size (in MB)
         file_size_mb = os.path.getsize(image_path) / (1024 * 1024)
-        
+
         # If file is smaller than 1MB, use original
         if file_size_mb < 1.0:
             return image_path
-            
+
         try:
             # Open image and check dimensions
             with Image.open(image_path) as img:
                 width, height = img.size
-                
+
                 # If image is already small enough, use original
                 if width <= 800 and height <= 600:
                     return image_path
-                    
+
                 # Calculate new dimensions (maintain aspect ratio)
                 aspect_ratio = width / height
                 if aspect_ratio > 1:  # Landscape
@@ -233,17 +233,17 @@ class ColorAnalyzer:
                 else:  # Portrait
                     new_height = 600
                     new_width = int(600 * aspect_ratio)
-                
+
                 # Resize image
                 resized_img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                
+
                 # Save to temporary file
                 temp_fd, temp_path = tempfile.mkstemp(suffix='.png')
                 os.close(temp_fd)  # Close file descriptor, we just need the path
-                
+
                 resized_img.save(temp_path, 'PNG', optimize=True)
                 return temp_path
-                
+
         except Exception as e:
             print(f"Warning: Could not preprocess image {image_path}: {e}")
             return image_path  # Fallback to original
