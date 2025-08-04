@@ -1,0 +1,39 @@
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace Aetherwave
+{
+    /// <summary>
+    /// Simple gallery startup that automatically configures ImageDisplayManager
+    /// Handles the setup that the build script couldn't do due to compilation order
+    /// </summary>
+    public class GalleryStartup : MonoBehaviour
+    {
+        void Start()
+        {
+            Debug.Log("🚀 Gallery Startup - Configuring ImageDisplayManager...");
+            
+            // Find the main image display
+            RawImage rawImage = FindFirstObjectByType<RawImage>();
+            if (rawImage != null)
+            {
+                // Add ImageDisplayManager if it doesn't exist
+                ImageDisplayManager imageManager = rawImage.GetComponent<ImageDisplayManager>();
+                if (imageManager == null)
+                {
+                    imageManager = rawImage.gameObject.AddComponent<ImageDisplayManager>();
+                    imageManager.imageDisplay = rawImage;
+                    Debug.Log("✅ ImageDisplayManager added to: " + rawImage.name);
+                }
+                else
+                {
+                    Debug.Log("✅ ImageDisplayManager already configured");
+                }
+            }
+            else
+            {
+                Debug.LogError("❌ No RawImage found for gallery display!");
+            }
+        }
+    }
+}

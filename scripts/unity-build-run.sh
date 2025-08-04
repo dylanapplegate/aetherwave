@@ -40,13 +40,11 @@ echo "Build: $BUILD_PATH"
 # Create build directory
 mkdir -p "$BUILD_PATH"
 
-# Build the project
-echo -e "${BLUE}📦 Starting Unity build...${NC}"
+# Build the project using our custom AutoBuild script
+echo -e "${BLUE}📦 Starting Unity build with AutoBuild.BuildFromCommandLine...${NC}"
 "$UNITY_PATH" \
     -projectPath "$PROJECT_PATH" \
-    -buildTarget StandaloneOSX \
-    -buildPath "$BUILD_PATH/Aetherwave.app" \
-    -executeMethod UnityEditor.BuildPipeline.BuildPlayer \
+    -executeMethod AutoBuild.BuildFromCommandLine \
     -quit \
     -batchmode \
     -nographics \
@@ -55,22 +53,16 @@ echo -e "${BLUE}📦 Starting Unity build...${NC}"
 if [[ $? -eq 0 ]]; then
     echo -e "${GREEN}✅ Unity build completed successfully${NC}"
 
-    # Check if app was created
-    if [[ -d "$BUILD_PATH/Aetherwave.app" ]]; then
-        echo -e "${GREEN}🎮 Launching Aetherwave Gallery...${NC}"
-        open "$BUILD_PATH/Aetherwave.app"
-        echo -e "${GREEN}✅ Gallery app launched!${NC}"
-        echo
-        echo "Controls:"
-        echo "  SPACE - Next image"
-        echo "  BACKSPACE - Previous image"
-        echo "  T - Toggle theme debug"
-        echo "  ESC - Exit"
-    else
-        echo -e "${RED}❌ Build failed - app not found${NC}"
-        echo "Check build log: build/unity-build.log"
-        exit 1
-    fi
+    # Check if build was successful
+if [ -f "/Users/dylanapplegate/Development/aetherwave/src/build/bin/Aetherwave.app/Contents/MacOS/Aetherwave" ]; then
+    echo -e "${GREEN}✅ Unity build completed successfully${NC}"
+    echo -e "${BLUE}🚀 Launching Aetherwave Unity Gallery...${NC}"
+    open "/Users/dylanapplegate/Development/aetherwave/src/build/bin/Aetherwave.app"
+else
+    echo -e "${RED}❌ Build failed - app not found${NC}"
+    echo "Check build log: build/unity-build.log"
+    exit 1
+fi
 else
     echo -e "${RED}❌ Unity build failed${NC}"
     echo "Check build log: build/unity-build.log"
