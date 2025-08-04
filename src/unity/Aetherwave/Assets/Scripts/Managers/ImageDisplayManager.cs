@@ -36,7 +36,31 @@ namespace Aetherwave
             
             if (imageDisplay == null)
             {
+                Debug.Log("🔍 imageDisplay is null, trying to find RawImage component...");
                 imageDisplay = GetComponent<RawImage>();
+                
+                if (imageDisplay == null)
+                {
+                    Debug.LogError("❌ No RawImage found on this GameObject!");
+                    // Try to find it in children
+                    imageDisplay = GetComponentInChildren<RawImage>();
+                    if (imageDisplay != null)
+                    {
+                        Debug.Log("✅ Found RawImage in children!");
+                    }
+                    else
+                    {
+                        Debug.LogError("❌ No RawImage found anywhere!");
+                    }
+                }
+                else
+                {
+                    Debug.Log("✅ Found RawImage component!");
+                }
+            }
+            else
+            {
+                Debug.Log("✅ imageDisplay already assigned!");
             }
             
             StartCoroutine(InitializeGallery());
@@ -158,6 +182,10 @@ namespace Aetherwave
         
         IEnumerator FadeToTexture(Texture2D newTexture)
         {
+            Debug.Log($"🎬 Starting fade transition to texture: {newTexture.width}x{newTexture.height}");
+            Debug.Log($"🎨 Current imageDisplay component: {(imageDisplay != null ? "Valid" : "NULL")}");
+            Debug.Log($"🎨 Current imageDisplay.texture: {(imageDisplay.texture != null ? $"{imageDisplay.texture.width}x{imageDisplay.texture.height}" : "NULL")}");
+            
             float elapsed = 0f;
             Color originalColor = imageDisplay.color;
             
@@ -171,7 +199,9 @@ namespace Aetherwave
             }
             
             // Change texture
+            Debug.Log($"🔄 Applying new texture to imageDisplay...");
             imageDisplay.texture = newTexture;
+            Debug.Log($"✅ Texture applied. Current texture: {(imageDisplay.texture != null ? $"{imageDisplay.texture.width}x{imageDisplay.texture.height}" : "NULL")}");
             
             // Fade in
             elapsed = 0f;
