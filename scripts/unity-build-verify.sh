@@ -168,10 +168,29 @@ else
 fi
 
 echo ""
+# Step 7: Check for built application
+echo -e "${YELLOW}Step 7: Checking for built application...${NC}"
+APP_PATH="$PROJECT_ROOT/src/build/bin/Aetherwave.app"
+if [ -d "$APP_PATH" ]; then
+    echo -e "${GREEN}✅ Built application found: $APP_PATH${NC}"
+    # Get app size for verification
+    APP_SIZE=$(du -sh "$APP_PATH" | cut -f1)
+    echo -e "${GREEN}✅ App size: $APP_SIZE${NC}"
+else
+    echo -e "${YELLOW}⚠️  Built application not found (compilation test only)${NC}"
+fi
+
+echo ""
 echo -e "${GREEN}🎉 Unity Build Verification PASSED${NC}"
 echo -e "${GREEN}✅ Project structure valid${NC}"
 echo -e "${GREEN}✅ Unity compilation successful${NC}"
 echo -e "${GREEN}✅ Required packages present${NC}"
+if [ -d "$APP_PATH" ]; then
+    echo -e "${GREEN}✅ Built application available${NC}"
+fi
 echo ""
 echo -e "${YELLOW}Build log saved to: $LOG_FILE${NC}"
 echo -e "${YELLOW}Project ready for development in Unity Editor${NC}"
+if [ -d "$APP_PATH" ]; then
+    echo -e "${YELLOW}To run the app: open '$APP_PATH'${NC}"
+fi

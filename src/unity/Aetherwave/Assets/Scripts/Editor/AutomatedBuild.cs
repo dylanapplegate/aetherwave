@@ -143,7 +143,7 @@ namespace Aetherwave.Editor
 
             // Configure player settings
             PlayerSettings.companyName = "Aetherwave";
-            PlayerSettings.productName = "Aetherwave Gallery";
+            PlayerSettings.productName = "Aetherwave";
             PlayerSettings.bundleVersion = "1.0.0";
 
 #if UNITY_STANDALONE_OSX
@@ -219,7 +219,7 @@ namespace Aetherwave.Editor
 #if UNITY_STANDALONE_OSX
             string scriptPath = Path.Combine(Path.GetDirectoryName(appPath), "run-aetherwave.sh");
             string scriptContent = $@"#!/bin/bash
-echo ""🚀 Starting Aetherwave Gallery...""
+echo ""🚀 Starting Aetherwave...""
 echo ""📡 Make sure Python API is running: ./scripts/dev-setup.sh""
 echo ""🎮 Controls: SPACE=Next, BACKSPACE=Previous, R=Random, ESC=Exit""
 echo """"

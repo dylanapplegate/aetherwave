@@ -70,11 +70,11 @@ namespace Aetherwave
         {
             if (!isTransitioning)
             {
-                if (Input.GetKeyDown(nextImageKey))
+                if (Input.GetKeyDown(nextImageKey) || Input.GetKeyDown(KeyCode.RightArrow))
                 {
                     NextImage();
                 }
-                else if (Input.GetKeyDown(previousImageKey))
+                else if (Input.GetKeyDown(previousImageKey) || Input.GetKeyDown(KeyCode.LeftArrow))
                 {
                     PreviousImage();
                 }
@@ -201,6 +201,35 @@ namespace Aetherwave
             // Change texture
             Debug.Log($"🔄 Applying new texture to imageDisplay...");
             imageDisplay.texture = newTexture;
+            
+            // Fix aspect ratio to prevent stretching
+            if (newTexture != null)
+            {
+                RectTransform rectTransform = imageDisplay.GetComponent<RectTransform>();
+                if (rectTransform != null)
+                {
+                    float imageAspect = (float)newTexture.width / newTexture.height;
+                    float containerAspect = rectTransform.rect.width / rectTransform.rect.height;
+                    
+                    if (imageAspect > containerAspect)
+                    {
+                        // Image is wider - fit to width, letterbox top/bottom
+                        rectTransform.anchorMin = new Vector2(0, 0.5f - (containerAspect / imageAspect) / 2f);
+                        rectTransform.anchorMax = new Vector2(1, 0.5f + (containerAspect / imageAspect) / 2f);
+                    }
+                    else
+                    {
+                        // Image is taller - fit to height, pillarbox left/right
+                        rectTransform.anchorMin = new Vector2(0.5f - (imageAspect / containerAspect) / 2f, 0);
+                        rectTransform.anchorMax = new Vector2(0.5f + (imageAspect / containerAspect) / 2f, 1);
+                    }
+                    rectTransform.offsetMin = Vector2.zero;
+                    rectTransform.offsetMax = Vector2.zero;
+                    
+                    Debug.Log($"📐 Fixed aspect ratio: image {newTexture.width}x{newTexture.height} (aspect: {imageAspect:F2}), container aspect: {containerAspect:F2}");
+                }
+            }
+            
             Debug.Log($"✅ Texture applied. Current texture: {(imageDisplay.texture != null ? $"{imageDisplay.texture.width}x{imageDisplay.texture.height}" : "NULL")}");
             
             // Fade in
