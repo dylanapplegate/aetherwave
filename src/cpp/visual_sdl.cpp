@@ -287,16 +287,16 @@ public:
         // Get texture dimensions for comprehensive logging
         int textureW, textureH;
         SDL_QueryTexture(currentTexture, nullptr, nullptr, &textureW, &textureH);
-        
+
         // Calculate proportions for debugging
         float textureAspect = (float)textureW / textureH;
         float destAspect = (float)destRect.w / destRect.h;
         float windowAspect = (float)windowWidth / windowHeight;
-        
+
         // Log comprehensive render info
-        DEBUG_LOG("RENDER", "INDEX=" + std::to_string(currentIndex) + 
-                  " TEXTURE=" + std::to_string(textureW) + "x" + std::to_string(textureH) + 
-                  " DEST=" + std::to_string(destRect.w) + "x" + std::to_string(destRect.h) + 
+        DEBUG_LOG("RENDER", "INDEX=" + std::to_string(currentIndex) +
+                  " TEXTURE=" + std::to_string(textureW) + "x" + std::to_string(textureH) +
+                  " DEST=" + std::to_string(destRect.w) + "x" + std::to_string(destRect.h) +
                   " POS=(" + std::to_string(destRect.x) + "," + std::to_string(destRect.y) + ")" +
                   " ASPECTS: tex=" + std::to_string(textureAspect) + " dest=" + std::to_string(destAspect) + " win=" + std::to_string(windowAspect));
 
@@ -778,8 +778,8 @@ public:
         // Update index BEFORE starting transition and calculating layout
         size_t previousIndex = currentIndex;
         currentIndex = (currentIndex + 1) % imagePaths.size();
-        
-        DEBUG_LOG("IMAGE_SWITCH", "nextImage() from index " + std::to_string(previousIndex) + 
+
+        DEBUG_LOG("IMAGE_SWITCH", "nextImage() from index " + std::to_string(previousIndex) +
                   " to " + std::to_string(currentIndex));
 
         startTransition();
@@ -810,8 +810,8 @@ public:
         // Move to previous index first, then start transition
         size_t previousIndex = currentIndex;
         currentIndex = (currentIndex == 0) ? imagePaths.size() - 1 : currentIndex - 1;
-        
-        DEBUG_LOG("IMAGE_SWITCH", "previousImage() from index " + std::to_string(previousIndex) + 
+
+        DEBUG_LOG("IMAGE_SWITCH", "previousImage() from index " + std::to_string(previousIndex) +
                   " to " + std::to_string(currentIndex));
 
         startTransition();

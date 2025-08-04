@@ -157,11 +157,13 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
 **For complex visual and multi-monitor issues, use this collaborative debugging approach:**
 
 1. **Setup Fresh Debug Logging:**
+
    - Debug logger automatically clears log on each app startup (`std::ios::trunc`)
    - Comprehensive logging includes: image switching, layout calculations, window events, rendering details
    - Log file location: `build/bin/aetherwave_debug.log`
 
 2. **Debug Session Protocol:**
+
    ```
    AGENT: "Please start the application and perform these tests in order:"
    USER: [Performs testing sequence]
@@ -170,6 +172,7 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
    ```
 
 3. **Standard Test Sequence:**
+
    - Start application and wait for initial load
    - Press SPACE/→ 3-4 times (test next image functionality)
    - Press BACKSPACE/← 2-3 times (test previous image functionality)
@@ -179,6 +182,7 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
    - Move back to main monitor (test return positioning)
 
 4. **What to Log and Track:**
+
    - Image switching operations with index changes (`DEBUG_LOG("IMAGE_SWITCH", ...)`)
    - Layout calculations with window/texture dimensions (`DEBUG_LOG("LAYOUT", ...)`)
    - Rendering details with aspect ratios (`DEBUG_LOG("RENDER", ...)`)
@@ -186,6 +190,7 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
    - Display detection and DPI scaling (`DEBUG_DISPLAY(...)`)
 
 5. **User Reporting Guidelines:**
+
    - Note specific visual issues: proportions wrong, sluggish controls, layout problems, quality issues
    - Specify which actions trigger problems
    - Always request debug log analysis before declaring issues fixed
