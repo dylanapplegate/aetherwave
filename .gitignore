@@ -1,7 +1,16 @@
 # Aetherwave .gitignore
 
-# Assets directory (read-only, not tracked)
-assets/
+# Assets directory - track structure but not image files
+assets/images/*.jpg
+assets/images/*.jpeg
+assets/images/*.png
+assets/images/*.gif
+assets/images/*.bmp
+assets/images/*.tiff
+assets/images/*.tif
+# Keep documentation
+!assets/README.md
+!assets/images/README.md
 
 # Build artifacts
 build/

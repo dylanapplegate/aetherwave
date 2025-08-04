@@ -108,8 +108,18 @@ if [ -f "../config/themes.yaml" ]; then
     echo "   ✅ Copied themes.yaml"
 fi
 
-# Create sample assets directory message
-if [ ! "$(ls -A bin/assets/images)" ]; then
+# Note: Asset synchronization is now handled by CMake during build
+# Check if source assets exist
+if [ -d "../assets/images" ]; then
+    SOURCE_IMAGE_COUNT=$(ls -1 ../assets/images/*.{jpg,jpeg,png,gif,bmp,tiff,tif} 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$SOURCE_IMAGE_COUNT" -gt 0 ]; then
+        echo "   📸 Found $SOURCE_IMAGE_COUNT source images in assets/images/"
+        echo "   🔄 Assets synced by CMake build system"
+    fi
+fi
+
+# Create sample assets directory message (only if no source assets)
+if [ ! -d "../assets/images" ] || [ ! "$(ls -A ../assets/images 2>/dev/null)" ]; then
     cat > bin/assets/images/README.txt << EOF
 Place your images in this directory for display in Aetherwave.
 
@@ -128,7 +138,8 @@ echo ""
 echo "🎉 Build completed successfully!"
 echo ""
 echo "📍 Binary location: build/bin/Aetherwave"
-echo "📁 Assets directory: build/bin/assets/images/"
+echo "📁 Runtime assets: build/bin/assets/images/"
+echo "📂 Source assets: assets/images/ (add images here)"
 echo "⚙️  Config directory: build/bin/config/"
 echo ""
 echo "🚀 To run the application:"
@@ -143,6 +154,7 @@ echo "   - P: Performance overlay"
 echo "   - ESC: Exit"
 echo ""
 echo "💡 Tips:"
-echo "   - Add images to build/bin/assets/images/ before running"
+echo "   - Add images to assets/images/ in project root, then rebuild"
+echo "   - Images are automatically synced during build process"
 echo "   - The app starts in fullscreen mode for best experience"
 echo "   - Use 'clean' argument to rebuild from scratch: ./scripts/cpp-setup.sh clean"

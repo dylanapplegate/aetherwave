@@ -41,7 +41,7 @@ chmod +x scripts/dev-setup.sh
 
 **That's it!** The Python classification engine is running. Next:
 
-- Add your images to the `assets/` folder
+- Add your images to the `assets/images/` folder in project root
 - Visit http://localhost:8000/docs for API documentation
 - Continue with C++ setup below for full rendering
 
@@ -54,8 +54,11 @@ For the complete visual experience, you'll also want the C++ display engine:
 chmod +x scripts/cpp-setup.sh
 ./scripts/cpp-setup.sh
 
-# Add images to the display directory
-cp your-images/* build/bin/assets/images/
+# Add images to the source assets directory
+cp your-images/* assets/images/
+
+# Rebuild to sync assets
+./scripts/cpp-setup.sh
 
 # Run the display engine
 ./scripts/cpp-run.sh
@@ -107,7 +110,10 @@ cd bin && ./Aetherwave
 
 ```text
 ./
-├── assets/                 # Your image collections (gitignored)
+├── assets/                 # Source image collections and documentation
+│   ├── README.md          # Asset management documentation
+│   └── images/            # Your images go here (synced to build)
+│       └── README.md      # Image-specific documentation
 ├── config/                 # Theme configurations and metadata
 ├── scripts/                # Development and deployment scripts
 ├── src/
@@ -193,9 +199,10 @@ rm -rf build libs/openFrameworks
 
 **"No images loaded" message:**
 
-- Add images to `build/bin/assets/images/` directory
+- Add images to `assets/images/` directory in project root
+- Rebuild to sync assets: `./scripts/cpp-setup.sh`
 - Supported formats: JPEG, PNG, GIF, BMP, TIFF
-- Images should be in the binary directory, not project root assets
+- Images are automatically synced from source to build during compilation
 
 **Application won't start:**
 
