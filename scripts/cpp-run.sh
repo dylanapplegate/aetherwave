@@ -1,26 +1,6 @@
 #!/bin/bash
 
-# Aetherwa# Check if assets directory has images
-ASSETS_DIR="build/bin/assets/images"
-SOURCE_ASSETS_DIR="assets/images"
-
-if [ ! -d "$ASSETS_DIR" ] || [ -z "$(ls -A "$ASSETS_DIR" 2>/dev/null | grep -E '\.(jpg|jpeg|png|gif|bmp|tiff|tif)$')" ]; then
-    echo "⚠️  No images found in $ASSETS_DIR"
-    echo "   The application will run but won't display any images"
-    echo ""
-
-    if [ -d "$SOURCE_ASSETS_DIR" ] && [ "$(ls -A "$SOURCE_ASSETS_DIR" 2>/dev/null | grep -E '\.(jpg|jpeg|png|gif|bmp|tiff|tif)$')" ]; then
-        echo "🔍 Found images in source assets directory ($SOURCE_ASSETS_DIR)"
-        echo "   These will be synced during the next build"
-        echo "   Run './scripts/cpp-setup.sh' to rebuild and sync assets"
-    else
-        echo "💡 To add images:"
-        echo "   1. Place images in: $SOURCE_ASSETS_DIR"
-        echo "   2. Rebuild: ./scripts/cpp-setup.sh"
-        echo "   3. Run: ./scripts/cpp-run.sh"
-    fi
-    echo ""
-fiunner
+# Aetherwave C++ Application Runner  
 # Quick run script for the C++ display engine
 
 set -e
@@ -43,21 +23,22 @@ fi
 
 # Check if assets directory has images
 ASSETS_DIR="build/bin/assets/images"
+SOURCE_ASSETS_DIR="assets/images"
+
 if [ ! -d "$ASSETS_DIR" ] || [ -z "$(ls -A "$ASSETS_DIR" 2>/dev/null | grep -E '\.(jpg|jpeg|png|gif|bmp|tiff|tif)$')" ]; then
     echo "⚠️  No images found in $ASSETS_DIR"
     echo "   The application will run but won't display any images"
-    echo "   Add images to $ASSETS_DIR for the best experience"
     echo ""
-
-    # Offer to copy sample images if they exist
-    if [ -d "assets" ] && [ "$(ls -A assets 2>/dev/null | grep -E '\.(jpg|jpeg|png|gif|bmp|tiff|tif)$')" ]; then
-        echo "🔍 Found images in project assets directory"
-        read -p "   Copy them to the runtime directory? (y/N): " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            cp assets/*.{jpg,jpeg,png,gif,bmp,tiff,tif} "$ASSETS_DIR/" 2>/dev/null || true
-            echo "   ✅ Copied images to runtime directory"
-        fi
+    
+    if [ -d "$SOURCE_ASSETS_DIR" ] && [ "$(ls -A "$SOURCE_ASSETS_DIR" 2>/dev/null | grep -E '\.(jpg|jpeg|png|gif|bmp|tiff|tif)$')" ]; then
+        echo "🔍 Found images in source assets directory ($SOURCE_ASSETS_DIR)"
+        echo "   These will be synced during the next build"
+        echo "   Run './scripts/cpp-setup.sh' to rebuild and sync assets"
+    else
+        echo "💡 To add images:"
+        echo "   1. Place images in: $SOURCE_ASSETS_DIR"
+        echo "   2. Rebuild: ./scripts/cpp-setup.sh"
+        echo "   3. Run: ./scripts/cpp-run.sh"
     fi
     echo ""
 fi
