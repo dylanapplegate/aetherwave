@@ -41,7 +41,32 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
    rm -rf *.o *.obj *.exe *.dll *.dylib
    ```
 
-2. **Terminate All Background Processes:**
+2. **Legacy Test Cleanup:**
+
+   ```bash
+   # CRITICAL: Only remove tests that are truly legacy/obsolete
+   # NEVER remove tests for active functionality
+   #
+   # Safe to remove:
+   # - Tests expecting old API versions (e.g., 1.0.0 when current is 2.0.0)
+   # - Tests for deprecated endpoints or schemas
+   # - Tests for removed functionality
+   #
+   # NEVER remove:
+   # - Tests for current API endpoints
+   # - Tests for active core functionality
+   # - Tests for business logic that's still in use
+   #
+   # Current active test files (DO NOT REMOVE):
+   # - test_enhanced_api.py (API v2.0.0 tests)
+   # - test_advanced_classification.py (core classification)
+   # - test_content_theme_analyzer.py (theme analysis)
+   #
+   # Example legacy cleanup (only when identified as obsolete):
+   # rm tests/python/test_metadata.py  # API v1.0.0 legacy tests
+   ```
+
+3. **Terminate All Background Processes:**
 
    ```bash
    # Kill any running development servers
@@ -55,7 +80,7 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
    docker-compose down --remove-orphans
    ```
 
-3. **Clean Terminal State:**
+4. **Clean Terminal State:**
 
    ```bash
    # Ensure no hanging background jobs
@@ -64,7 +89,7 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
    kill %1 %2 %3 2>/dev/null || true
    ```
 
-4. **Verify Complete Build Pipeline:**
+5. **Verify Complete Build Pipeline:**
 
    ```bash
    # Must pass: Python API build verification
@@ -84,7 +109,7 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
    pytest tests/ --tb=short
    ```
 
-5. **Final State Verification:**
+6. **Final State Verification:**
    - ✅ No running background processes (`ps aux | grep -E "python.*main|Aetherwave|fastapi"` returns empty)
    - ✅ No hanging terminal jobs (`jobs -l` returns empty)
    - ✅ Python API builds and responds to health checks
