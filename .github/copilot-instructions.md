@@ -107,6 +107,9 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
 
    # Must pass: All tests
    pytest tests/ --tb=short
+   # Test coverage goal: 90%+ for all Python and C++ modules
+   # Use: pytest --cov=src --cov-report=term-missing
+   # If coverage drops below 90%, add or update tests before completing session
    ```
 
 6. **Final State Verification:**
@@ -384,6 +387,13 @@ Image Collection → Classification → Theme Detection → Visual Rendering
 - **Integration Tests**: End-to-end content→theme→visual pipeline validation
 - **Performance Tests**: 60 FPS rendering with large collections
 - **Theme Accuracy Tests**: Statistical validation of content-to-theme mapping
+
+#### **Test Coverage Goals**
+
+- All Python and C++ modules must maintain **90%+ test coverage**
+- Use `pytest --cov=src --cov-report=term-missing` for Python coverage
+- Use C++ coverage tools (e.g., gcov, lcov) for C++ modules
+- If coverage drops below 90%, add or update tests before completing any coding session
 
 ### **Quality Assurance:**
 
