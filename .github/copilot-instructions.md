@@ -199,7 +199,26 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
 - Use Sequential Thinking to break down complex tasks into manageable steps.
 - Use Memory to keep track of business decisions, technical information, and project context.
 - Use Deepwiki to access detailed documentation and examples for specific libraries or frameworks. Use as backup to Context7.
-- Please use filesystem MCP to access projedct files and directories.
+- Always use the filesystem MCP server for all file and directory operations.
+- For reading files, use:
+  - `read_text_file` to get the full contents of a text file (optionally head/tail lines).
+  - `read_media_file` to stream image/audio files as base64 with MIME type.
+  - `read_multiple_files` to read several files at once (failed reads do not halt operation).
+- For writing or editing files, use:
+  - `write_file` to create or overwrite a file with new content.
+  - `edit_file` for selective edits using pattern matching, indentation preservation, and dry-run previews.
+- For directory management, use:
+  - `create_directory` to create or ensure a directory exists.
+  - `list_directory` to list contents with [FILE]/[DIR] prefixes.
+- For moving/renaming, use:
+  - `move_file` to move or rename files/directories (fails if destination exists).
+- For searching and metadata:
+  - `search_files` to recursively find files/directories by pattern, with exclusions.
+  - `get_file_info` for detailed metadata (size, timestamps, type, permissions).
+  - `list_allowed_directories` to see which directories are permitted for access.
+- Always treat files as UTF-8 text unless using `read_media_file`.
+- Preview edits with `edit_file` dryRun before applying changes.
+- Use these commands for any file or directory access, modification, or inspection.
 
 ### **🧠 Coding Behavior Rules**
 

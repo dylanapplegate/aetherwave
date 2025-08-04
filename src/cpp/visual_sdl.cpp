@@ -213,37 +213,13 @@ public:
         SDL_SetRenderDrawColor(renderer, bgColor.r, bgColor.g, bgColor.b, 255);
         SDL_RenderClear(renderer);
 
-        // Render current image if available
-        if (!imagePaths.empty() && currentIndex < imageTextures.size() && imageTextures[currentIndex]) {
-            SDL_Texture* currentTexture = imageTextures[currentIndex];
-
-            // Get texture dimensions
-            int textureWidth, textureHeight;
-            SDL_QueryTexture(currentTexture, nullptr, nullptr, &textureWidth, &textureHeight);
-
-            // Calculate aspect-ratio-preserving scaling
-            float scaleX = (float)windowWidth / textureWidth;
-            float scaleY = (float)windowHeight / textureHeight;
-            float scale = std::min(scaleX, scaleY);
-
-            int scaledWidth = (int)(textureWidth * scale);
-            int scaledHeight = (int)(textureHeight * scale);
-
-            // Center the image
-            int x = (windowWidth - scaledWidth) / 2;
-            int y = (windowHeight - scaledHeight) / 2;
-
-            SDL_Rect destRect = { x, y, scaledWidth, scaledHeight };
-
-            // Apply fade effect during transitions
+        // Render images with proper transitions
+        if (!imagePaths.empty() && !imageTextures.empty()) {
             if (isTransitioning) {
-                SDL_SetTextureAlphaMod(currentTexture, (Uint8)(fadeAlpha * 255));
+                renderTransition();
             } else {
-                SDL_SetTextureAlphaMod(currentTexture, 255);
+                renderCurrentImage();
             }
-
-            // Render the image
-            SDL_RenderCopy(renderer, currentTexture, nullptr, &destRect);
         } else if (imagePaths.empty()) {
             // Show "no images" message
             renderNoImagesMessage();
@@ -254,6 +230,203 @@ public:
 
         // Present the frame
         SDL_RenderPresent(renderer);
+    }
+
+    void renderCurrentImage() {
+        if (currentIndex >= imageTextures.size() || !imageTextures[currentIndex]) return;
+
+        SDL_Texture* currentTexture = imageTextures[currentIndex];
+        SDL_Rect destRect = calculateImageRect(currentTexture);
+
+        // Reset alpha to full opacity
+        SDL_SetTextureAlphaMod(currentTexture, 255);
+        SDL_RenderCopy(renderer, currentTexture, nullptr, &destRect);
+    }
+
+    void renderTransition() {
+        size_t nextIndex = (currentIndex + 1) % imageTextures.size();
+
+        // Ensure both textures are valid
+        if (currentIndex >= imageTextures.size() || !imageTextures[currentIndex] ||
+            nextIndex >= imageTextures.size() || !imageTextures[nextIndex]) {
+            renderCurrentImage();
+            return;
+        }
+
+        SDL_Texture* currentTexture = imageTextures[currentIndex];
+        SDL_Texture* nextTexture = imageTextures[nextIndex];
+
+        SDL_Rect currentRect = calculateImageRect(currentTexture);
+        SDL_Rect nextRect = calculateImageRect(nextTexture);
+
+        // Apply transition effects based on type
+        switch (currentTransitionType) {
+            case TransitionType::FADE:
+                renderFadeTransition(currentTexture, nextTexture, currentRect, nextRect);
+                break;
+            case TransitionType::GLITCH:
+                renderGlitchTransition(currentTexture, nextTexture, currentRect, nextRect);
+                break;
+            case TransitionType::SOFT_FADE:
+                renderSoftFadeTransition(currentTexture, nextTexture, currentRect, nextRect);
+                break;
+            case TransitionType::PIXEL:
+                renderPixelTransition(currentTexture, nextTexture, currentRect, nextRect);
+                break;
+            case TransitionType::DISSOLVE:
+                renderDissolveTransition(currentTexture, nextTexture, currentRect, nextRect);
+                break;
+            default:
+                renderFadeTransition(currentTexture, nextTexture, currentRect, nextRect);
+                break;
+        }
+    }
+
+    SDL_Rect calculateImageRect(SDL_Texture* texture) {
+        if (!texture) return {0, 0, 0, 0};
+
+        int textureWidth, textureHeight;
+        SDL_QueryTexture(texture, nullptr, nullptr, &textureWidth, &textureHeight);
+
+        // Calculate aspect-ratio-preserving scaling
+        float scaleX = (float)windowWidth / textureWidth;
+        float scaleY = (float)windowHeight / textureHeight;
+        float scale = std::min(scaleX, scaleY);
+
+        int scaledWidth = (int)(textureWidth * scale);
+        int scaledHeight = (int)(textureHeight * scale);
+
+        // Center the image
+        int x = (windowWidth - scaledWidth) / 2;
+        int y = (windowHeight - scaledHeight) / 2;
+
+        return { x, y, scaledWidth, scaledHeight };
+    }
+
+    void renderFadeTransition(SDL_Texture* currentTexture, SDL_Texture* nextTexture,
+                             const SDL_Rect& currentRect, const SDL_Rect& nextRect) {
+        // Render current image with decreasing alpha
+        SDL_SetTextureAlphaMod(currentTexture, (Uint8)((1.0f - fadeAlpha) * 255));
+        SDL_RenderCopy(renderer, currentTexture, nullptr, &currentRect);
+
+        // Render next image with increasing alpha
+        SDL_SetTextureAlphaMod(nextTexture, (Uint8)(fadeAlpha * 255));
+        SDL_RenderCopy(renderer, nextTexture, nullptr, &nextRect);
+    }
+
+    void renderSoftFadeTransition(SDL_Texture* currentTexture, SDL_Texture* nextTexture,
+                                 const SDL_Rect& currentRect, const SDL_Rect& nextRect) {
+        // Use eased fade for organic feel
+        float easedAlpha = 0.5f * (1 + sin(M_PI * fadeAlpha - M_PI/2)); // Smoothstep
+
+        // Add subtle warmth during transition
+        SDL_SetRenderDrawColor(renderer, 20, 15, 10, (Uint8)(easedAlpha * 30));
+        SDL_RenderFillRect(renderer, nullptr);
+
+        // Render current image
+        SDL_SetTextureAlphaMod(currentTexture, (Uint8)((1.0f - easedAlpha) * 255));
+        SDL_RenderCopy(renderer, currentTexture, nullptr, &currentRect);
+
+        // Render next image
+        SDL_SetTextureAlphaMod(nextTexture, (Uint8)(easedAlpha * 255));
+        SDL_RenderCopy(renderer, nextTexture, nullptr, &nextRect);
+    }
+
+    void renderGlitchTransition(SDL_Texture* currentTexture, SDL_Texture* nextTexture,
+                               const SDL_Rect& currentRect, const SDL_Rect& nextRect) {
+        float progress = fadeAlpha;
+
+        // Render current image with glitch effects
+        if (progress < 0.8f) {
+            SDL_SetTextureAlphaMod(currentTexture, (Uint8)((1.0f - progress * 1.25f) * 255));
+
+            // Apply chromatic aberration effect
+            SDL_SetTextureColorMod(currentTexture, 255, (Uint8)(255 * (1 - glitchIntensity * 0.3f)), 255);
+
+            // Render with random horizontal offsets for glitch effect
+            if (glitchRng() % 10 < 3) { // 30% chance of glitch strip
+                SDL_Rect glitchRect = currentRect;
+                glitchRect.x += static_cast<int>((glitchRng() % 20) - 10); // Random offset
+                SDL_RenderCopy(renderer, currentTexture, nullptr, &glitchRect);
+            } else {
+                SDL_RenderCopy(renderer, currentTexture, nullptr, &currentRect);
+            }
+
+            // Reset color modulation
+            SDL_SetTextureColorMod(currentTexture, 255, 255, 255);
+        }
+
+        // Render next image
+        SDL_SetTextureAlphaMod(nextTexture, (Uint8)(progress * 255));
+        SDL_RenderCopy(renderer, nextTexture, nullptr, &nextRect);
+
+        // Add glitch lines
+        if (glitchRng() % 20 < 1) { // 5% chance
+            SDL_SetRenderDrawColor(renderer, 0, 255, 255, 150); // Cyan glitch
+            int y = static_cast<int>(glitchRng() % windowHeight);
+            SDL_Rect glitchLine = {0, y, windowWidth, 2};
+            SDL_RenderFillRect(renderer, &glitchLine);
+        }
+
+        // Add magenta noise blocks
+        if (progress > 0.3f && glitchRng() % 30 < 1) {
+            SDL_SetRenderDrawColor(renderer, 255, 0, 255, 100); // Magenta noise
+            SDL_Rect noiseRect = {
+                static_cast<int>(glitchRng() % windowWidth),
+                static_cast<int>(glitchRng() % windowHeight),
+                static_cast<int>(glitchRng() % 50 + 10),
+                static_cast<int>(glitchRng() % 20 + 5)
+            };
+            SDL_RenderFillRect(renderer, &noiseRect);
+        }
+    }
+
+    void renderPixelTransition(SDL_Texture* currentTexture, SDL_Texture* nextTexture,
+                              const SDL_Rect& currentRect, const SDL_Rect& nextRect) {
+        // Sharp digital transition with blocky reveal
+        int blockSize = 8;
+
+        for (int x = 0; x < windowWidth; x += blockSize) {
+            for (int y = 0; y < windowHeight; y += blockSize) {
+                // Deterministic pattern based on position
+                float threshold = sin(x * 0.02f) * sin(y * 0.02f) * 0.5f + 0.5f;
+
+                SDL_Rect blockRect = {x, y, blockSize, blockSize};
+
+                if (fadeAlpha > threshold) {
+                    // Show next image block
+                    SDL_SetTextureAlphaMod(nextTexture, 255);
+                    SDL_RenderCopy(renderer, nextTexture, &blockRect, &blockRect);
+                } else {
+                    // Show current image block
+                    SDL_SetTextureAlphaMod(currentTexture, 255);
+                    SDL_RenderCopy(renderer, currentTexture, &blockRect, &blockRect);
+                }
+            }
+        }
+    }
+
+    void renderDissolveTransition(SDL_Texture* currentTexture, SDL_Texture* nextTexture,
+                                 const SDL_Rect& currentRect, const SDL_Rect& nextRect) {
+        // Organic dissolve with noise pattern
+        int pixelSize = 4;
+
+        for (int x = 0; x < windowWidth; x += pixelSize) {
+            for (int y = 0; y < windowHeight; y += pixelSize) {
+                // Use noise for dissolve pattern
+                float noiseValue = sin(x * 0.01f + y * 0.01f) * 0.5f + 0.5f;
+
+                SDL_Rect pixelRect = {x, y, pixelSize, pixelSize};
+
+                if (fadeAlpha > noiseValue) {
+                    SDL_SetTextureAlphaMod(nextTexture, 255);
+                    SDL_RenderCopy(renderer, nextTexture, &pixelRect, &pixelRect);
+                } else {
+                    SDL_SetTextureAlphaMod(currentTexture, 255);
+                    SDL_RenderCopy(renderer, currentTexture, &pixelRect, &pixelRect);
+                }
+            }
+        }
     }
 
     void renderNoImagesMessage() {
@@ -403,8 +576,10 @@ public:
     void nextImage() {
         if (imagePaths.empty()) return;
 
+        // Don't start new transition if already transitioning
+        if (isTransitioning) return;
+
         startTransition();
-        currentIndex = (currentIndex + 1) % imagePaths.size();
 
         std::string filename = std::filesystem::path(imagePaths[currentIndex]).filename().string();
         std::cout << "➡️ Next: " << filename << " (" << (currentIndex + 1) << "/" << imagePaths.size() << ")" << std::endl;
@@ -413,8 +588,12 @@ public:
     void previousImage() {
         if (imagePaths.empty()) return;
 
-        startTransition();
+        // Don't start new transition if already transitioning
+        if (isTransitioning) return;
+
+        // Move to previous index first, then start transition
         currentIndex = (currentIndex == 0) ? imagePaths.size() - 1 : currentIndex - 1;
+        startTransition();
 
         std::string filename = std::filesystem::path(imagePaths[currentIndex]).filename().string();
         std::cout << "⬅️ Previous: " << filename << " (" << (currentIndex + 1) << "/" << imagePaths.size() << ")" << std::endl;
@@ -455,6 +634,9 @@ public:
             fadeAlpha = 1.0f;
             isTransitioning = false;
             glitchIntensity = 0.0f;
+
+            // Update to next image after transition completes
+            currentIndex = (currentIndex + 1) % imagePaths.size();
         } else {
             // Apply different easing based on transition type
             switch (currentTransitionType) {
@@ -465,6 +647,7 @@ public:
                 case TransitionType::GLITCH:
                     // Quick snap with glitch effects
                     fadeAlpha = progress > 0.7f ? 1.0f : progress * 1.4f;
+                    glitchIntensity = sin(progress * M_PI) * themeManager->getEffectIntensity();
                     break;
                 case TransitionType::PIXEL:
                     // Sharp digital transition
