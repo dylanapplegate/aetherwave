@@ -34,7 +34,7 @@ COPY tests/ ./tests/
 EXPOSE 8000
 
 # Default command for development
-CMD ["python", "src/python/main.py", "--reload"]
+CMD ["python", "src/python/main.py"]
 
 # Stage 3: Production environment
 FROM python-base as production

@@ -8,6 +8,9 @@
 
 namespace Aetherwave {
 
+// Forward declarations
+class ThemeManager;
+
 /**
  * Advanced image management and display system.
  * Handles multiple image formats, preloading, and smooth transitions.
@@ -53,6 +56,7 @@ public:
     void setTransitionDuration(float duration);
     void setTransitionType(const std::string& type);
     void setDisplayMode(const std::string& mode);
+    void setThemeManager(ThemeManager* themeManager);
 
     // State queries
     int getCurrentImageIndex() const { return displayState.currentIndex; }
@@ -67,6 +71,7 @@ public:
 private:
     std::vector<std::unique_ptr<ImageData>> images;
     DisplayState displayState;
+    ThemeManager* themeManager_;
 
     // Configuration
     std::string transitionType;
@@ -81,8 +86,15 @@ private:
     void drawTransition();
     void drawFadeTransition();
     void drawSlideTransition();
+    void drawGlitchTransition();
+    void drawDissolveTransition();
+    void drawPixelTransition();
+    void drawSoftFadeTransition();
     void drawImage(const ImageData& imageData, float alpha = 1.0f);
     ofRectangle calculateImageBounds(const ImageData& imageData) const;
+
+    // Theme-aware transition selection
+    std::string selectThemeAppropriateTransition() const;
 };
 
 /**

@@ -1,0 +1,9 @@
+themes:
+  cyberfemme:
+    colors: ["#ff0080", "#00ffff", "#8000ff"]
+    mood: "energetic"
+    transitions: ["fade", "slide"]
+  minimal:
+    colors: ["#ffffff", "#000000", "#808080"]
+    mood: "calm"
+    transitions: ["fade"]

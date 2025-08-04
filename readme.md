@@ -203,6 +203,15 @@ rm -rf build libs/openFrameworks
 
 ### **Docker/Python API Issues**
 
+**Container fails to start with "unexpected character" or PYTHONPATH errors:**
+
+```bash
+# Rebuild containers after recent fixes
+docker-compose down
+docker-compose build
+docker-compose up -d
+```
+
 **Port 8000 already in use:**
 
 ```bash
@@ -218,6 +227,11 @@ docker-compose down
 # Make scripts executable
 chmod +x scripts/*.sh
 ```
+
+**API not accessible from outside container:**
+
+- Fixed: Python API now properly binds to 0.0.0.0 in Docker environment
+- The API should be accessible at http://localhost:8000
 
 ## **🔒 Privacy and Asset Handling**
 

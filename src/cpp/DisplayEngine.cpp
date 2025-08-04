@@ -1,4 +1,5 @@
 #include "DisplayEngine.h"
+#include "ThemeManager.h"
 #include "ofMain.h"
 #include <filesystem>
 #include <algorithm>
@@ -17,6 +18,7 @@ const std::vector<std::string> ImageManager::SUPPORTED_EXTENSIONS = {
 ImageManager::ImageManager()
     : transitionType("fade")
     , displayMode("fit")
+    , themeManager_(nullptr)
 {
     displayState = DisplayState();
 }
@@ -158,12 +160,26 @@ void ImageManager::draw() {
 }
 
 void ImageManager::drawTransition() {
-    if (transitionType == "fade") {
+    // Use theme-appropriate transition if theme manager is available
+    std::string effectiveTransition = transitionType;
+    if (themeManager_ && themeManager_->hasActiveTheme()) {
+        effectiveTransition = selectThemeAppropriateTransition();
+    }
+
+    if (effectiveTransition == "fade") {
         drawFadeTransition();
-    } else if (transitionType == "slide") {
+    } else if (effectiveTransition == "slide") {
         drawSlideTransition();
+    } else if (effectiveTransition == "glitch") {
+        drawGlitchTransition();
+    } else if (effectiveTransition == "dissolve") {
+        drawDissolveTransition();
+    } else if (effectiveTransition == "pixel") {
+        drawPixelTransition();
+    } else if (effectiveTransition == "soft_fade") {
+        drawSoftFadeTransition();
     } else {
-        drawFadeTransition(); // Default
+        drawFadeTransition(); // Default fallback
     }
 }
 
@@ -217,6 +233,176 @@ void ImageManager::drawSlideTransition() {
     }
 
     ofPopMatrix();
+}
+
+void ImageManager::drawGlitchTransition() {
+    // Cyberfemme-style glitch transition with chromatic aberration and digital artifacts
+    float progress = displayState.transitionProgress;
+    float glitchIntensity = sin(progress * OF_PI) * 20.0f;  // Peak in middle of transition
+
+    // Draw current image with glitch effects
+    if (displayState.currentIndex >= 0) {
+        const auto* currentImage = getCurrentImage();
+        if (currentImage && currentImage->loaded) {
+            ofPushMatrix();
+
+            // Add random horizontal offsets for glitch bars
+            if (ofRandom(1.0f) > 0.7f) {
+                float randomOffset = ofRandom(-glitchIntensity, glitchIntensity);
+                ofTranslate(randomOffset, ofRandom(-5, 5));
+            }
+
+            // Fade out with glitch
+            float alpha = (1.0f - progress) * (1.0f - glitchIntensity * 0.01f);
+
+            // Chromatic aberration effect - draw color channels slightly offset
+            ofSetColor(255, 0, 0, alpha * 255 * 0.8f);  // Red channel
+            currentImage->image.draw(-2, 0, ofGetWidth(), ofGetHeight());
+
+            ofSetColor(0, 255, 0, alpha * 255);  // Green channel (normal)
+            currentImage->image.draw(0, 0, ofGetWidth(), ofGetHeight());
+
+            ofSetColor(0, 0, 255, alpha * 255 * 0.8f);  // Blue channel
+            currentImage->image.draw(2, 0, ofGetWidth(), ofGetHeight());
+
+            ofPopMatrix();
+        }
+    }
+
+    // Draw next image with glitch entry
+    if (displayState.nextIndex >= 0) {
+        const auto* nextImage = getImageAt(displayState.nextIndex);
+        if (nextImage && nextImage->loaded) {
+            ofPushMatrix();
+
+            // Add digital noise effect
+            if (progress > 0.3f && ofRandom(1.0f) > 0.8f) {
+                ofSetColor(255, 0, 255, 50);  // Magenta noise
+                ofDrawRectangle(0, ofRandom(ofGetHeight()),
+                              ofGetWidth(), ofRandom(5, 20));
+            }
+
+            float alpha = progress;
+            ofSetColor(255, 255, 255, alpha * 255);
+            nextImage->image.draw(0, 0, ofGetWidth(), ofGetHeight());
+
+            ofPopMatrix();
+        }
+    }
+
+    // Add screen-wide glitch lines
+    if (ofRandom(1.0f) > 0.9f) {
+        ofSetColor(0, 255, 255, 100);  // Cyan glitch lines
+        float y = ofRandom(ofGetHeight());
+        ofDrawRectangle(0, y, ofGetWidth(), 2);
+    }
+}
+
+void ImageManager::drawDissolveTransition() {
+    // Digital dissolve with pixelated effect for tech themes
+    float progress = displayState.transitionProgress;
+    int pixelSize = 4;  // Size of dissolve pixels
+
+    // Create dissolve pattern
+    for (int x = 0; x < ofGetWidth(); x += pixelSize) {
+        for (int y = 0; y < ofGetHeight(); y += pixelSize) {
+            float dissolveThreshold = ofNoise(x * 0.01f, y * 0.01f, ofGetElapsedTimef() * 2.0f);
+
+            if (dissolveThreshold < progress) {
+                // Show next image
+                if (displayState.nextIndex >= 0) {
+                    const auto* nextImage = getImageAt(displayState.nextIndex);
+                    if (nextImage && nextImage->loaded) {
+                        ofSetColor(255);
+                        nextImage->image.drawSubsection(x, y, pixelSize, pixelSize,
+                                                      x, y, pixelSize, pixelSize);
+                    }
+                }
+            } else {
+                // Show current image
+                if (displayState.currentIndex >= 0) {
+                    const auto* currentImage = getCurrentImage();
+                    if (currentImage && currentImage->loaded) {
+                        ofSetColor(255);
+                        currentImage->image.drawSubsection(x, y, pixelSize, pixelSize,
+                                                         x, y, pixelSize, pixelSize);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void ImageManager::drawPixelTransition() {
+    // Sharp pixel-based transition for tech themes
+    float progress = displayState.transitionProgress;
+    int blockSize = 8;
+
+    for (int x = 0; x < ofGetWidth(); x += blockSize) {
+        for (int y = 0; y < ofGetHeight(); y += blockSize) {
+            // Use deterministic pattern based on position
+            float threshold = ofNoise(x * 0.02f, y * 0.02f) * 1.2f - 0.1f;
+
+            if (progress > threshold) {
+                // Show next image
+                if (displayState.nextIndex >= 0) {
+                    const auto* nextImage = getImageAt(displayState.nextIndex);
+                    if (nextImage && nextImage->loaded) {
+                        ofSetColor(255);
+                        nextImage->image.drawSubsection(x, y, blockSize, blockSize,
+                                                      x, y, blockSize, blockSize);
+                    }
+                }
+            } else {
+                // Show current image
+                if (displayState.currentIndex >= 0) {
+                    const auto* currentImage = getCurrentImage();
+                    if (currentImage && currentImage->loaded) {
+                        ofSetColor(255);
+                        currentImage->image.drawSubsection(x, y, blockSize, blockSize,
+                                                         x, y, blockSize, blockSize);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void ImageManager::drawSoftFadeTransition() {
+    // Gentle organic fade with soft edges for organic themes
+    float progress = displayState.transitionProgress;
+
+    // Use eased progress for more organic feel
+    float easedProgress = progress * progress * (3.0f - 2.0f * progress); // Smoothstep
+
+    // Draw current image
+    if (displayState.currentIndex >= 0) {
+        const auto* currentImage = getCurrentImage();
+        if (currentImage && currentImage->loaded) {
+            float alpha = 1.0f - easedProgress;
+            ofSetColor(255, 255, 255, alpha * 255);
+            currentImage->image.draw(0, 0, ofGetWidth(), ofGetHeight());
+        }
+    }
+
+    // Draw next image with soft entrance
+    if (displayState.nextIndex >= 0) {
+        const auto* nextImage = getImageAt(displayState.nextIndex);
+        if (nextImage && nextImage->loaded) {
+            float alpha = easedProgress;
+
+            // Add subtle warmth to the transition
+            if (themeManager_ && themeManager_->hasActiveTheme()) {
+                ofColor warmTint = themeManager_->getAccentColor(0);
+                warmTint.a = alpha * 20; // Very subtle tint
+                ofSetColor(warmTint);
+                ofDrawRectangle(0, 0, ofGetWidth(), ofGetHeight());
+            }
+
+            ofSetColor(255, 255, 255, alpha * 255);
+            nextImage->image.draw(0, 0, ofGetWidth(), ofGetHeight());
+        }
+    }
 }
 
 void ImageManager::drawImage(const ImageData& imageData, float alpha) {
@@ -308,6 +494,42 @@ void ImageManager::setTransitionType(const std::string& type) {
 
 void ImageManager::setDisplayMode(const std::string& mode) {
     displayMode = mode;
+}
+
+void ImageManager::setThemeManager(ThemeManager* themeManager) {
+    themeManager_ = themeManager;
+    ofLogNotice("ImageManager") << "Theme manager connected";
+}
+
+std::string ImageManager::selectThemeAppropriateTransition() const {
+    if (!themeManager_ || !themeManager_->hasActiveTheme()) {
+        return transitionType; // Fallback to manual setting
+    }
+
+    std::string preferredTransition = themeManager_->getPreferredTransition();
+
+    // Map theme styles to available transitions
+    if (preferredTransition == "glitch") {
+        return "glitch";
+    } else if (preferredTransition == "soft_fade") {
+        return "soft_fade";
+    } else if (preferredTransition == "pixel") {
+        return "pixel";
+    } else if (preferredTransition == "dissolve") {
+        return "dissolve";
+    }
+
+    // Fallback based on theme name if preferred transition not recognized
+    const auto& currentTheme = themeManager_->getCurrentTheme();
+    if (currentTheme.themeName == "cyberfemme") {
+        return "glitch";
+    } else if (currentTheme.themeName == "organic") {
+        return "soft_fade";
+    } else if (currentTheme.themeName == "tech") {
+        return "pixel";
+    }
+
+    return "fade"; // Final fallback
 }
 
 //=============================================================================

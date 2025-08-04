@@ -602,9 +602,14 @@ async def save_classification_metadata(filename: str, classification_data: Dict[
 
 if __name__ == "__main__":
     import uvicorn
+    import os
+
+    # Use 0.0.0.0 in Docker, 127.0.0.1 for local development
+    host = "0.0.0.0" if os.getenv("ENVIRONMENT") == "development" else "127.0.0.1"
+
     uvicorn.run(
         "main:app",
-        host="127.0.0.1",
+        host=host,
         port=8000,
         reload=True,
         log_level="info"

@@ -1,5 +1,6 @@
 #include "ofMain.h"
 #include "DisplayEngine.h"
+#include "ThemeManager.h"
 #include <memory>
 
 namespace Aetherwave {
@@ -30,10 +31,12 @@ private:
     std::unique_ptr<ImageManager> imageManager;
     std::unique_ptr<MonitorManager> monitorManager;
     std::unique_ptr<PerformanceMonitor> performanceMonitor;
+    std::unique_ptr<ThemeManager> themeManager;
 
     // Application state
     bool isFullscreen;
     bool showPerformanceOverlay;
+    bool showThemeDebug;
     bool showWelcomeScreen;
     float welcomeScreenTimer;
     int currentImageIndex;
@@ -79,6 +82,7 @@ void AetherwaveApp::setup() {
     // Initialize application state
     isFullscreen = true;
     showPerformanceOverlay = false;
+    showThemeDebug = false;
     showWelcomeScreen = true;
     welcomeScreenTimer = 0.0f;
     currentImageIndex = 0;
@@ -118,6 +122,13 @@ void AetherwaveApp::initializeSystems() {
     imageManager = std::make_unique<ImageManager>();
     monitorManager = std::make_unique<MonitorManager>();
     performanceMonitor = std::make_unique<PerformanceMonitor>();
+    themeManager = std::make_unique<ThemeManager>();
+
+    // Initialize theme manager first
+    themeManager->initialize();
+
+    // Connect theme manager to image manager
+    imageManager->setThemeManager(themeManager.get());
 
     // Configure image manager
     imageManager->setTransitionDuration(2.0f);
@@ -147,6 +158,11 @@ void AetherwaveApp::update() {
 
     // Update performance monitoring
     performanceMonitor->update();
+
+    // Update theme manager
+    if (themeManager) {
+        themeManager->update(deltaTime);
+    }
 
     // Update welcome screen timer
     if (showWelcomeScreen) {
@@ -222,6 +238,11 @@ void AetherwaveApp::draw() {
     // Draw performance overlay if enabled
     if (showPerformanceOverlay && performanceMonitor) {
         performanceMonitor->draw();
+    }
+
+    // Draw theme debug info if enabled
+    if (showThemeDebug && themeManager) {
+        themeManager->drawThemeDebugInfo(20, 100);
     }
 }
 
@@ -315,6 +336,7 @@ void AetherwaveApp::drawUI() {
         "SPACE: Next image",
         "F: Toggle fullscreen",
         "P: Performance overlay",
+        "T: Theme debug info",
         "H: Toggle help",
         "ESC: Exit"
     };
@@ -371,6 +393,13 @@ void AetherwaveApp::keyPressed(int key) {
             showPerformanceOverlay = !showPerformanceOverlay;
             ofLogNotice("Aetherwave") << "Performance overlay: "
                                       << (showPerformanceOverlay ? "ON" : "OFF");
+            break;
+
+        case 't':
+        case 'T':
+            showThemeDebug = !showThemeDebug;
+            ofLogNotice("Aetherwave") << "Theme debug: "
+                                      << (showThemeDebug ? "ON" : "OFF");
             break;
 
         case 'h':
