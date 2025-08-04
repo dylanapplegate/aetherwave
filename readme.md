@@ -37,14 +37,14 @@ Aetherwave is an immersive media engine for displaying cinematic MidJourney art 
 # 1. Start Python API for theme detection
 ./scripts/dev-setup.sh
 
-# 2. Install Unity Hub + Unity 2022.3 LTS
+# 2. Install Unity Hub + Unity 6.1
 # Easy install with Homebrew:
 brew install --cask unity-hub
 
 # Alternative: Download from https://unity3d.com/get-unity/download
 
-# 3. Install Unity 2022.3 LTS through Unity Hub
-# Open Unity Hub and install Unity 2022.3 LTS with these modules:
+# 3. Install Unity 6.1 through Unity Hub
+# Open Unity Hub and install Unity 6.1 (6000.1.14f1 or newer) with these modules:
 # - Mac Build Support (Il2CPP)
 # - Visual Studio for Mac (optional, for code editing)
 
@@ -58,30 +58,33 @@ brew install --cask unity-hub
 **Unity Installation Details:**
 
 1. **Install Unity Hub via Homebrew:**
+
    ```bash
    # Install Unity Hub
    brew install --cask unity-hub
-   
+
    # Launch Unity Hub
    open -a "Unity Hub"
    ```
 
-2. **Install Unity 2022.3 LTS:**
+2. **Install Unity 6.1:**
+
    - Open Unity Hub
    - Go to "Installs" tab
    - Click "Install Editor"
-   - Select "Unity 2022.3 LTS" (Long Term Support)
+   - Select "Unity 6.1" (6000.1.14f1 or newer) - Latest stable version with enhanced URP
    - Include these modules:
      - ✅ **Mac Build Support (Il2CPP)** - Required for macOS builds
      - ✅ **Visual Studio for Mac** - Code editor (optional)
      - ✅ **Documentation** - Offline documentation
 
 3. **Verify Installation:**
+
    ```bash
    # Check if Unity is properly installed
    ./scripts/unity-verify.sh
-   
-   # Should show all green checkmarks for Unity Hub, Unity 2022.3 LTS, and Xcode tools
+
+   # Should show all green checkmarks for Unity Hub, Unity 6.1, and Xcode tools
    ```
 
 ✅ **Result**: Professional cyberfemme gallery with content-driven themes!
@@ -113,14 +116,18 @@ chmod +x scripts/dev-setup.sh
 ✅ **Result**: FastAPI service with 95% cyberfemme theme detection accuracy
 
 # Add images to the source assets directory
-cp your-images/* assets/images/
+
+cp your-images/\* assets/images/
 
 # Rebuild to sync assets
+
 ./scripts/cpp-setup.sh
 
 # Run the display engine
+
 ./scripts/cpp-run.sh
-```
+
+````
 
 **System Requirements for C++:**
 
@@ -140,7 +147,7 @@ python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 python main.py  # Starts FastAPI server
-```
+````
 
 #### **2. C++ Display Engine Setup**
 
@@ -250,8 +257,8 @@ black src/python/ && pylint src/python/
 
 # This will check:
 # ✅ Homebrew installation
-# ✅ Unity Hub installation  
-# ✅ Unity 2022.3 LTS installation
+# ✅ Unity Hub installation
+# ✅ Unity 6.1 installation
 # ✅ Xcode Command Line Tools
 # ✅ System requirements (RAM, disk space, macOS version)
 ```
@@ -269,11 +276,11 @@ brew install --cask unity-hub
 open https://unity3d.com/get-unity/download
 ```
 
-**Unity 2022.3 LTS not showing in Unity Hub:**
+**Unity 6.1 not showing in Unity Hub:**
 
-- Make sure you're looking at the "LTS" tab in Unity Hub
-- Unity 2022.3 LTS is the recommended version for stability
-- If you see newer versions, stick with 2022.3 for compatibility
+- Make sure you're looking at the "Official releases" tab in Unity Hub
+- Unity 6.1 is the latest stable version with enhanced performance
+- Look for version 6000.1.14f1 or newer
 
 **Unity setup script can't find Unity installation:**
 
@@ -282,7 +289,7 @@ open https://unity3d.com/get-unity/download
 ls /Applications/Unity/Hub/Editor/
 
 # Should show folders like: 2022.3.0f1, 2022.3.10f1, etc.
-# If empty, reinstall Unity 2022.3 LTS through Unity Hub
+# If empty, reinstall Unity 6.1 through Unity Hub
 ```
 
 **Unity project won't open:**

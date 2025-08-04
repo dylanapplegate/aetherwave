@@ -3,7 +3,7 @@
 # ============================================================================
 # Aetherwave Unity Setup Script
 # ============================================================================
-# Sets up Unity 2022.3 LTS project with URP for Aetherwave cyberfemme gallery
+# Sets up Unity 6.1 project with URP for Aetherwave cyberfemme gallery
 # Part of strategic migration from SDL2/C++ to Unity engine
 
 set -e
@@ -41,7 +41,7 @@ if [[ ! -f "$UNITY_HUB_PATH" ]]; then
     echo "   1. Open Unity Hub"
     echo "   2. Go to 'Installs' tab"
     echo "   3. Click 'Install Editor'"
-    echo "   4. Select 'Unity 2022.3 LTS'"
+    echo "   4. Select 'Unity 6.1' (6000.1.14f1 or newer)"
     echo "   5. Include: Mac Build Support + Visual Studio for Mac"
     echo "   6. Run this script again: ./scripts/unity-setup.sh"
     echo
@@ -50,16 +50,16 @@ if [[ ! -f "$UNITY_HUB_PATH" ]]; then
     exit 1
 fi
 
-# Find Unity 2022.3 installation
-UNITY_2022_PATH=$(find /Applications/Unity/Hub/Editor -name "2022.3.*" -type d 2>/dev/null | head -1)
-if [[ -z "$UNITY_2022_PATH" ]]; then
-    echo -e "${YELLOW}⚠️  Unity 2022.3 LTS not found${NC}"
+# Find Unity 6.1 installation
+UNITY_6_PATH=$(find /Applications/Unity/Hub/Editor -name "6000.1.*" -o -name "6.0.*" -type d 2>/dev/null | head -1)
+if [[ -z "$UNITY_6_PATH" ]]; then
+    echo -e "${YELLOW}⚠️  Unity 6.1 not found${NC}"
     echo
-    echo -e "${BLUE}📦 Please install Unity 2022.3 LTS through Unity Hub:${NC}"
+    echo -e "${BLUE}📦 Please install Unity 6.1 through Unity Hub:${NC}"
     echo "   1. Open Unity Hub: open -a 'Unity Hub'"
     echo "   2. Go to 'Installs' tab"
     echo "   3. Click 'Install Editor'"
-    echo "   4. Select 'Unity 2022.3 LTS'"
+    echo "   4. Select 'Unity 6.1' (6000.1.14f1 or newer)"
     echo "   5. Include these modules:"
     echo "      ✅ Mac Build Support (Il2CPP)"
     echo "      ✅ Visual Studio for Mac (optional)"
@@ -71,8 +71,8 @@ if [[ -z "$UNITY_2022_PATH" ]]; then
     exit 1
 fi
 
-UNITY_PATH="$UNITY_2022_PATH/Unity.app/Contents/MacOS/Unity"
-echo -e "${GREEN}✅ Found Unity 2022.3 LTS at: $UNITY_2022_PATH${NC}"
+UNITY_PATH="$UNITY_6_PATH/Unity.app/Contents/MacOS/Unity"
+echo -e "${GREEN}✅ Found Unity 6.1 at: $UNITY_6_PATH${NC}"
 
 # Create Unity project directory structure
 echo -e "${BLUE}📁 Creating Unity project structure...${NC}"
@@ -93,8 +93,8 @@ echo -e "${BLUE}⚙️  Creating Unity project configuration...${NC}"
 
 # ProjectSettings/ProjectVersion.txt
 cat > src/unity/Aetherwave/ProjectSettings/ProjectVersion.txt << 'EOF'
-m_EditorVersion: 2022.3.0f1
-m_EditorVersionWithRevision: 2022.3.0f1 (fb119bb0b476)
+m_EditorVersion: 6000.1.14f1
+m_EditorVersionWithRevision: 6000.1.14f1 (f5c8f7e6e8f8)
 EOF
 
 # ProjectSettings/ProjectSettings.asset (basic configuration)
@@ -189,31 +189,31 @@ namespace Aetherwave
         [Header("Display Configuration")]
         public RawImage mainImageDisplay;
         public Camera galleryCamera;
-        
+
         [Header("Theme System")]
         public ThemeManager themeManager;
-        
+
         [Header("Multi-Monitor")]
         public MultiMonitorController multiMonitorController;
-        
+
         [Header("Input Configuration")]
         public KeyCode nextImageKey = KeyCode.Space;
         public KeyCode previousImageKey = KeyCode.Backspace;
         public KeyCode refreshThemeKey = KeyCode.T;
-        
+
         private ImageDisplayManager imageDisplayManager;
-        
+
         void Start()
         {
             Debug.Log("🎨 Aetherwave Gallery Starting...");
             InitializeGallery();
         }
-        
+
         void Update()
         {
             HandleInput();
         }
-        
+
         private void InitializeGallery()
         {
             // Initialize display manager
@@ -222,39 +222,39 @@ namespace Aetherwave
             {
                 imageDisplayManager = gameObject.AddComponent<ImageDisplayManager>();
             }
-            
+
             // Initialize theme system
             if (themeManager != null)
             {
                 themeManager.InitializeThemeSystem();
             }
-            
+
             // Initialize multi-monitor support
             if (multiMonitorController != null)
             {
                 multiMonitorController.DetectDisplays();
             }
-            
+
             Debug.Log("✅ Aetherwave Gallery Initialized");
         }
-        
+
         private void HandleInput()
         {
             if (Input.GetKeyDown(nextImageKey))
             {
                 imageDisplayManager?.NextImage();
             }
-            
+
             if (Input.GetKeyDown(previousImageKey))
             {
                 imageDisplayManager?.PreviousImage();
             }
-            
+
             if (Input.GetKeyDown(refreshThemeKey))
             {
                 themeManager?.RefreshTheme();
             }
-            
+
             // ESC to quit (like SDL2 implementation)
             if (Input.GetKeyDown(KeyCode.Escape))
             {
@@ -287,58 +287,58 @@ namespace Aetherwave
         [Header("Image Display")]
         public RawImage imageDisplay;
         public float transitionDuration = 1.0f;
-        
+
         [Header("Image Sources")]
         public string imageDirectory = "Images";
-        
+
         private List<Texture2D> images = new List<Texture2D>();
         private int currentImageIndex = 0;
         private bool isTransitioning = false;
-        
+
         private PythonAPIClient apiClient;
-        
+
         void Start()
         {
             apiClient = FindObjectOfType<PythonAPIClient>();
             LoadImages();
-            
+
             if (images.Count > 0)
             {
                 ShowImage(0);
             }
         }
-        
+
         private void LoadImages()
         {
             string imagePath = Path.Combine(Application.streamingAssetsPath, imageDirectory);
-            
+
             if (!Directory.Exists(imagePath))
             {
                 Debug.LogWarning($"Image directory not found: {imagePath}");
                 return;
             }
-            
+
             string[] supportedExtensions = { "*.jpg", "*.jpeg", "*.png", "*.bmp" };
-            
+
             foreach (string extension in supportedExtensions)
             {
                 string[] files = Directory.GetFiles(imagePath, extension, SearchOption.AllDirectories);
-                
+
                 foreach (string file in files)
                 {
                     StartCoroutine(LoadImageCoroutine(file));
                 }
             }
-            
+
             Debug.Log($"📸 Loaded {images.Count} images for display");
         }
-        
+
         private IEnumerator LoadImageCoroutine(string filePath)
         {
             using (var www = new WWW("file://" + filePath))
             {
                 yield return www;
-                
+
                 if (string.IsNullOrEmpty(www.error))
                 {
                     Texture2D texture = www.texture;
@@ -351,34 +351,34 @@ namespace Aetherwave
                 }
             }
         }
-        
+
         public void NextImage()
         {
             if (isTransitioning || images.Count == 0) return;
-            
+
             int nextIndex = (currentImageIndex + 1) % images.Count;
             StartCoroutine(TransitionToImage(nextIndex));
         }
-        
+
         public void PreviousImage()
         {
             if (isTransitioning || images.Count == 0) return;
-            
+
             int prevIndex = (currentImageIndex - 1 + images.Count) % images.Count;
             StartCoroutine(TransitionToImage(prevIndex));
         }
-        
+
         private IEnumerator TransitionToImage(int targetIndex)
         {
             isTransitioning = true;
-            
+
             // Get theme for transition type
             ThemeProfile currentTheme = null;
             if (apiClient != null)
             {
                 currentTheme = apiClient.GetCurrentTheme();
             }
-            
+
             // Apply theme-based transition
             if (currentTheme != null && currentTheme.themeName == "cyberfemme")
             {
@@ -388,16 +388,16 @@ namespace Aetherwave
             {
                 yield return StartCoroutine(FadeTransition(targetIndex));
             }
-            
+
             currentImageIndex = targetIndex;
             isTransitioning = false;
         }
-        
+
         private IEnumerator FadeTransition(int targetIndex)
         {
             float elapsedTime = 0f;
             Color startColor = imageDisplay.color;
-            
+
             // Fade out
             while (elapsedTime < transitionDuration / 2)
             {
@@ -406,10 +406,10 @@ namespace Aetherwave
                 elapsedTime += Time.deltaTime;
                 yield return null;
             }
-            
+
             // Switch image
             ShowImage(targetIndex);
-            
+
             // Fade in
             elapsedTime = 0f;
             while (elapsedTime < transitionDuration / 2)
@@ -419,48 +419,48 @@ namespace Aetherwave
                 elapsedTime += Time.deltaTime;
                 yield return null;
             }
-            
+
             imageDisplay.color = startColor;
         }
-        
+
         private IEnumerator GlitchTransition(int targetIndex)
         {
             // Cyberfemme glitch effect - quick digital transition
             float glitchDuration = 0.3f;
             float elapsedTime = 0f;
-            
+
             Vector3 originalScale = imageDisplay.transform.localScale;
             Vector3 originalPosition = imageDisplay.transform.localPosition;
-            
+
             while (elapsedTime < glitchDuration)
             {
                 // Add glitch effects
                 float glitchIntensity = Random.Range(0.95f, 1.05f);
                 imageDisplay.transform.localScale = originalScale * glitchIntensity;
-                
+
                 float positionOffset = Random.Range(-2f, 2f);
                 imageDisplay.transform.localPosition = originalPosition + Vector3.right * positionOffset;
-                
+
                 // Color channel separation effect
                 Color glitchColor = new Color(
                     Random.Range(0.8f, 1.2f),
-                    Random.Range(0.8f, 1.2f), 
+                    Random.Range(0.8f, 1.2f),
                     Random.Range(0.8f, 1.2f),
                     1f
                 );
                 imageDisplay.color = glitchColor;
-                
+
                 elapsedTime += Time.deltaTime;
                 yield return null;
             }
-            
+
             // Switch image and restore
             ShowImage(targetIndex);
             imageDisplay.transform.localScale = originalScale;
             imageDisplay.transform.localPosition = originalPosition;
             imageDisplay.color = Color.white;
         }
-        
+
         private void ShowImage(int index)
         {
             if (index >= 0 && index < images.Count)
@@ -469,12 +469,12 @@ namespace Aetherwave
                 Debug.Log($"🖼️  Displaying: {images[index].name} ({index + 1}/{images.Count})");
             }
         }
-        
+
         public int GetImageCount()
         {
             return images.Count;
         }
-        
+
         public string GetCurrentImageName()
         {
             if (currentImageIndex >= 0 && currentImageIndex < images.Count)

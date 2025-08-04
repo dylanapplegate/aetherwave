@@ -3,7 +3,7 @@
 # ============================================================================
 # Aetherwave Unity Installation Verification Script
 # ============================================================================
-# Verifies Unity Hub and Unity 2022.3 LTS installation
+# Verifies Unity Hub and Unity 6.1 installation
 
 set -e
 
@@ -48,11 +48,11 @@ fi
 
 echo
 
-# Check Unity 2022.3 LTS
-echo -e "${BLUE}🔧 Checking Unity 2022.3 LTS...${NC}"
-UNITY_2022_PATH=$(find /Applications/Unity/Hub/Editor -name "2022.3.*" -type d 2>/dev/null | head -1)
+# Check Unity 6.1
+echo -e "${BLUE}🔧 Checking Unity 6.1...${NC}"
+UNITY_2022_PATH=$(find /Applications/Unity/Hub/Editor -name "6000.1.*" -o -name "6.0.*" -type d 2>/dev/null | head -1)
 if [[ -n "$UNITY_2022_PATH" ]]; then
-    echo -e "${GREEN}✅ Unity 2022.3 LTS installed${NC}"
+    echo -e "${GREEN}✅ Unity 6.1 installed${NC}"
     echo "   Location: $UNITY_2022_PATH"
     
     # Check Unity version
@@ -61,10 +61,10 @@ if [[ -n "$UNITY_2022_PATH" ]]; then
         echo "   Binary: Ready"
     fi
 else
-    echo -e "${RED}❌ Unity 2022.3 LTS not found${NC}"
+    echo -e "${RED}❌ Unity 6.1 not found${NC}"
     echo "   Install through Unity Hub:"
     echo "   1. Open Unity Hub: open -a 'Unity Hub'"
-    echo "   2. Installs tab -> Install Editor -> Unity 2022.3 LTS"
+    echo "   2. Installs tab -> Install Editor -> Unity 6.1 (6000.1.14f1 or newer)"
 fi
 
 echo
@@ -130,6 +130,6 @@ else
         echo "   xcode-select --install"
     fi
     if [[ -z "$UNITY_2022_PATH" ]]; then
-        echo "   open -a 'Unity Hub'  # Then install Unity 2022.3 LTS"
+        echo "   open -a 'Unity Hub'  # Then install Unity 6.1 (6000.1.14f1 or newer)"
     fi
 fi
