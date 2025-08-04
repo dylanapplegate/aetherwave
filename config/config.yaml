@@ -1,0 +1,56 @@
+# Aetherwave Configuration
+# Main configuration file for the Aetherwave media display engine
+
+app:
+  name: "Aetherwave"
+  version: "1.0.0"
+  description: "Media display engine for high-resolution MidJourney artwork"
+
+display:
+  window:
+    width: 1920
+    height: 1080
+    fullscreen: true
+    vsync: true
+    target_fps: 60
+  
+  effects:
+    fade_duration: 2.0
+    transition_type: "fade"
+    background_color: "#000000"
+
+classification:
+  analysis:
+    include_colors: true
+    include_mood: true
+    include_complexity: true
+    confidence_threshold: 0.8
+  
+  colors:
+    max_dominant_colors: 5
+    color_tolerance: 10
+
+assets:
+  directories:
+    images: "assets/images"
+    metadata: "config/metadata"
+    cache: "config/cache"
+  
+  supported_formats:
+    - ".jpg"
+    - ".jpeg"
+    - ".png"
+    - ".tiff"
+    - ".webp"
+
+api:
+  service:
+    host: "127.0.0.1"
+    port: 8000
+    timeout: 30
+
+logging:
+  level: "INFO"
+  output:
+    console: true
+    file: false

@@ -1,0 +1,55 @@
+{
+  "filename": "example_artwork.jpg",
+  "file_path": "/path/to/assets/images/example_artwork.jpg",
+  "file_size": 2048576,
+  "dimensions": {
+    "width": 1920,
+    "height": 1080,
+    "aspect_ratio": 1.778
+  },
+  "colors": {
+    "dominant_colors": [
+      {
+        "hex": "#1a1a2e",
+        "rgb": [26, 26, 46],
+        "percentage": 0.45
+      },
+      {
+        "hex": "#16213e", 
+        "rgb": [22, 33, 62],
+        "percentage": 0.32
+      },
+      {
+        "hex": "#0f3460",
+        "rgb": [15, 52, 96], 
+        "percentage": 0.23
+      }
+    ],
+    "color_palette": "cool_blues",
+    "brightness": 0.2,
+    "contrast": 0.8
+  },
+  "classification": {
+    "mood": "cinematic",
+    "style": "digital_art",
+    "complexity": 0.7,
+    "focal_points": [
+      {
+        "x": 960,
+        "y": 540,
+        "strength": 0.9
+      }
+    ]
+  },
+  "metadata": {
+    "processing_timestamp": "2025-08-03T12:00:00Z",
+    "classifier_version": "1.0.0",
+    "confidence_score": 0.95,
+    "processing_time_ms": 150
+  },
+  "display_hints": {
+    "recommended_duration": 8.0,
+    "transition_style": "fade",
+    "ambient_color": "#0a0a15"
+  }
+}
