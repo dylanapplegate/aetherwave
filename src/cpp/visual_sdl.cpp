@@ -1,5 +1,6 @@
 // Aetherwave Real Visual Display Engine using SDL2
 // This creates an actual graphical window with image rendering
+// Now includes theme-aware transitions and Python API integration
 
 #include <iostream>
 #include <vector>
@@ -9,9 +10,11 @@
 #include <chrono>
 #include <algorithm>
 #include <cmath>
+#include <random>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include "ThemeManagerSDL.h"
 
 namespace Aetherwave {
 
@@ -20,6 +23,10 @@ private:
     // SDL Components
     SDL_Window* window = nullptr;
     SDL_Renderer* renderer = nullptr;
+
+    // Theme Management
+    std::unique_ptr<Aetherwave::ThemeManagerSDL> themeManager;
+    bool showThemeDebug = false;
 
     // Application State
     std::vector<std::string> imagePaths;
@@ -32,14 +39,36 @@ private:
     int windowWidth = 1920;
     int windowHeight = 1080;
 
-    // Transition State
+    // Enhanced Transition State
+    enum class TransitionType {
+        FADE,
+        GLITCH, 
+        SOFT_FADE,
+        PIXEL,
+        DISSOLVE
+    };
+    
+    TransitionType currentTransitionType = TransitionType::FADE;
     float fadeAlpha = 1.0f;
     bool isTransitioning = false;
     std::chrono::steady_clock::time_point transitionStart;
+    
+    // Glitch effect state
+    std::mt19937 glitchRng;
+    float glitchIntensity = 0.0f;
+    
+    // Random number generator
+    std::random_device rd;
 
 public:
     bool initialize() {
         std::cout << "🌊 Initializing Aetherwave Visual Display Engine..." << std::endl;
+
+        // Initialize random number generator
+        glitchRng.seed(rd());
+        
+        // Initialize theme manager
+        themeManager = std::make_unique<Aetherwave::ThemeManagerSDL>();
 
         // Initialize SDL
         if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -179,8 +208,9 @@ public:
     }
 
     void render() {
-        // Clear screen with black background
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        // Clear screen with theme background color
+        SDL_Color bgColor = themeManager->getBackgroundColor();
+        SDL_SetRenderDrawColor(renderer, bgColor.r, bgColor.g, bgColor.b, 255);
         SDL_RenderClear(renderer);
 
         // Render current image if available
@@ -255,7 +285,60 @@ public:
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderDrawRect(renderer, &uiRect);
 
-        // We'll add text rendering with SDL_ttf later for image names and controls
+        // Theme debug overlay
+        if (showThemeDebug) {
+            renderThemeDebug();
+        }
+    }
+
+    void renderThemeDebug() {
+        // Theme debug panel in top-right
+        int panelWidth = 300;
+        int panelHeight = 200;
+        SDL_Rect debugRect = { 
+            windowWidth - panelWidth - 10, 
+            10, 
+            panelWidth, 
+            panelHeight 
+        };
+
+        // Semi-transparent background
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 180);
+        SDL_RenderFillRect(renderer, &debugRect);
+
+        // Border with theme accent color
+        SDL_Color accentColor = themeManager->getAccentColor();
+        SDL_SetRenderDrawColor(renderer, accentColor.r, accentColor.g, accentColor.b, 255);
+        SDL_RenderDrawRect(renderer, &debugRect);
+
+        // Color swatches for primary colors
+        auto theme = themeManager->getCurrentTheme();
+        int swatchSize = 30;
+        int x = debugRect.x + 10;
+        int y = debugRect.y + 40;
+
+        // Primary color swatch
+        SDL_Color primaryColor = themeManager->getPrimaryColor();
+        SDL_Rect primarySwatch = { x, y, swatchSize, swatchSize };
+        SDL_SetRenderDrawColor(renderer, primaryColor.r, primaryColor.g, primaryColor.b, 255);
+        SDL_RenderFillRect(renderer, &primarySwatch);
+
+        // Accent color swatch
+        SDL_Rect accentSwatch = { x + swatchSize + 5, y, swatchSize, swatchSize };
+        SDL_SetRenderDrawColor(renderer, accentColor.r, accentColor.g, accentColor.b, 255);
+        SDL_RenderFillRect(renderer, &accentSwatch);
+
+        // Background color swatch
+        SDL_Color bgColor = themeManager->getBackgroundColor();
+        SDL_Rect bgSwatch = { x + (swatchSize + 5) * 2, y, swatchSize, swatchSize };
+        SDL_SetRenderDrawColor(renderer, bgColor.r, bgColor.g, bgColor.b, 255);
+        SDL_RenderFillRect(renderer, &bgSwatch);
+        
+        // White borders for swatches
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderDrawRect(renderer, &primarySwatch);
+        SDL_RenderDrawRect(renderer, &accentSwatch);
+        SDL_RenderDrawRect(renderer, &bgSwatch);
     }
 
     void handleInput() {
@@ -295,6 +378,14 @@ public:
                         case SDLK_i:
                             showInfo();
                             break;
+                            
+                        case SDLK_t:
+                            toggleThemeDebug();
+                            break;
+                            
+                        case SDLK_u:
+                            refreshTheme();
+                            break;
                     }
                     break;
 
@@ -333,6 +424,21 @@ public:
         isTransitioning = true;
         transitionStart = std::chrono::steady_clock::now();
         fadeAlpha = 0.0f;
+        
+        // Set transition type based on current theme
+        std::string themeTransition = themeManager->getTransitionType();
+        if (themeTransition == "glitch") {
+            currentTransitionType = TransitionType::GLITCH;
+            glitchIntensity = themeManager->getEffectIntensity();
+        } else if (themeTransition == "soft_fade") {
+            currentTransitionType = TransitionType::SOFT_FADE;
+        } else if (themeTransition == "pixel") {
+            currentTransitionType = TransitionType::PIXEL;
+        } else if (themeTransition == "dissolve") {
+            currentTransitionType = TransitionType::DISSOLVE;
+        } else {
+            currentTransitionType = TransitionType::FADE;
+        }
     }
 
     void updateTransition() {
@@ -341,16 +447,60 @@ public:
         auto now = std::chrono::steady_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - transitionStart).count();
 
-        // 500ms fade transition
-        const float transitionDuration = 500.0f;
+        // Use theme-specific transition duration
+        float transitionDuration = themeManager->getTransitionDuration() * 1000.0f;
         float progress = elapsed / transitionDuration;
 
         if (progress >= 1.0f) {
             fadeAlpha = 1.0f;
             isTransitioning = false;
+            glitchIntensity = 0.0f;
         } else {
-            fadeAlpha = progress;
+            // Apply different easing based on transition type
+            switch (currentTransitionType) {
+                case TransitionType::SOFT_FADE:
+                    // Ease-in-out for organic feel
+                    fadeAlpha = 0.5f * (1 + sin(M_PI * progress - M_PI/2));
+                    break;
+                case TransitionType::GLITCH:
+                    // Quick snap with glitch effects
+                    fadeAlpha = progress > 0.7f ? 1.0f : progress * 1.4f;
+                    break;
+                case TransitionType::PIXEL:
+                    // Sharp digital transition
+                    fadeAlpha = progress > 0.5f ? 1.0f : 0.0f;
+                    break;
+                default:
+                    fadeAlpha = progress;
+                    break;
+            }
         }
+    }
+    
+    void applyGlitchEffect(SDL_Texture* texture, int x, int y, int w, int h) {
+        if (currentTransitionType != TransitionType::GLITCH || glitchIntensity <= 0.0f) {
+            return;
+        }
+        
+        // Simple glitch effect with random offset strips
+        std::uniform_int_distribution<int> offsetDist(-10, 10);
+        std::uniform_int_distribution<int> heightDist(5, 20);
+        
+        for (int i = 0; i < 5; ++i) {
+            int stripY = glitchRng() % h;
+            int stripHeight = heightDist(glitchRng);
+            int offsetX = offsetDist(glitchRng) * glitchIntensity;
+            
+            SDL_Rect srcRect = {0, stripY, w, stripHeight};
+            SDL_Rect dstRect = {x + offsetX, y + stripY, w, stripHeight};
+            
+            // Render with color modulation for chromatic aberration
+            SDL_SetTextureColorMod(texture, 255, (Uint8)(255 * (1 - glitchIntensity * 0.3)), 255);
+            SDL_RenderCopy(renderer, texture, &srcRect, &dstRect);
+        }
+        
+        // Reset color modulation
+        SDL_SetTextureColorMod(texture, 255, 255, 255);
     }
 
     void toggleFullscreen() {
@@ -362,6 +512,26 @@ public:
         } else {
             SDL_SetWindowFullscreen(window, 0);
             std::cout << "🪟 Windowed mode enabled" << std::endl;
+        }
+    }
+
+    void refreshTheme() {
+        std::cout << "🎨 Refreshing theme from content analysis..." << std::endl;
+        if (themeManager->loadThemeFromAPI(imagePaths)) {
+            std::cout << "✅ Theme updated successfully" << std::endl;
+            themeManager->printThemeInfo();
+        } else {
+            std::cout << "⚠️ Using fallback theme" << std::endl;
+        }
+    }
+
+    void toggleThemeDebug() {
+        showThemeDebug = !showThemeDebug;
+        if (showThemeDebug) {
+            std::cout << "🎨 Theme debug overlay enabled" << std::endl;
+            themeManager->printThemeInfo();
+        } else {
+            std::cout << "🎨 Theme debug overlay disabled" << std::endl;
         }
     }
 
@@ -395,7 +565,13 @@ public:
         std::cout << "\n🎮 Controls:" << std::endl;
         std::cout << "   [SPACE/→/N] Next image    [←/P] Previous image" << std::endl;
         std::cout << "   [F] Toggle fullscreen    [R] Reload images" << std::endl;
-        std::cout << "   [I] Show info            [ESC/Q] Quit" << std::endl;
+        std::cout << "   [I] Show info            [T] Theme debug" << std::endl;
+        std::cout << "   [U] Update theme         [ESC/Q] Quit" << std::endl;
+        
+        // Load initial theme from content
+        std::cout << "\n🎨 Analyzing content for theme..." << std::endl;
+        refreshTheme();
+        
         std::cout << "\n🚀 Visual display engine starting..." << std::endl;
 
         // Main render loop

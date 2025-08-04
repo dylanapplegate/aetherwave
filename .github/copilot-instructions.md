@@ -158,6 +158,7 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
 - Use Sequential Thinking to break down complex tasks into manageable steps.
 - Use Memory to keep track of business decisions, technical information, and project context.
 - Use Deepwiki to access detailed documentation and examples for specific libraries or frameworks. Use as backup to Context7.
+- Please use filesystem MCP to access projedct files and directories.
 
 ### **🧠 Coding Behavior Rules**
 

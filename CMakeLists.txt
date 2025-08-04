@@ -16,9 +16,13 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(SDL2 REQUIRED sdl2)
 pkg_check_modules(SDL2_IMAGE REQUIRED SDL2_image)
 
+# Find additional dependencies for theme management
+find_package(CURL REQUIRED)
+
 # Source files (using real SDL2 visual app)
 set(SOURCES
     "src/cpp/visual_sdl.cpp"
+    "src/cpp/ThemeManagerSDL.cpp"
     "src/shared/Config.cpp"
 )
 
@@ -61,6 +65,7 @@ target_link_directories(${PROJECT_NAME} PRIVATE
 target_link_libraries(${PROJECT_NAME} PRIVATE
     ${SDL2_LIBRARIES}
     ${SDL2_IMAGE_LIBRARIES}
+    ${CURL_LIBRARIES}
 )
 
 # Add compile flags
