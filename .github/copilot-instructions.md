@@ -152,6 +152,54 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
      - Connect them to the current entities using relations (e.g., `decided_on`, `is_related_to`, `discovered_does_not_work`).
      - Store facts about them as observations, including the `timestamp` and, if possible, the `decision_maker`.
 
+### **🧪 Interactive Debugging Protocol**
+
+**For complex visual and multi-monitor issues, use this collaborative debugging approach:**
+
+1. **Setup Fresh Debug Logging:**
+   - Debug logger automatically clears log on each app startup (`std::ios::trunc`)
+   - Comprehensive logging includes: image switching, layout calculations, window events, rendering details
+   - Log file location: `build/bin/aetherwave_debug.log`
+
+2. **Debug Session Protocol:**
+   ```
+   AGENT: "Please start the application and perform these tests in order:"
+   USER: [Performs testing sequence]
+   USER: "Check the debug log"
+   AGENT: [Analyzes debug log for root cause]
+   ```
+
+3. **Standard Test Sequence:**
+   - Start application and wait for initial load
+   - Press SPACE/→ 3-4 times (test next image functionality)
+   - Press BACKSPACE/← 2-3 times (test previous image functionality)
+   - Move window to laptop monitor (test multi-monitor positioning)
+   - Try next/previous on laptop monitor (test consistency)
+   - Resize window (test layout recalculation)
+   - Move back to main monitor (test return positioning)
+
+4. **What to Log and Track:**
+   - Image switching operations with index changes (`DEBUG_LOG("IMAGE_SWITCH", ...)`)
+   - Layout calculations with window/texture dimensions (`DEBUG_LOG("LAYOUT", ...)`)
+   - Rendering details with aspect ratios (`DEBUG_LOG("RENDER", ...)`)
+   - Window events with position/size changes (`DEBUG_WINDOW(...)`)
+   - Display detection and DPI scaling (`DEBUG_DISPLAY(...)`)
+
+5. **User Reporting Guidelines:**
+   - Note specific visual issues: proportions wrong, sluggish controls, layout problems, quality issues
+   - Specify which actions trigger problems
+   - Always request debug log analysis before declaring issues fixed
+   - Use phrase "Check the debug log" to trigger analysis
+
+6. **Debug Log Analysis Focus:**
+   - Look for inconsistent index updates in image switching
+   - Check for excessive or missing layout calculations
+   - Verify correct window/display detection
+   - Identify aspect ratio calculation problems
+   - Track texture dimension vs. destination rectangle mismatches
+
+**CRITICAL**: Never declare issues fixed without collaborative debug log analysis and user confirmation.
+
 ### **📚 Documentation Maintenance Protocol**
 
 **Maintain living documentation that evolves with the project:**

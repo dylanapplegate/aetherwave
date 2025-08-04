@@ -268,7 +268,10 @@ public:
     }
 
     void renderCurrentImage() {
-        if (currentIndex >= imageTextures.size() || !imageTextures[currentIndex]) return;
+        if (currentIndex >= imageTextures.size() || !imageTextures[currentIndex]) {
+            DEBUG_LOG("RENDER", "renderCurrentImage() - no valid texture at index " + std::to_string(currentIndex));
+            return;
+        }
 
         SDL_Texture* currentTexture = imageTextures[currentIndex];
 
@@ -276,13 +279,27 @@ public:
         SDL_Rect destRect = layoutEngine->getImageRect(0);
         if (destRect.w == 0 || destRect.h == 0) {
             // Fallback if layout engine fails
+            DEBUG_LOG("RENDER", "Layout engine returned invalid rect - using fallback");
             std::cout << "⚠️ Layout engine returned invalid rect, using fallback calculation" << std::endl;
             destRect = calculateImageRectFallback(currentTexture);
         }
 
-        // Debug: Print current layout calculations
+        // Get texture dimensions for comprehensive logging
         int textureW, textureH;
         SDL_QueryTexture(currentTexture, nullptr, nullptr, &textureW, &textureH);
+        
+        // Calculate proportions for debugging
+        float textureAspect = (float)textureW / textureH;
+        float destAspect = (float)destRect.w / destRect.h;
+        float windowAspect = (float)windowWidth / windowHeight;
+        
+        // Log comprehensive render info
+        DEBUG_LOG("RENDER", "INDEX=" + std::to_string(currentIndex) + 
+                  " TEXTURE=" + std::to_string(textureW) + "x" + std::to_string(textureH) + 
+                  " DEST=" + std::to_string(destRect.w) + "x" + std::to_string(destRect.h) + 
+                  " POS=(" + std::to_string(destRect.x) + "," + std::to_string(destRect.y) + ")" +
+                  " ASPECTS: tex=" + std::to_string(textureAspect) + " dest=" + std::to_string(destAspect) + " win=" + std::to_string(windowAspect));
+
         std::cout << "🖼️ RENDER DEBUG: texture=" << textureW << "x" << textureH
                   << " window=" << windowWidth << "x" << windowHeight
                   << " destRect=" << destRect.w << "x" << destRect.h
@@ -747,10 +764,23 @@ public:
     }
 
     void nextImage() {
-        if (imagePaths.empty()) return;
+        if (imagePaths.empty()) {
+            DEBUG_LOG("IMAGE_SWITCH", "nextImage() called but no images available");
+            return;
+        }
 
         // Don't start new transition if already transitioning
-        if (isTransitioning) return;
+        if (isTransitioning) {
+            DEBUG_LOG("IMAGE_SWITCH", "nextImage() blocked - already transitioning");
+            return;
+        }
+
+        // Update index BEFORE starting transition and calculating layout
+        size_t previousIndex = currentIndex;
+        currentIndex = (currentIndex + 1) % imagePaths.size();
+        
+        DEBUG_LOG("IMAGE_SWITCH", "nextImage() from index " + std::to_string(previousIndex) + 
+                  " to " + std::to_string(currentIndex));
 
         startTransition();
 
@@ -758,7 +788,7 @@ public:
         if (layoutEngine && currentIndex < imageTextures.size() && imageTextures[currentIndex]) {
             std::vector<SDL_Texture*> textures = { imageTextures[currentIndex] };
             layoutEngine->calculateLayout(textures);
-            std::cout << "🎨 Layout calculated for new image" << std::endl;
+            DEBUG_LOG("LAYOUT", "Layout calculated for new image at index " + std::to_string(currentIndex));
         }
 
         std::string filename = std::filesystem::path(imagePaths[currentIndex]).filename().string();
@@ -766,20 +796,31 @@ public:
     }
 
     void previousImage() {
-        if (imagePaths.empty()) return;
+        if (imagePaths.empty()) {
+            DEBUG_LOG("IMAGE_SWITCH", "previousImage() called but no images available");
+            return;
+        }
 
         // Don't start new transition if already transitioning
-        if (isTransitioning) return;
+        if (isTransitioning) {
+            DEBUG_LOG("IMAGE_SWITCH", "previousImage() blocked - already transitioning");
+            return;
+        }
 
         // Move to previous index first, then start transition
+        size_t previousIndex = currentIndex;
         currentIndex = (currentIndex == 0) ? imagePaths.size() - 1 : currentIndex - 1;
+        
+        DEBUG_LOG("IMAGE_SWITCH", "previousImage() from index " + std::to_string(previousIndex) + 
+                  " to " + std::to_string(currentIndex));
+
         startTransition();
 
         // Calculate layout for the new image once when switching
         if (layoutEngine && currentIndex < imageTextures.size() && imageTextures[currentIndex]) {
             std::vector<SDL_Texture*> textures = { imageTextures[currentIndex] };
             layoutEngine->calculateLayout(textures);
-            std::cout << "🎨 Layout calculated for new image" << std::endl;
+            DEBUG_LOG("LAYOUT", "Layout calculated for new image at index " + std::to_string(currentIndex));
         }
 
         std::string filename = std::filesystem::path(imagePaths[currentIndex]).filename().string();

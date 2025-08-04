@@ -8,11 +8,13 @@ void DebugLogger::setLogFile(const std::string& filename) {
         logFile.close();
     }
 
-    logFile.open(filename, std::ios::out | std::ios::app);
+    // Clear the log file on startup for fresh debugging session
+    logFile.open(filename, std::ios::out | std::ios::trunc);
     if (!logFile.is_open()) {
         std::cerr << "⚠️ Failed to open debug log file: " << filename << std::endl;
     } else {
-        writeLog("SYSTEM", "Debug logging started");
+        writeLog("SYSTEM", "=== NEW DEBUG SESSION STARTED ===");
+        writeLog("SYSTEM", "Aetherwave Visual Display Engine starting up");
     }
 }
 
