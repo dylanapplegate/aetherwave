@@ -14,6 +14,7 @@ import logging
 from pathlib import Path
 import aiofiles
 from advanced_classifier import AdvancedImageClassifier
+from content_theme_analyzer import CollectionAnalyzer, ThemeProfile, ContentThemeCache
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -28,8 +29,10 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# Initialize the advanced classifier
+# Initialize the advanced classifier and theme analyzer
 classifier = AdvancedImageClassifier()
+collection_analyzer = CollectionAnalyzer()
+theme_cache = ContentThemeCache()
 
 class ImageMetadata(BaseModel):
     """
@@ -109,6 +112,22 @@ class BatchClassificationResponse(BaseModel):
     results: List[Dict[str, Any]]
     errors: List[str]
 
+class CollectionThemeRequest(BaseModel):
+    """
+    Request model for collection theme analysis.
+    """
+    metadata_directory: str = METADATA_DIR
+    force_refresh: bool = False
+
+class CollectionThemeResponse(BaseModel):
+    """
+    Response model for collection theme analysis.
+    """
+    ok: bool
+    theme: Optional[Dict[str, Any]] = None
+    cache_hit: bool = False
+    error: Optional[str] = None
+
 @app.get("/")
 async def root() -> Dict[str, Any]:
     """
@@ -126,7 +145,10 @@ async def root() -> Dict[str, Any]:
             "complexity_analysis",
             "mood_detection",
             "batch_processing",
-            "cinematic_scoring"
+            "cinematic_scoring",
+            "content_driven_themes",
+            "adaptive_aesthetics",
+            "collection_analysis"
         ]
     }
 
@@ -447,6 +469,113 @@ async def get_analytics_summary() -> Dict[str, Any]:
             status_code=500,
             detail=f"Error generating analytics: {str(e)}"
         )
+
+@app.post("/analyze/collection-theme", response_model=CollectionThemeResponse)
+async def analyze_collection_theme(request: CollectionThemeRequest) -> CollectionThemeResponse:
+    """
+    Analyze the aesthetic theme of an image collection based on content patterns.
+
+    This endpoint analyzes all image metadata in a directory to detect dominant
+    aesthetic themes (cyberfemme, organic, tech, vintage) and generate appropriate
+    UI themes and color palettes.
+
+    Args:
+        request: Collection theme analysis request with directory and options.
+
+    Returns:
+        CollectionThemeResponse with detected theme and aesthetic specifications.
+    """
+    try:
+        import hashlib
+        import os
+
+        logger.info(f"Collection theme analysis requested for: {request.metadata_directory}")
+
+        # Generate cache key based on directory contents
+        metadata_dir = Path(request.metadata_directory)
+        if not metadata_dir.exists():
+            raise FileNotFoundError(f"Metadata directory not found: {request.metadata_directory}")
+
+        # Create hash of directory contents for caching
+        file_hashes = []
+        for json_file in sorted(metadata_dir.glob("*.json")):
+            try:
+                stat = json_file.stat()
+                file_hashes.append(f"{json_file.name}:{stat.st_mtime}:{stat.st_size}")
+            except OSError:
+                continue
+
+        collection_hash = hashlib.md5("|".join(file_hashes).encode()).hexdigest()
+
+        # Check cache first (unless force refresh)
+        cached_theme = None
+        if not request.force_refresh:
+            cached_theme = theme_cache.get_theme(collection_hash)
+
+        if cached_theme:
+            logger.info(f"Using cached theme: {cached_theme.theme_name}")
+            return CollectionThemeResponse(
+                ok=True,
+                theme=cached_theme.to_dict(),
+                cache_hit=True
+            )
+
+        # Perform fresh analysis
+        theme_profile = collection_analyzer.analyze_collection_theme(request.metadata_directory)
+
+        # Cache the result
+        theme_cache.set_theme(collection_hash, theme_profile)
+
+        logger.info(f"Generated fresh theme: {theme_profile.theme_name} (confidence: {theme_profile.confidence:.2f})")
+
+        return CollectionThemeResponse(
+            ok=True,
+            theme=theme_profile.to_dict(),
+            cache_hit=False
+        )
+
+    except FileNotFoundError as e:
+        logger.error(f"Directory not found: {str(e)}")
+        return CollectionThemeResponse(
+            ok=False,
+            error=f"Directory not found: {str(e)}"
+        )
+    except Exception as e:
+        logger.error(f"Collection theme analysis error: {str(e)}")
+        return CollectionThemeResponse(
+            ok=False,
+            error=str(e)
+        )
+
+@app.get("/theme/current")
+async def get_current_theme() -> Dict[str, Any]:
+    """
+    Get the currently active theme for the collection.
+
+    Returns:
+        Current theme specifications or fallback theme.
+    """
+    try:
+        # Analyze current metadata directory
+        theme_profile = collection_analyzer.analyze_collection_theme(METADATA_DIR)
+
+        return {
+            "active_theme": theme_profile.to_dict(),
+            "last_analyzed": "real-time",
+            "source": "content-driven"
+        }
+
+    except Exception as e:
+        logger.error(f"Current theme retrieval error: {str(e)}")
+
+        # Return fallback theme
+        fallback = collection_analyzer._get_fallback_theme()
+        return {
+            "active_theme": fallback.to_dict(),
+            "last_analyzed": "fallback",
+            "source": "default",
+            "error": str(e)
+        }
 
 async def save_classification_metadata(filename: str, classification_data: Dict[str, Any]) -> None:
     """

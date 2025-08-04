@@ -24,7 +24,7 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
 - Do NOT alter `assets/` (read-only unless instructed)
 - Do NOT use black-box AI models for classification (use colorthief, OpenCV, etc.)
 
-### **🧠 Memory Management**
+### **🧠 Memory & Documentation Management**
 
 **Follow these steps for each interaction:**
 
@@ -45,6 +45,47 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
      - Create entities for recurring organizations, people, and significant project-related items.
      - Connect them to the current entities using relations (e.g., `decided_on`, `is_related_to`, `discovered_does_not_work`).
      - Store facts about them as observations, including the `timestamp` and, if possible, the `decision_maker`.
+
+### **📚 Documentation Maintenance Protocol**
+
+**Maintain living documentation that evolves with the project:**
+
+1. **Business Decision Documentation:**
+
+   - **ALWAYS** update `/docs/FEATURE_ROADMAP.md` when business decisions are made
+   - Record the decision, reasoning, alternatives considered, and implementation timeline
+   - Include confidence levels and success metrics for major architectural choices
+   - Document trade-offs and potential future reconsiderations
+
+2. **Technical Architecture Visibility:**
+
+   - **ALWAYS** update this `copilot-instructions.md` file when:
+     - New architectural patterns emerge
+     - Key dependencies are added or changed
+     - Development workflow changes
+     - Testing strategies evolve
+   - Replace placeholder sections as the codebase develops
+   - Maintain current examples of key patterns and conventions
+
+3. **Application Functionality Documentation:**
+
+   - **ALWAYS** maintain up-to-date `README.md` files in each major directory (`src/`, `config/`, `tests/`)
+   - Document how components work together, not just what they do
+   - Include usage examples and integration patterns
+   - Update API documentation when endpoints change
+
+4. **Decision Audit Trail:**
+
+   - **DUAL STORAGE**: Store all business decisions in both MCP memory AND documentation files
+   - MCP memory for conversational context and relationship tracking
+   - Documentation files for team onboarding and historical reference
+   - Cross-reference between memory entities and documentation sections
+
+5. **Documentation Quality Standards:**
+   - **Accuracy**: Documentation must reflect current implementation, not future plans
+   - **Completeness**: Every major component should have purpose, usage, and integration docs
+   - **Accessibility**: Technical decisions should be understandable to future contributors
+   - **Maintenance**: Documentation updates are part of every significant code change
 
 ### MCP Server Tools
 
@@ -80,35 +121,123 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
 
 ## Project Overview
 
-Aetherwave is an early-stage project. These instructions will be updated as the codebase develops.
+Aetherwave is a content-driven media display engine for showcasing high-resolution MidJourney artwork across multiple monitors. The project evolved from hardcoded cyberfemme aesthetics to intelligent content analysis that automatically generates appropriate visual themes.
+
+**Key Business Decision (August 3, 2025)**: Content-driven aesthetic adaptation enables universal reusability while preserving artistic vision. Cyberfemme artwork naturally drives cyberfemme interfaces, but the same system adapts to any art collection.
 
 ## Architecture & Structure
 
-_To be documented as the project structure emerges_
+### **Core Components:**
+
+- **Python Classification Engine** (`src/python/`): ColorThief + OpenCV analysis, FastAPI endpoints
+- **C++ Display Engine** (`src/cpp/`): openFrameworks rendering with 60 FPS multi-monitor support
+- **Theme Management** (`src/shared/`): Content-to-theme mapping with statistical confidence
+- **Configuration System** (`config/`): YAML-based settings with theme caching
+
+### **Content-Driven Architecture:**
+
+```
+Image Collection → Classification → Theme Detection → Visual Rendering
+     ↓               ↓                ↓               ↓
+  Metadata      Color/Mood       Aesthetic        Dynamic UI
+  Analysis      Extraction       Selection        Generation
+```
 
 ## Development Workflow
 
-_To be documented once build tools and processes are established_
+### **Standard Development Process:**
+
+1. **Feature Planning**: Update `/docs/FEATURE_ROADMAP.md` with implementation timeline
+2. **Implementation**: Follow C++17/Python typing standards with comprehensive testing
+3. **Documentation**: Update architecture docs and README files during development
+4. **Memory Recording**: Store business decisions in MCP memory for conversational context
+5. **PR Creation**: Tag with scope (`feature/`, `bugfix/`) and document config changes
+
+### **Build Commands:**
+
+- **Python Setup**: `python -m venv venv && source venv/bin/activate && pip install -r requirements.txt`
+- **C++ Build**: `make build` (openFrameworks project)
+- **Testing**: `pytest tests/` (90%+ coverage requirement)
+- **Classification**: `python src/python/main.py` (FastAPI server on port 8000)
 
 ## Key Conventions
 
-_To be documented as coding patterns emerge_
+### **Naming & Structure:**
+
+- All C++ logic wrapped in `namespace Aetherwave`
+- Python functions fully typed with comprehensive docstrings
+- Configuration via YAML files, no hardcoded values
+- 80-character line width where possible
+
+### **Theme System Convention:**
+
+- **Content Analysis** → **Statistical Theme Detection** → **Dynamic Visual Application**
+- Themes determined by color dominance, mood analysis, and confidence scoring
+- Universal adaptability without manual configuration required
 
 ## Critical Files & Directories
 
-_To be documented as the project structure develops_
+### **Core Implementation:**
+
+- `src/python/content_theme_analyzer.py`: Collection analysis and theme detection algorithms
+- `src/python/main.py`: FastAPI server with `/analyze/collection-theme` endpoint
+- `src/cpp/ThemeManager.h`: C++ theme management architecture
+- `config/themes.yaml`: Theme configuration and caching system
+
+### **Documentation & Planning:**
+
+- `/docs/FEATURE_ROADMAP.md`: Business decisions, implementation status, future planning
+- `.github/copilot-instructions.md`: Development guidelines and architectural decisions
+- `README.md`: Current setup instructions and project overview
 
 ## Dependencies & Integration Points
 
-_To be documented as external dependencies are added_
+### **Python Dependencies:**
+
+- **FastAPI 2.0**: API server with theme analysis endpoints
+- **ColorThief**: Dominant color extraction from images
+- **OpenCV**: Advanced computer vision and image analysis
+- **Pytest**: Testing framework with 90%+ coverage requirement
+
+### **C++ Dependencies:**
+
+- **openFrameworks**: Graphics rendering and multi-monitor support
+- **Modern C++17**: Performance-optimized display engine
+
+### **External Integrations:**
+
+- **MidJourney Assets**: Read-only access to high-resolution artwork
+- **Multi-Monitor Setup**: macOS display coordination
+- **Theme Caching**: File-based caching for collection analysis
 
 ## Testing Strategy
 
-_To be documented once testing framework is chosen_
+### **Comprehensive Test Coverage:**
+
+- **Unit Tests**: Individual component functionality (90%+ coverage)
+- **Integration Tests**: End-to-end content→theme→visual pipeline validation
+- **Performance Tests**: 60 FPS rendering with large collections
+- **Theme Accuracy Tests**: Statistical validation of content-to-theme mapping
+
+### **Quality Assurance:**
+
+- **Linting**: Python typing validation, C++ modern standards compliance
+- **Business Logic Testing**: Theme detection accuracy validation
+- **Visual Regression**: Screenshot-based UI consistency testing
 
 ## Deployment & Environment
 
-_To be documented once deployment strategy is established_
+### **Development Environment:**
+
+- **macOS**: Primary development and testing platform
+- **Multi-Monitor Setup**: Testing environment for gallery installations
+- **Local Asset Management**: Placeholder assets for development testing
+
+### **Production Considerations:**
+
+- **4K+ Display Support**: Optimized for high-resolution multi-monitor setups
+- **Performance Requirements**: 60 FPS sustained rendering with visual effects
+- **Collection Scalability**: Efficient analysis of large image collections
 
 ---
 
