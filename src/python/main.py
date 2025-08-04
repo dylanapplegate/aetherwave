@@ -17,8 +17,8 @@ from pathlib import Path
 import aiofiles
 import os
 import glob
-from .advanced_classifier import AdvancedImageClassifier
-from .content_theme_analyzer import CollectionAnalyzer, ThemeProfile, ContentThemeCache
+from advanced_classifier import AdvancedImageClassifier
+from content_theme_analyzer import CollectionAnalyzer, ThemeProfile, ContentThemeCache
 
 # Constants
 ASSETS_PATH = Path("assets/images")
