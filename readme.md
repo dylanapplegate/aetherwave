@@ -49,8 +49,9 @@ python main.py
 ```
 
 **Controls**:
+
 - `→` / `SPACE`: Next image
-- `←` / `BACKSPACE`: Previous image  
+- `←` / `BACKSPACE`: Previous image
 - `P`: Pause/resume slideshow
 - `F` / `F11`: Toggle fullscreen
 - `I`: Toggle info display
@@ -234,7 +235,7 @@ pip install -r src/qt/requirements.txt
 Aetherwave automatically analyzes your image collection to determine the appropriate visual theme:
 
 - **Cyberfemme Content**: Magenta/cyan UI with glitch effects
-- **Organic Content**: Earth tones with soft transitions  
+- **Organic Content**: Earth tones with soft transitions
 - **Tech Content**: Minimal design with sharp transitions
 - **Vintage Content**: Warm colors with classic effects
 
@@ -249,5 +250,5 @@ The system achieves 95% accuracy in theme detection for cyberfemme content and a
 
 ---
 
-**Technology Stack**: Qt 6.9.1 + PySide6 + Python 3.11 + FastAPI 2.0  
+**Technology Stack**: Qt 6.9.1 + PySide6 + Python 3.11 + FastAPI 2.0
 **Status**: ✅ Production Ready

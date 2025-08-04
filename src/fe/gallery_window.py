@@ -17,7 +17,7 @@ from PySide6.QtCore import (
     QEasingCurve, Property
 )
 from PySide6.QtGui import (
-    QPixmap, QKeyEvent, QPainter, QPen, QColor, QFont, 
+    QPixmap, QKeyEvent, QPainter, QPen, QColor, QFont,
     QLinearGradient, QBrush, QScreen, QPalette
 )
 
@@ -27,36 +27,36 @@ from config_manager import ConfigManager
 
 class ImageLoader(QThread):
     """Background thread for loading images from the API."""
-    
+
     image_loaded = Signal(str, QPixmap)  # filename, pixmap
     loading_error = Signal(str, str)  # filename, error_message
-    
+
     def __init__(self, api_client: AetherwaveAPIClient):
         super().__init__()
         self.api_client = api_client
         self.pending_loads: List[str] = []
         self.logger = logging.getLogger(__name__)
-    
+
     def load_image(self, filename: str) -> None:
         """Queue an image for loading."""
         if filename not in self.pending_loads:
             self.pending_loads.append(filename)
             if not self.isRunning():
                 self.start()
-    
+
     def run(self) -> None:
         """Load queued images using requests (synchronous in thread)."""
         import requests
-        
+
         while self.pending_loads:
             filename = self.pending_loads.pop(0)
             try:
                 image_url = self.api_client.get_image_url(filename)
-                
+
                 # Use requests for simpler synchronous loading
                 response = requests.get(image_url, timeout=10)
                 response.raise_for_status()
-                
+
                 # Load pixmap from image data
                 pixmap = QPixmap()
                 if pixmap.loadFromData(response.content):
@@ -64,7 +64,7 @@ class ImageLoader(QThread):
                     self.logger.debug(f"Loaded image: {filename}")
                 else:
                     self.loading_error.emit(filename, "Failed to decode image data")
-                
+
             except requests.RequestException as e:
                 self.loading_error.emit(filename, str(e))
             except Exception as e:
@@ -73,7 +73,7 @@ class ImageLoader(QThread):
 
 class CyberfemmeLabel(QLabel):
     """Custom QLabel with cyberfemme visual effects optimized for detailed info display."""
-    
+
     def __init__(self, parent=None):
         super().__init__(parent)
         # Using user's personal brand colors: #FF2D88 (pink), #8A2BE2 (purple), #007BFF (blue)
@@ -103,64 +103,64 @@ class CyberfemmeLabel(QLabel):
 
 class GalleryWindow(QMainWindow):
     """Main gallery window with multi-monitor support and cyberfemme aesthetics."""
-    
+
     # Class variable to track all gallery windows for content coordination
     _all_windows: List['GalleryWindow'] = []
     _window_counter: int = 0
-    
+
     def __init__(self, api_client: AetherwaveAPIClient, config: ConfigManager, window_id: Optional[int] = None):
         super().__init__()
         self.api_client = api_client
         self.config = config
         self.logger = logging.getLogger(__name__)
-        
+
         # Window management
         self.window_id = window_id or GalleryWindow._window_counter
         GalleryWindow._window_counter += 1
         GalleryWindow._all_windows.append(self)
-        
+
         # Gallery state
         self.image_list: List[str] = []
         self.current_index: int = 0
         self.current_pixmap: Optional[QPixmap] = None
         self.is_playing: bool = False
-        
+
         # Set up UI components with proper typing
         self.image_label: Optional[QLabel] = None
         self.info_label: Optional[QLabel] = None
         self.progress_bar: Optional[QProgressBar] = None
         self.connection_label: Optional[QLabel] = None
-        
+
         # Timers and threads
         self.slideshow_timer: Optional[QTimer] = None
         self.image_loader: Optional[ImageLoader] = None
         self.fade_animation: Optional[QPropertyAnimation] = None
-        
+
         # Multi-monitor support
         self.screens: List[QScreen] = []
         self.primary_screen: Optional[QScreen] = None
-        
+
         self.setup_ui()
         self.setup_multi_monitor()
         self.setup_image_loader()
         self.setup_timers()
         self.load_images()
-    
+
     def setup_ui(self) -> None:
         """Initialize the user interface."""
         # Set window properties
         self.setWindowTitle("Aetherwave Gallery")
         self.setMinimumSize(800, 600)
-        
+
         # Create central widget
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        
+
         # Main layout
         layout = QVBoxLayout(central_widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-        
+
         # Image display area
         self.image_label = QLabel()
         self.image_label.setObjectName("image_label")  # Set object name for CSS selector
@@ -168,19 +168,19 @@ class GalleryWindow(QMainWindow):
         # Don't set hardcoded background - let adaptive background handle it
         self.image_label.setScaledContents(False)  # We'll handle scaling manually
         layout.addWidget(self.image_label, 1)
-        
+
         # Info overlay
         self.setup_info_overlay()
-        
+
         # Apply cyberfemme styling
         self.apply_cyberfemme_theme()
-        
+
         # Set fullscreen if configured
         if self.config.is_fullscreen():
             self.showFullScreen()
         else:
             self.show()
-    
+
     def setup_info_overlay(self) -> None:
         """Setup the information overlay."""
         # Info label for image details
@@ -189,7 +189,7 @@ class GalleryWindow(QMainWindow):
             self.info_label.setText("Initializing Aetherwave...")
             self.info_label.move(20, 20)
             self.info_label.hide()
-        
+
         # Connection status label
         self.connection_label = CyberfemmeLabel(self)
         if self.connection_label is not None:
@@ -209,7 +209,7 @@ class GalleryWindow(QMainWindow):
             """)
             # Position in bottom left with proper spacing for progress bar
             self.connection_label.move(20, self.height() - 80)
-        
+
         # Progress bar for slideshow
         self.progress_bar = QProgressBar(self)
         if self.progress_bar is not None:
@@ -234,50 +234,50 @@ class GalleryWindow(QMainWindow):
             """)
             self.progress_bar.setRange(0, 100)
             self.progress_bar.setVisible(False)
-    
+
     def setup_multi_monitor(self) -> None:
         """Setup multi-monitor detection and configuration."""
         app = QApplication.instance()
         self.screens = app.screens()
         self.primary_screen = app.primaryScreen()
-        
+
         screen_count = len(self.screens)
         self.logger.info(f"Detected {screen_count} screen(s)")
-        
+
         for i, screen in enumerate(self.screens):
             geometry = screen.geometry()
             name = screen.name()
             self.logger.info(f"Screen {i}: {name} ({geometry.width()}x{geometry.height()})")
-        
+
         # Position window on primary screen initially
         if self.primary_screen:
             geometry = self.primary_screen.geometry()
             self.move(geometry.topLeft())
             self.resize(geometry.size())
-    
+
     def setup_image_loader(self) -> None:
         """Setup the background image loader."""
         self.image_loader = ImageLoader(self.api_client)
         self.image_loader.image_loaded.connect(self.on_image_loaded)
         self.image_loader.loading_error.connect(self.on_loading_error)
-    
+
     def setup_timers(self) -> None:
         """Setup timers for slideshow and updates."""
         # Slideshow timer
         self.slideshow_timer = QTimer()
         self.slideshow_timer.timeout.connect(self.next_image)
-        
+
         # Update timer for progress bar
         self.update_timer = QTimer()
         self.update_timer.timeout.connect(self.update_progress)
         self.update_timer.start(100)  # Update every 100ms
-    
+
     def apply_cyberfemme_theme(self) -> None:
         """Apply cyberfemme visual theme optimized for monochromatic purple/pink/blue artwork."""
         # Set a sophisticated dark background that complements cyberfemme artwork
         # Using deep purple-blue that enhances without competing with the art
         cyberfemme_bg = [25, 20, 35]  # Deep purple-blue background
-        
+
         self.setStyleSheet(f"""
             QMainWindow {{
                 background-color: rgb({cyberfemme_bg[0]}, {cyberfemme_bg[1]}, {cyberfemme_bg[2]});
@@ -286,12 +286,12 @@ class GalleryWindow(QMainWindow):
                 background-color: rgb({cyberfemme_bg[0]}, {cyberfemme_bg[1]}, {cyberfemme_bg[2]});
             }}
         """)
-        
+
         self.logger.debug(f"🎭 Applied cyberfemme theme background: rgb({cyberfemme_bg[0]}, {cyberfemme_bg[1]}, {cyberfemme_bg[2]})")
-        
+
         # Set cursor style
         self.setCursor(Qt.BlankCursor if self.config.is_fullscreen() else Qt.ArrowCursor)
-    
+
     def load_images(self) -> None:
         """Load the image list from the API with content coordination between windows."""
         try:
@@ -300,92 +300,92 @@ class GalleryWindow(QMainWindow):
                 self.image_list = self.get_unique_image_list()
             else:
                 self.image_list = self.api_client.get_image_list()
-            
+
             if self.image_list:
                 random.shuffle(self.image_list)  # Randomize order
                 self.logger.info(f"Window #{self.window_id} loaded {len(self.image_list)} images")
                 self.update_info_display()
             else:
                 self.show_error("No images found")
-                
+
         except Exception as e:
             self.logger.error(f"Failed to load images: {e}")
             self.show_error(f"Failed to load images: {e}")
-    
+
     def start_gallery(self) -> None:
         """Start the gallery slideshow."""
         if not self.image_list:
             self.show_error("No images to display")
             return
-        
+
         self.is_playing = True
         self.current_index = 0
         self.load_current_image()
-        
+
         # Start slideshow timer
         duration_ms = int(self.config.get_image_duration() * 1000)
         self.slideshow_timer.start(duration_ms)
-        
+
         # Show progress bar
         self.progress_bar.setVisible(True)
         self.position_progress_bar()
-        
+
         self.logger.info("Gallery slideshow started")
-    
+
     def stop_gallery(self) -> None:
         """Stop the gallery slideshow."""
         self.is_playing = False
         if self.slideshow_timer:
             self.slideshow_timer.stop()
-        
+
         self.progress_bar.setVisible(False)
         self.logger.info("Gallery slideshow stopped")
-    
+
     def next_image(self) -> None:
         """Display the next image."""
         if not self.image_list:
             self.logger.debug("🚫 No image list available for next image")
             return
-        
+
         old_index = self.current_index
         self.current_index = (self.current_index + 1) % len(self.image_list)
         new_filename = self.image_list[self.current_index]
-        
+
         self.logger.debug(f"➡️  Navigation: {old_index} → {self.current_index} ({new_filename})")
-        
+
         self.load_current_image()
         self.update_info_display()
-    
+
     def previous_image(self) -> None:
         """Display the previous image."""
         if not self.image_list:
             self.logger.debug("🚫 No image list available for previous image")
             return
-        
+
         old_index = self.current_index
         self.current_index = (self.current_index - 1) % len(self.image_list)
         new_filename = self.image_list[self.current_index]
-        
+
         self.logger.debug(f"⬅️  Navigation: {old_index} → {self.current_index} ({new_filename})")
-        
+
         self.load_current_image()
         self.update_info_display()
-    
+
     def load_current_image(self) -> None:
         """Load the current image from the API."""
         if not self.image_list or self.current_index >= len(self.image_list):
             self.logger.debug(f"🚫 Cannot load image: list={len(self.image_list) if self.image_list else 0}, index={self.current_index}")
             return
-        
+
         filename = self.image_list[self.current_index]
         self.logger.debug(f"📥 Loading image: {filename} (index {self.current_index})")
         self.image_loader.load_image(filename)
-    
+
     def on_image_loaded(self, filename: str, pixmap: QPixmap) -> None:
         """Handle successful image loading."""
         current_filename = self.image_list[self.current_index] if self.image_list else "none"
         self.logger.debug(f"📦 Image loaded: {filename} | Current target: {current_filename} | Match: {filename == current_filename}")
-        
+
         if filename == current_filename:
             self.current_pixmap = pixmap
             pixmap_size = pixmap.size()
@@ -393,7 +393,7 @@ class GalleryWindow(QMainWindow):
             self.display_current_image()
         else:
             self.logger.debug(f"⏭️  Ignoring outdated image load: {filename}")
-    
+
     def on_loading_error(self, filename: str, error_msg: str) -> None:
         """Handle image loading errors."""
         self.logger.warning(f"💥 Failed to load {filename}: {error_msg}")
@@ -401,60 +401,60 @@ class GalleryWindow(QMainWindow):
         if self.is_playing:
             self.logger.debug("🔄 Auto-advancing to next image due to loading error")
             QTimer.singleShot(1000, self.next_image)
-    
+
     def display_current_image(self) -> None:
         """Display the current image with proper scaling and adaptive background."""
         if not self.current_pixmap:
             self.logger.debug("🚫 No current pixmap available for display")
             return
-        
+
         filename = self.image_list[self.current_index] if self.image_list else "unknown"
         self.logger.debug(f"🖼️  Displaying image: {filename}")
-        
+
         # Scale image to fit window while maintaining aspect ratio
         label_size = self.image_label.size()
         original_size = self.current_pixmap.size()
-        
+
         scaled_pixmap = self.current_pixmap.scaled(
-            label_size, 
-            Qt.KeepAspectRatio, 
+            label_size,
+            Qt.KeepAspectRatio,
             Qt.SmoothTransformation
         )
-        
+
         scaled_size = scaled_pixmap.size()
         self.logger.debug(f"📐 Image scaling: {original_size.width()}x{original_size.height()} → {scaled_size.width()}x{scaled_size.height()} (label: {label_size.width()}x{label_size.height()})")
-        
+
         self.image_label.setPixmap(scaled_pixmap)
         self.logger.debug("✅ Pixmap set on image label")
-        
+
         # Apply adaptive background color based on image
         self.apply_adaptive_background()
-        
+
         self.logger.debug(f"🎯 Displayed image {self.current_index + 1}/{len(self.image_list)}: {filename}")
-    
+
     def apply_adaptive_background(self) -> None:
         """Apply background color that complements the current image."""
         if not self.image_list:
             self.logger.debug("🚫 No image list available for adaptive background")
             return
-            
+
         try:
             # Get classification data for current image
             filename = self.image_list[self.current_index]
             self.logger.debug(f"🎨 Starting adaptive background for: {filename}")
-            
+
             classification_data = self.api_client.classify_image(filename, include_metadata=True)
-            
+
             if classification_data and 'metadata' in classification_data:
                 metadata = classification_data['metadata']
                 self.logger.debug(f"📊 Classification metadata keys: {list(metadata.keys())}")
-                
+
                 # Get dominant color from classification
                 dominant_color = metadata.get('dominant_color')
                 self.logger.debug(f"🎯 Raw dominant color: {dominant_color} (type: {type(dominant_color)})")
-                
+
                 r, g, b = None, None, None
-                
+
                 # Handle both hex string and RGB array formats
                 if isinstance(dominant_color, str) and dominant_color.startswith('#'):
                     # Convert hex to RGB
@@ -468,11 +468,11 @@ class GalleryWindow(QMainWindow):
                     # RGB array format
                     r, g, b = dominant_color[:3]
                     self.logger.debug(f"📋 Using RGB array: ({r}, {g}, {b})")
-                
+
                 if r is not None and g is not None and b is not None:
                     # Calculate perceived brightness using luminance formula
                     luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
-                    
+
                     # Enhanced hue-preserving adaptive background
                     if luminance > 0.7:  # Light images -> light background with hue preservation
                         # For light images, use a brighter version that preserves the hue
@@ -492,7 +492,7 @@ class GalleryWindow(QMainWindow):
                         bg_g = max(12, int(g * 0.25))
                         bg_b = max(12, int(b * 0.25))
                         brightness_desc = "dark (25%)"
-                    
+
                     # Calculate hue information for enhanced debugging
                     import colorsys
                     try:
@@ -503,15 +503,15 @@ class GalleryWindow(QMainWindow):
                         hue_desc = f"H:{hue_degrees}° S:{saturation_pct}% V:{value_pct}%"
                     except:
                         hue_desc = "HSV calculation failed"
-                    
+
                     self.logger.debug(f"✨ Luminance: {luminance:.2f} | {hue_desc} → {brightness_desc} background RGB: ({bg_r}, {bg_g}, {bg_b})")
-                    
+
                     # METHOD 1: Clear existing styles first
                     self.setStyleSheet("")
                     if self.image_label is not None:
                         self.image_label.setStyleSheet("")
                     self.logger.debug("🧹 Cleared existing styles")
-                    
+
                     # METHOD 2: Apply via stylesheet
                     background_style = f"""
                         QMainWindow {{
@@ -523,13 +523,13 @@ class GalleryWindow(QMainWindow):
                     """
                     self.setStyleSheet(background_style)
                     self.logger.debug(f"🎨 Applied main window style: rgb({bg_r}, {bg_g}, {bg_b})")
-                    
+
                     # METHOD 3: Set image label directly
                     if self.image_label is not None:
                         label_style = f"background-color: rgb({bg_r}, {bg_g}, {bg_b});"
                         self.image_label.setStyleSheet(label_style)
                         self.logger.debug(f"🏷️  Applied image label style: {label_style}")
-                    
+
                     # METHOD 4: Use Qt palette (more direct approach)
                     try:
                         palette = self.palette()
@@ -537,7 +537,7 @@ class GalleryWindow(QMainWindow):
                         palette.setColor(QPalette.Window, bg_color)
                         palette.setColor(QPalette.Base, bg_color)
                         self.setPalette(palette)
-                        
+
                         # Also set on image label if it exists
                         if self.image_label is not None:
                             label_palette = self.image_label.palette()
@@ -545,11 +545,11 @@ class GalleryWindow(QMainWindow):
                             label_palette.setColor(QPalette.Base, bg_color)
                             self.image_label.setPalette(label_palette)
                             self.image_label.setAutoFillBackground(True)
-                        
+
                         self.logger.debug(f"🎭 Applied palette colors: {bg_color.name()}")
                     except Exception as palette_error:
                         self.logger.warning(f"⚠️  Palette method failed: {palette_error}")
-                    
+
                     # METHOD 5: Force immediate repaints
                     self.update()
                     if self.image_label is not None:
@@ -558,14 +558,14 @@ class GalleryWindow(QMainWindow):
                     if self.image_label is not None:
                         self.image_label.repaint()
                     self.logger.debug("🔄 Forced complete repaint cycle")
-                    
+
                     # Log the final result
                     try:
                         current_bg = self.palette().color(QPalette.Window)
                         self.logger.debug(f"🎯 Final window background: {current_bg.name()}")
                     except Exception as bg_read_error:
                         self.logger.debug(f"🎯 Could not read final background color: {bg_read_error}")
-                        
+
                     self.logger.debug(f"✅ Applied adaptive background: rgb({bg_r}, {bg_g}, {bg_b}) from dominant color {dominant_color}")
                     return  # Successfully applied adaptive background
                 else:
@@ -576,31 +576,31 @@ class GalleryWindow(QMainWindow):
                 self.logger.warning(f"❌ No metadata in classification response for {filename}")
                 # Fallback to default cyberfemme background
                 self.apply_cyberfemme_theme()
-                
+
         except Exception as e:
             self.logger.warning(f"💥 Failed to apply adaptive background: {e}")
             import traceback
             self.logger.debug(f"🔍 Full traceback: {traceback.format_exc()}")
             # Fallback to default cyberfemme background
             self.apply_cyberfemme_theme()
-    
+
     def update_info_display(self) -> None:
         """Update the information overlay with comprehensive classification data."""
         if not self.image_list or self.info_label is None:
             return
-        
+
         filename = self.image_list[self.current_index]
-        
+
         # Build comprehensive info display
         info_lines = [f"[{self.current_index + 1}/{len(self.image_list)}]"]
-        
+
         try:
             # Get detailed classification data
             classification_data = self.api_client.classify_image(filename, include_metadata=True)
-            
+
             if classification_data and 'metadata' in classification_data:
                 metadata = classification_data['metadata']
-                
+
                 # Image properties section
                 width = metadata.get('width', 0)
                 height = metadata.get('height', 0)
@@ -615,7 +615,7 @@ class GalleryWindow(QMainWindow):
                     except (ValueError, TypeError):
                         # Use the string value as-is if it can't be converted
                         info_lines.append(f"📐 {width}×{height} :: {orientation} :: {megapixels}MP")
-                
+
                 # Color analysis section
                 dominant_color = metadata.get('dominant_color', '')
                 color_temp = metadata.get('color_temperature', '')
@@ -627,7 +627,7 @@ class GalleryWindow(QMainWindow):
                     if color_harmony:
                         color_info += f" :: {color_harmony}"
                     info_lines.append(color_info)
-                
+
                 # Visual complexity section
                 brightness = metadata.get('brightness', 0)
                 saturation = metadata.get('saturation', 0)
@@ -659,7 +659,7 @@ class GalleryWindow(QMainWindow):
                             # Use the string value as-is if it can't be converted
                             complexity_info += f" Detail:{edge_density}"
                     info_lines.append(complexity_info)
-                
+
                 # Mood and emotion section
                 primary_mood = metadata.get('primary_mood', '')
                 emotional_tone = metadata.get('emotional_tone', '')
@@ -679,7 +679,7 @@ class GalleryWindow(QMainWindow):
                             # Use the string value as-is if it can't be converted
                             mood_info += f" :: Energy:{energy_level}"
                     info_lines.append(mood_info)
-                
+
                 # Technical quality section
                 format_type = metadata.get('format', '')
                 cinematic_score = metadata.get('cinematic_score', 0)
@@ -705,7 +705,7 @@ class GalleryWindow(QMainWindow):
                             # Use the string value as-is if it can't be converted
                             tech_info += f" :: Conf:{classification_confidence}"
                     info_lines.append(tech_info)
-            
+
             # Add theme information if available
             theme_data = self.api_client.get_collection_theme()
             if theme_data and 'theme' in theme_data:
@@ -718,59 +718,59 @@ class GalleryWindow(QMainWindow):
                 except (ValueError, TypeError):
                     # Use the string value as-is if it can't be converted
                     info_lines.append(f"🎭 Theme: {theme_name.title()} ({confidence})")
-                
+
         except Exception as e:
             # Fallback to basic info if classification fails
             info_lines.append(f"📁 {filename}")
             self.logger.debug(f"Failed to get detailed classification for info display: {e}")
-        
+
         # Join all info lines with newlines and apply alternating brand colors
         # Using your brand colors: #FF2D88 (pink), #8A2BE2 (purple), #007BFF (blue)
         brand_colors = ["#FF2D88", "#8A2BE2", "#007BFF"]
         colored_lines = []
-        
+
         for i, line in enumerate(info_lines):
             color = brand_colors[i % len(brand_colors)]
             colored_lines.append(f'<span style="color: {color};">{line}</span>')
-        
+
         info_text = "<br>".join(colored_lines)
-        
+
         self.info_label.setText(info_text)
         self.info_label.adjustSize()
-        
+
         # Show info for longer to give time to read comprehensive data
         self.info_label.show()
         QTimer.singleShot(8000, self.info_label.hide)  # Show for 8 seconds for more info
-    
+
     def update_progress(self) -> None:
         """Update the slideshow progress bar."""
         if not self.is_playing or not self.slideshow_timer or self.progress_bar is None:
             return
-        
+
         duration_ms = self.slideshow_timer.interval()
         elapsed_ms = duration_ms - self.slideshow_timer.remainingTime()
         progress = int((elapsed_ms / duration_ms) * 100)
-        
+
         self.progress_bar.setValue(progress)
-    
+
     def position_progress_bar(self) -> None:
         """Position the progress bar at the bottom of the window, avoiding connection status."""
         if self.progress_bar is None:
             return
-            
+
         bar_height = 8
         bar_width = self.width() - 40
         x = 20
         # Position above connection status (which is at height - 80) with some padding
         y = self.height() - bar_height - 30
-        
+
         self.progress_bar.setGeometry(x, y, bar_width, bar_height)
-    
+
     def show_connection_error(self) -> None:
         """Show connection error status."""
         if self.connection_label is None:
             return
-            
+
         self.connection_label.setText("◉ DISCONNECTED")
         # Use your brand pink #FF2D88 for error states
         self.connection_label.setStyleSheet("""
@@ -786,20 +786,20 @@ class GalleryWindow(QMainWindow):
             }
         """)
         self.connection_label.show()
-    
+
     def spawn_new_window(self) -> None:
         """Spawn a new gallery window on the next available screen."""
         try:
             # Create new window with unique window ID
             new_window_id = GalleryWindow._window_counter + 1
             new_window = GalleryWindow(self.api_client, self.config, window_id=new_window_id)
-            
+
             # Set window title to distinguish windows
             new_window.setWindowTitle(f"Aetherwave Gallery #{new_window_id}")
-            
+
             # Position on next available screen or offset position
             self.position_new_window(new_window)
-            
+
             # Start at different position in image list for variety
             if new_window.image_list:
                 # Start at a different position based on window number
@@ -807,57 +807,57 @@ class GalleryWindow(QMainWindow):
                 new_window.current_index = offset
                 new_window.load_current_image()
                 new_window.update_info_display()
-            
+
             # Auto-start slideshow if current window is playing
             if self.is_playing:
                 new_window.start_gallery()
-            
+
             # Show the new window (use windowed mode by default unless current window is fullscreen)
             if self.isFullScreen():
                 new_window.showFullScreen()
             else:
                 new_window.show()
-            
+
             self.logger.info(f"Spawned new gallery window #{new_window_id} with {len(new_window.image_list)} images, starting at index {new_window.current_index}")
-            
+
         except Exception as e:
             self.logger.error(f"Failed to spawn new window: {e}")
             self.show_error(f"Failed to create new window: {e}")
-    
+
     def position_new_window(self, new_window: 'GalleryWindow') -> None:
         """Position new window on available screen or with offset."""
         screens = QApplication.instance().screens()
-        
+
         if len(screens) > 1:
             # Try to place on different screen
             current_screen_index = 0
             current_geometry = self.geometry()
-            
+
             # Find which screen the current window is on
             for i, screen in enumerate(screens):
                 if screen.geometry().contains(current_geometry.center()):
                     current_screen_index = i
                     break
-            
+
             # Use next screen (cycling through available screens)
             next_screen_index = (current_screen_index + 1) % len(screens)
             target_screen = screens[next_screen_index]
-            
+
             # Position on target screen (center it, don't fill the screen)
             screen_geometry = target_screen.geometry()
-            
+
             # Use same size as current window, or reasonable default
             window_size = self.size()
             if window_size.width() < 100 or window_size.height() < 100:
                 window_size = QSize(1200, 800)  # Default size
-            
+
             # Center on target screen
             center_x = screen_geometry.center().x() - window_size.width() // 2
             center_y = screen_geometry.center().y() - window_size.height() // 2
-            
+
             new_window.move(center_x, center_y)
             new_window.resize(window_size)
-            
+
             self.logger.debug(f"Positioned new window on screen {next_screen_index}: {target_screen.name()}")
         else:
             # Single screen - offset the window position
@@ -866,31 +866,31 @@ class GalleryWindow(QMainWindow):
             offset_y = 50 + (self.window_id * 30)
             new_window.move(current_pos.x() + offset_x, current_pos.y() + offset_y)
             new_window.resize(self.size())
-            
+
             self.logger.debug(f"Positioned new window with cascade offset: +{offset_x}, +{offset_y}")
-    
+
     def get_unique_image_list(self) -> List[str]:
         """Get image list with images not currently displayed by other windows."""
         all_images = self.api_client.get_image_list()
-        
+
         # Get currently displayed images from other windows
         used_images = set()
         for window in GalleryWindow._all_windows:
             if window != self and window.image_list and 0 <= window.current_index < len(window.image_list):
                 used_images.add(window.image_list[window.current_index])
-        
+
         # Filter out used images, or return all if too few available
         available_images = [img for img in all_images if img not in used_images]
-        
+
         # If too few unique images available, use all images
         if len(available_images) < 10:
             available_images = all_images
-        
+
         return available_images
         """Show an error message."""
         if self.info_label is None:
             return
-            
+
         self.info_label.setText(f"ERROR: {message}")
         self.info_label.setStyleSheet("""
             QLabel {
@@ -900,11 +900,11 @@ class GalleryWindow(QMainWindow):
             }
         """)
         self.info_label.show()
-    
+
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """Handle keyboard input."""
         key = event.key()
-        
+
         if key == Qt.Key_Space or key == Qt.Key_Right:
             self.next_image()
         elif key == Qt.Key_Left or key == Qt.Key_Backspace:
@@ -933,7 +933,7 @@ class GalleryWindow(QMainWindow):
             self.close()
         else:
             super().keyPressEvent(event)
-    
+
     def toggle_fullscreen(self) -> None:
         """Toggle fullscreen mode."""
         if self.isFullScreen():
@@ -942,39 +942,39 @@ class GalleryWindow(QMainWindow):
         else:
             self.showFullScreen()
             self.setCursor(Qt.BlankCursor)
-    
+
     def resizeEvent(self, event) -> None:
         """Handle window resize events."""
         super().resizeEvent(event)
-        
+
         # Reposition overlays
         if self.connection_label:
             self.connection_label.move(20, self.height() - 60)
-        
+
         if self.progress_bar and self.progress_bar.isVisible():
             self.position_progress_bar()
-        
+
         # Rescale current image
         if self.current_pixmap:
             self.display_current_image()
-    
+
     def closeEvent(self, event) -> None:
         """Handle window close event."""
         self.logger.info(f"Closing gallery window #{self.window_id}")
-        
+
         # Remove from window tracking
         if self in GalleryWindow._all_windows:
             GalleryWindow._all_windows.remove(self)
-        
+
         # Stop all timers and threads
         if self.slideshow_timer:
             self.slideshow_timer.stop()
-        
+
         if self.update_timer:
             self.update_timer.stop()
-        
+
         if self.image_loader and self.image_loader.isRunning():
             self.image_loader.quit()
             self.image_loader.wait()
-        
+
         super().closeEvent(event)

@@ -59,7 +59,7 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
    source venv/bin/activate
    python -m uvicorn src.python.main:app --host 0.0.0.0 --port 8000 --reload &
    sleep 3
-   
+
    # Test Qt application startup
    ./scripts/fe-run.sh
    # EXPECTED: Gallery window opens, connects to API, displays images   pkill -f "uvicorn"

@@ -160,9 +160,9 @@ effects:
 
 theme:
   cyberfemme:
-    primary_color: [255, 0, 255]    # Magenta
-    secondary_color: [0, 255, 255]  # Cyan
-    accent_color: [255, 255, 255]   # White
+    primary_color: [255, 0, 255] # Magenta
+    secondary_color: [0, 255, 255] # Cyan
+    accent_color: [255, 255, 255] # White
     ui_transparency: 0.8
 
 input:
@@ -176,12 +176,12 @@ input:
 
 ### FastAPI Service (Port 8000)
 
-| Endpoint                    | Method | Purpose                 | Features                    |
-| --------------------------- | ------ | ----------------------- | --------------------------- |
-| `/health`                   | GET    | Health check            | System status, dependencies |
-| `/images/list`              | GET    | Available images        | Filename list, count        |
-| `/images/{filename}`        | GET    | Serve image file        | HTTP image serving          |
-| `/classify`                 | POST   | Single image analysis   | Full metadata extraction    |
+| Endpoint                    | Method | Purpose                   | Features                    |
+| --------------------------- | ------ | ------------------------- | --------------------------- |
+| `/health`                   | GET    | Health check              | System status, dependencies |
+| `/images/list`              | GET    | Available images          | Filename list, count        |
+| `/images/{filename}`        | GET    | Serve image file          | HTTP image serving          |
+| `/classify`                 | POST   | Single image analysis     | Full metadata extraction    |
 | `/analyze/collection-theme` | POST   | Collection theme analysis | Theme detection, confidence |
 
 ### Collection Theme Analysis
@@ -222,7 +222,7 @@ input:
 
 ### Python Classification Service
 
-- **Processing Time**: 
+- **Processing Time**:
   - Individual images: 0.4-0.8 seconds (1.5-6.7MB PNG files)
   - Collection analysis: 0.023 seconds (5 images)
 - **Memory Usage**: ~100MB base + efficient ColorThief quality=10 settings
@@ -253,7 +253,7 @@ input:
 
    # Start Qt gallery
    ./scripts/fe-run.sh
-   
+
    # Or manually
    cd src/qt && python main.py
    ```
@@ -316,11 +316,13 @@ input:
 ### Planned Features
 
 1. **OpenGL Effects Pipeline**
+
    - Bloom and chromatic aberration shaders
    - Glitch effects for cyberfemme themes
    - Hardware-accelerated transitions
 
 2. **Advanced Multi-Monitor**
+
    - Content distribution strategies
    - Independent display control
    - Synchronized playlist management
