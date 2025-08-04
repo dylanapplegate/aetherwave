@@ -35,6 +35,33 @@ Rather than hardcoding cyberfemme aesthetics, **Aetherwave now reads your conten
 - Hot reload development with volume mounts for live code editing
 - Manual setup preserved as alternative for developers needing customization
 
+### 🎮 **Strategic Technology Pivot (August 4, 2025)**
+
+**Key Decision**: Transition from SDL2/C++ to Unity for visual display engine while maintaining Python classification API.
+
+**Reasoning**:
+
+- **Development Velocity**: SDL2 requiring extensive low-level implementation blocking progress on core cyberfemme vision
+- **Built-in Features**: Unity provides shader effects (chromatic aberration, bloom), multi-monitor support, audio sync out-of-the-box
+- **Future-Proof Architecture**: Direct support for Phase 5+ features (audio sync, video integration, advanced effects)
+- **Professional Quality**: Unity's rendering pipeline enables gallery-installation quality visuals
+- **Proven Foundation**: Python API for content analysis and theme detection remains unchanged
+
+**Migration Strategy**:
+
+- **Phase 1**: Unity prototype with basic image display and multi-monitor support (1 week)
+- **Phase 2**: Python API integration for theme-driven aesthetics (1 week)
+- **Phase 3**: Cyberfemme shader effects and transitions (2 weeks)
+- **Phase 4**: Advanced features from roadmap (audio sync, video, control interface)
+
+**Technical Benefits**:
+
+- **Shader Pipeline**: Post-processing stack for cyberfemme effects (glitch, bloom, chromatic aberration)
+- **Multi-Monitor**: Native display targeting with automatic coordination
+- **Audio System**: Beat detection, waveform analysis, sync capabilities
+- **UI Framework**: Professional control panels with immediate mode GUI
+- **Performance**: Hardware-accelerated 60 FPS guaranteed across platforms
+
 ---
 
 ## 📊 Implementation Status
@@ -86,44 +113,53 @@ Demo Results (95% Confidence):
 
 ---
 
-## 🚀 **Phase 4B: Advanced Visual Implementation**
+## 🚀 **Phase 4B: Unity Visual Implementation**
 
-### **4B.1 Dynamic Layout Engine** (Next Priority)
+### **4B.1 Unity Migration & Foundation** 📅 **August 2025**
 
-- [ ] **Content-Responsive Layouts**:
-  - [ ] Single image: Full-screen with theme-based framing
-  - [ ] Dual display: Split-screen with complementary images
-  - [ ] Gallery mode: Mosaic layouts based on aspect ratios
-  - [ ] Portrait/landscape adaptive switching
+- [ ] **Unity Project Setup**:
 
-### **4B.2 Advanced Transition System** ✅ **COMPLETED (August 3, 2025)**
+  - [ ] Unity 2022.3 LTS project creation with Universal Render Pipeline (URP)
+  - [ ] Python API integration via HTTP client for theme data
+  - [ ] Asset pipeline for automatic image loading and optimization
+  - [ ] Multi-monitor display detection and coordination
 
-- ✅ **Theme-Driven Transitions**:
-  - ✅ **Cyberfemme**: Glitch wipes, digital dissolves, chromatic aberration
-  - ✅ **Organic**: Soft fades with eased timing, warm blends
-  - ✅ **Tech**: Sharp pixel transitions, digital dissolves
-  - ✅ **Vintage**: Available framework (using soft fades for now)
-- ✅ **ThemeManager Integration**: Real-time theme loading from Python API
-- ✅ **Automatic Transition Selection**: Content analysis drives visual style
-- ✅ **Fallback System**: Graceful operation when Python API unavailable
+- [ ] **Core Image Display System**:
+  - [ ] Unity UI Canvas with responsive image rendering
+  - [ ] Aspect-ratio preserving scaling with letterboxing
+  - [ ] Keyboard input handling (Space/Arrow keys for navigation)
+  - [ ] Smooth transitions between images with configurable timing
 
-**Testing the Implementation:**
+### **4B.2 Advanced Transition System** ✅ **COMPLETED (August 3, 2025)** → 🔄 **MIGRATING TO UNITY**
 
-```bash
-# Start Python API for theme detection
-./scripts/dev-setup.sh
+- [ ] **Unity Shader-Based Transitions** (Replaces SDL2 implementation):
 
-# Build and run C++ display engine with theme integration
-./scripts/cpp-setup.sh
-./scripts/cpp-run.sh
+  - [ ] **Cyberfemme**: Custom shaders for glitch wipes, digital dissolves, chromatic aberration
+  - [ ] **Organic**: Post-processing volume blends with eased timing curves
+  - [ ] **Tech**: Pixel-perfect transitions using compute shaders
+  - [ ] **Vintage**: Film-grain overlays with sepia tone blending
 
-# Controls:
-# - T: Toggle theme debug overlay
-# - P: Performance monitoring
-# - Space: Next image (triggers theme-aware transitions)
-```
+- [ ] **Unity Post-Processing Integration**:
+  - [ ] URP Post-Processing Volume setup for real-time effects
+  - [ ] Theme-driven effect intensity modulation
+  - [ ] Smooth parameter interpolation between theme transitions
+  - [ ] Performance optimization for 4K+ displays
 
-### **4B.3 Visual Effects Pipeline**
+### **4B.3 Cyberfemme Visual Effects Pipeline**
+
+- [ ] **Unity Shader Graph Effects**:
+
+  - [ ] **Chromatic Aberration**: RGB channel separation for micro-glitch aesthetic
+  - [ ] **Bloom/Neon Glow**: Selective bloom on saturated colors (magentas, cyans)
+  - [ ] **Holographic Prism**: Edge detection with rainbow chromatic shifts
+  - [ ] **Digital Rain**: Particle systems for Matrix-style code cascades
+
+- [ ] **Dynamic Effect Control**:
+
+  - [ ] Theme-responsive effect intensity (cyberfemme = high, organic = subtle)
+  - [ ] Real-time parameter adjustment via Python API
+  - [ ] Effect preset system: Muted → Dreamlike → Cinematic → Hard Glitch
+  - [ ] Context-aware application based on image content analysis
 
 - [ ] **Mood-Responsive Effects**:
   - [ ] High-energy content: Bloom, chromatic aberration, intense colors
@@ -131,12 +167,20 @@ Demo Results (95% Confidence):
   - [ ] Complex content: Edge enhancement, detail sharpening
   - [ ] Simple content: Subtle background patterns, gentle animations
 
-### **4B.4 Motion Staging System**
+### **4B.4 Unity Motion Staging System**
 
-- [ ] **Content-Aware Movement**:
-  - [ ] **Ken Burns Effect**: Zoom/pan based on image composition analysis
-  - [ ] **Pulse Animation**: Intensity based on mood energy levels
-  - [ ] **Drift Motion**: Slow movement patterns matching theme aesthetics
+- [ ] **Unity Animation System**:
+
+  - [ ] **Ken Burns Effect**: Camera transform animations with composition-aware focal points
+  - [ ] **Pulse Breathing**: Transform.scale tweening synchronized with theme energy levels
+  - [ ] **Drift Motion**: Slow Transform.position animations with organic easing curves
+  - [ ] **Parallax Layers**: Multi-layer depth simulation for composition elements
+
+- [ ] **Unity Timeline Integration**:
+  - [ ] **Sequence Builder**: Visual timeline for curating motion combinations
+  - [ ] **Metadata-Driven Motion**: Python API provides motion recommendations per image
+  - [ ] **Smooth Transitions**: Animation state machine for seamless motion blending
+  - [ ] **Performance Optimization**: Object pooling and LOD system for smooth 60 FPS
 
 ---
 
@@ -245,23 +289,46 @@ Theme Application:
 
 - [x] Python collection analysis and theme detection
 - [x] FastAPI endpoints for theme generation
-- [x] C++ ThemeManager architecture
+- [x] ~~C++ ThemeManager architecture~~ (Migrated to Unity)
 - [x] Comprehensive test coverage
 - [x] Demo validation with 95% accuracy
 
-### **Phase 4B: Visual Implementation** 📅 **Q3 2025**
+### **Phase 4B: Unity Visual Implementation** 📅 **August 2025**
 
-- [ ] Dynamic layout engine with content-responsive modes
-- [ ] Advanced transition system with theme-specific effects
-- [ ] Visual effects pipeline with mood-responsive intensity
-- [ ] Motion staging with composition-aware Ken Burns
+- [ ] **Unity Foundation** (Week 1):
+
+  - [ ] Unity 2022.3 LTS project setup with URP
+  - [ ] Multi-monitor display coordination
+  - [ ] Python API HTTP client integration
+  - [ ] Basic image display and navigation
+
+- [ ] **Theme-Driven Visuals** (Week 2):
+
+  - [ ] Unity Post-Processing Volume setup
+  - [ ] Shader Graph effects for cyberfemme aesthetics
+  - [ ] Dynamic theme parameter modulation
+  - [ ] Transition system with custom shaders
+
+- [ ] **Advanced Effects** (Weeks 3-4):
+  - [ ] Chromatic aberration and bloom pipeline
+  - [ ] Motion staging with Unity Animation system
+  - [ ] Performance optimization for 4K+ displays
+  - [ ] Theme-responsive effect intensity system
 
 ### **Phase 4C: Polish & Enhancement** 📅 **Q4 2025**
 
-- [ ] Real-time theme switching with smooth transitions
-- [ ] Theme override system for manual customization
-- [ ] Theme sharing and export functionality
-- [ ] Performance optimization for 4K+ multi-monitor setups
+- [ ] **Professional Features**:
+
+  - [ ] Unity IMGUI control panels for real-time adjustment
+  - [ ] Theme override system with live preview
+  - [ ] Multi-monitor setup wizard
+  - [ ] Performance monitoring dashboard
+
+- [ ] **Gallery Installation Features**:
+  - [ ] Presence detection via Unity sensor input
+  - [ ] Time-based mood transitions
+  - [ ] Exhibition mode with automated curation
+  - [ ] Remote control via Unity networking
 
 ---
 
@@ -587,27 +654,94 @@ Based on your vision, here are some enhancements that could make Aetherwave even
 
 ---
 
-## 🎉 **Phase 3 → Phase 4 Transition**
+## 🚀 **Unity-Enabled Future Phases**
 
-**You've built an incredibly solid foundation!** The production-ready core from Phase 3 gives you:
+### **Phase 5: Multi-Modal Experience** 📅 **Q1-Q2 2026**
 
-✅ **Professional architecture** ready for advanced features
-✅ **Real computer vision** for intelligent visual decisions
-✅ **Multi-monitor support** for gallery installations
-✅ **Performance optimization** for smooth 60 FPS rendering
-✅ **Developer-friendly tooling** for rapid iteration
+**Unity-Enabled Capabilities:**
 
-**Next step: Transform this technical excellence into the cyberfemme aesthetic experience you originally envisioned.**
+- [ ] **Audio Integration** (Built-in Unity Audio):
 
-The most impactful next features would be:
+  - [ ] Generative soundscapes matching cyberfemme themes
+  - [ ] Real-time audio analysis for theme refinement
+  - [ ] Spatial audio for multi-room installations
+  - [ ] Unity Audio Mixer for professional sound design
 
-1. **Cyberfemme visual identity** (colors, typography, framing)
-2. **Dynamic layout system** (split-screen, mosaic, memory trails)
-3. **Advanced transitions** (zoom, drift, overlay effects)
-4. **Visual effects pipeline** (bloom, chromatic aberration, glitch)
+- [ ] **Interactive Features** (Unity Input System):
+  - [ ] Touch gesture navigation for gallery installations
+  - [ ] Multi-user concurrent viewing modes
+  - [ ] VR/AR preview capabilities via Unity XR
+  - [ ] Voice control integration
 
-These will transform your solid technical foundation into the immersive, cinematic, cyberfemme art gallery you envisioned!
+### **Phase 6: Enterprise Gallery** 📅 **Q3-Q4 2026**
+
+**Unity Professional Features:**
+
+- [ ] **Exhibition Management** (Unity Networking):
+
+  - [ ] Remote curation via Unity Dashboard
+  - [ ] Multi-gallery synchronization
+  - [ ] Analytics and visitor engagement tracking
+  - [ ] Cloud-based content management
+
+- [ ] **Platform Distribution** (Unity Build Pipeline):
+  - [ ] Multi-platform deployment (Windows, macOS, Linux)
+  - [ ] Gallery appliance packaging
+  - [ ] White-label customization system
+  - [ ] App store distribution ready
+
+### **Phase 7: AI Evolution** 📅 **2027+**
+
+**Advanced Capabilities:**
+
+- [ ] **Neural Enhancement**:
+
+  - [ ] Real-time style transfer with Unity ML-Agents
+  - [ ] Predictive theme evolution
+  - [ ] Emotion-responsive display systems
+  - [ ] Artist style learning and generation
+
+- [ ] **Ecosystem Integration**:
+  - [ ] Unity Asset Store publication
+  - [ ] MidJourney API direct integration
+  - [ ] Multi-media content support
+  - [ ] Community theme marketplace
 
 ---
 
-_This roadmap preserves your "art as hero" philosophy while building the aesthetic and interaction layers that will make Aetherwave a truly unique creative platform._
+## 🎉 **Phase 3 → Unity Transition**
+
+**You've built an incredibly solid foundation!** The production-ready core from Phase 3 gives you:
+
+✅ **Professional Python API** with 95% theme detection accuracy
+✅ **Real computer vision** for intelligent visual decisions
+✅ **Comprehensive test coverage** and development tooling
+✅ **Content-driven architecture** that adapts to any art collection
+✅ **Docker infrastructure** for scalable deployment
+
+**Unity Migration Strategy:**
+
+1. **Preserve Python Excellence** - Your FastAPI classification system is proven and working perfectly
+2. **Replace SDL2 Complexity** - Unity provides built-in multi-monitor, effects, and audio capabilities
+3. **Accelerate Development** - Focus on cyberfemme aesthetics instead of low-level implementation
+4. **Professional Features** - Unity's ecosystem unlocks VR, networking, and enterprise capabilities
+
+**Immediate Unity Benefits:**
+
+- **10x faster visual development** with Shader Graph and post-processing
+- **Built-in multi-monitor support** without manual coordination
+- **Professional audio integration** for immersive experiences
+- **VR/AR readiness** for future gallery installations
+
+The most impactful next features will be:
+
+1. **Unity project setup** with Python API integration
+2. **Cyberfemme shader pipeline** (bloom, chromatic aberration, glitch effects)
+3. **Dynamic post-processing** driven by content themes
+4. **Advanced transition system** with Unity Animation Timeline
+
+This will transform your solid technical foundation into the immersive, cinematic, cyberfemme art gallery you originally envisioned!
+
+---
+
+_This roadmap preserves your "art as hero" philosophy while leveraging Unity's professional capabilities to accelerate development and unlock advanced features for the cyberfemme aesthetic experience._
