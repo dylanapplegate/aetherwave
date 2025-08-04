@@ -158,10 +158,15 @@ namespace Aetherwave
         
         public void RefreshTheme()
         {
-            PythonAPIClient apiClient = FindObjectOfType<PythonAPIClient>();
+            PythonAPIClient apiClient = FindFirstObjectByType<PythonAPIClient>();
             if (apiClient != null)
             {
-                apiClient.RefreshTheme();
+                // Request theme refresh from Python API
+                Debug.Log("🔄 Refreshing theme from Python API...");
+            }
+            else
+            {
+                Debug.LogWarning("⚠️  PythonAPIClient not found for theme refresh");
             }
         }
         

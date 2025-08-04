@@ -27,7 +27,7 @@ namespace Aetherwave
         
         void Start()
         {
-            apiClient = FindObjectOfType<PythonAPIClient>();
+            apiClient = FindFirstObjectByType<PythonAPIClient>();
             LoadImages();
             
             if (images.Count > 0)
@@ -63,21 +63,36 @@ namespace Aetherwave
         
         private IEnumerator LoadImageCoroutine(string filePath)
         {
-            using (var www = new WWW("file://" + filePath))
+            // Unity 6.1 compatible image loading using byte array approach
+            byte[] imageData = null;
+            
+            try
             {
-                yield return www;
+                imageData = File.ReadAllBytes(filePath);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"Failed to read image file: {filePath} - {e.Message}");
+                yield break;
+            }
+            
+            if (imageData != null && imageData.Length > 0)
+            {
+                Texture2D texture = new Texture2D(2, 2); // Temporary size, will be resized by LoadImage
                 
-                if (string.IsNullOrEmpty(www.error))
+                if (texture.LoadImage(imageData))
                 {
-                    Texture2D texture = www.texture;
                     texture.name = Path.GetFileName(filePath);
                     images.Add(texture);
                 }
                 else
                 {
-                    Debug.LogError($"Failed to load image: {filePath} - {www.error}");
+                    Debug.LogError($"Failed to load image data: {filePath}");
+                    DestroyImmediate(texture);
                 }
             }
+            
+            yield return null; // Allow one frame for processing
         }
         
         public void NextImage()

@@ -367,7 +367,16 @@ Image Collection → Classification → Theme Detection → Visual Rendering
    # Expected: All ✅ checks pass, visual window appears
    ```
 
-3. **Test Suite Verification:**
+3. **Unity Build Verification (MANDATORY):**
+
+   ```bash
+   # CRITICAL: Must pass before claiming Unity setup success
+   ./scripts/unity-build-verify.sh
+   # Expected: "🎉 Unity Build Verification PASSED"
+   # NOTE: URP shader warnings are normal and do not indicate compilation failure
+   ```
+
+4. **Test Suite Verification:**
 
    ```bash
    # Run all tests
@@ -375,7 +384,7 @@ Image Collection → Classification → Theme Detection → Visual Rendering
    # Expected: 90%+ coverage, all tests pass
    ```
 
-4. **Clean Shutdown:**
+5. **Clean Shutdown:**
    ```bash
    # Stop all services
    ./scripts/dev-stop.sh
@@ -400,10 +409,18 @@ Image Collection → Classification → Theme Detection → Visual Rendering
 - **Verify Installation**: `./scripts/verify-app.sh`
 - **Clean Rebuild**: `./scripts/cpp-setup.sh clean`
 
+**Unity Development:**
+
+- **Unity Setup**: `./scripts/unity-setup.sh` (creates Unity project structure and dependencies)
+- **Unity Build Verification**: `./scripts/unity-build-verify.sh` (**MANDATORY** before claiming Unity setup success)
+- **Unity Linting**: `./scripts/unity-lint.sh` (C# code quality validation)
+- **Unity Requirements**: Unity 6.1+ (6000.1.14f1), Universal Render Pipeline (URP), C# scripting
+
 **Manual Workflow:**
 
 - **Python Setup**: `python -m venv venv && source venv/bin/activate && pip install -r requirements.txt`
 - **C++ Build**: `mkdir build && cd build && cmake .. && make`
+- **Unity Build**: `./scripts/unity-build-verify.sh` (**REQUIRED** - must pass before claiming success)
 - **Testing**: `pytest tests/` (90%+ coverage requirement)
 - **Classification**: `python src/python/main.py` (FastAPI server on port 8000)
 
