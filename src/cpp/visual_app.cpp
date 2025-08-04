@@ -29,10 +29,10 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
+
     self.imagePaths = [[NSMutableArray alloc] init];
     self.currentImageIndex = 0;
-    
+
     // Create main image view
     self.imageView = [[NSImageView alloc] init];
     self.imageView.imageScaling = NSImageScaleProportionallyUpOrDown;
@@ -40,7 +40,7 @@
     self.imageView.translatesAutoresizingMaskIntoConstraints = NO;
     self.imageView.wantsLayer = YES;
     self.imageView.layer.backgroundColor = [[NSColor blackColor] CGColor];
-    
+
     // Create status label
     self.statusLabel = [[NSTextField alloc] init];
     self.statusLabel.stringValue = @"🌊 Aetherwave Display Engine v2.0 - Loading...";
@@ -52,7 +52,7 @@
     self.statusLabel.editable = NO;
     self.statusLabel.selectable = NO;
     self.statusLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    
+
     // Create controls label
     self.controlsLabel = [[NSTextField alloc] init];
     self.controlsLabel.stringValue = @"SPACE/→: Next  •  ←: Previous  •  ESC: Exit";
@@ -64,12 +64,12 @@
     self.controlsLabel.editable = NO;
     self.controlsLabel.selectable = NO;
     self.controlsLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    
+
     // Add subviews
     [self.view addSubview:self.imageView];
     [self.view addSubview:self.statusLabel];
     [self.view addSubview:self.controlsLabel];
-    
+
     // Set up constraints
     [NSLayoutConstraint activateConstraints:@[
         // Image view - full screen except for labels
@@ -77,35 +77,35 @@
         [self.imageView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
         [self.imageView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
         [self.imageView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor constant:-50],
-        
+
         // Status label - top
         [self.statusLabel.topAnchor constraintEqualToAnchor:self.view.topAnchor constant:15],
         [self.statusLabel.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
         [self.statusLabel.widthAnchor constraintEqualToConstant:600],
-        
+
         // Controls label - bottom
         [self.controlsLabel.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor constant:-15],
         [self.controlsLabel.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
         [self.controlsLabel.widthAnchor constraintEqualToConstant:400],
     ]];
-    
+
     // Set background color
     self.view.wantsLayer = YES;
     self.view.layer.backgroundColor = [[NSColor blackColor] CGColor];
-    
+
     // Load images
     [self loadImagesFromDirectory:@"assets/images"];
-    
+
     if (self.imagePaths.count > 0) {
         [self showCurrentImage];
     } else {
         self.statusLabel.stringValue = @"No images found. Add images to assets/images/ directory";
-        
+
         // Show a placeholder
         NSImage *placeholderImage = [NSImage imageWithSize:NSMakeSize(400, 300) flipped:NO drawingHandler:^BOOL(NSRect dstRect) {
             [[NSColor darkGrayColor] setFill];
             NSRectFill(dstRect);
-            
+
             NSDictionary *attributes = @{
                 NSFontAttributeName: [NSFont systemFontOfSize:24],
                 NSForegroundColorAttributeName: [NSColor lightGrayColor]
@@ -115,30 +115,30 @@
             NSPoint textPoint = NSMakePoint((dstRect.size.width - textSize.width) / 2,
                                           (dstRect.size.height - textSize.height) / 2);
             [text drawAtPoint:textPoint withAttributes:attributes];
-            
+
             return YES;
         }];
-        
+
         self.imageView.image = placeholderImage;
     }
 }
 
 - (void)loadImagesFromDirectory:(NSString*)path {
     [self.imagePaths removeAllObjects];
-    
+
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSError *error;
     NSArray *files = [fileManager contentsOfDirectoryAtPath:path error:&error];
-    
+
     if (error) {
         NSLog(@"Error reading directory %@: %@", path, error.localizedDescription);
         // Try to create the directory
         [fileManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:nil];
         return;
     }
-    
+
     NSArray *imageExtensions = @[@"jpg", @"jpeg", @"png", @"gif", @"bmp", @"tiff", @"tif"];
-    
+
     for (NSString *file in files) {
         NSString *extension = [[file pathExtension] lowercaseString];
         if ([imageExtensions containsObject:extension]) {
@@ -146,26 +146,26 @@
             [self.imagePaths addObject:fullPath];
         }
     }
-    
+
     NSLog(@"Found %lu images in %@", (unsigned long)self.imagePaths.count, path);
 }
 
 - (void)showCurrentImage {
     if (self.imagePaths.count == 0) return;
-    
+
     NSString *imagePath = self.imagePaths[self.currentImageIndex];
     NSImage *image = [[NSImage alloc] initWithContentsOfFile:imagePath];
-    
+
     if (image) {
         self.imageView.image = image;
-        
+
         NSString *filename = [imagePath lastPathComponent];
         NSString *status = [NSString stringWithFormat:@"🎨 %@ (%ld of %lu)",
                            filename,
                            (long)(self.currentImageIndex + 1),
                            (unsigned long)self.imagePaths.count];
         self.statusLabel.stringValue = status;
-        
+
         NSLog(@"Displaying: %@", filename);
     } else {
         NSLog(@"Failed to load image: %@", imagePath);
@@ -174,15 +174,15 @@
 
 - (void)nextImage {
     if (self.imagePaths.count == 0) return;
-    
+
     self.currentImageIndex = (self.currentImageIndex + 1) % self.imagePaths.count;
     [self showCurrentImage];
 }
 
 - (void)previousImage {
     if (self.imagePaths.count == 0) return;
-    
-    self.currentImageIndex = (self.currentImageIndex == 0) ? 
+
+    self.currentImageIndex = (self.currentImageIndex == 0) ?
         self.imagePaths.count - 1 : self.currentImageIndex - 1;
     [self showCurrentImage];
 }
@@ -195,23 +195,23 @@
     NSString *characters = [event characters];
     if ([characters length] > 0) {
         unichar character = [characters characterAtIndex:0];
-        
+
         AetherwaveViewController *viewController = (AetherwaveViewController*)self.contentViewController;
-        
+
         switch (character) {
             case NSRightArrowFunctionKey:
             case ' ':
                 [viewController nextImage];
                 break;
-                
+
             case NSLeftArrowFunctionKey:
                 [viewController previousImage];
                 break;
-                
+
             case 27: // ESC
                 [NSApp terminate:self];
                 break;
-                
+
             default:
                 [super keyDown:event];
                 break;
@@ -241,21 +241,21 @@
                                                                NSWindowStyleMaskResizable
                                                        backing:NSBackingStoreBuffered
                                                          defer:NO];
-    
+
     self.window.title = @"Aetherwave Display Engine";
     self.window.backgroundColor = [NSColor blackColor];
-    
+
     // Create and set view controller
     AetherwaveViewController *viewController = [[AetherwaveViewController alloc] init];
     self.window.contentViewController = viewController;
-    
+
     // Show window
     [self.window makeKeyAndOrderFront:nil];
     [self.window center];
-    
+
     // Make app active
     [NSApp activateIgnoringOtherApps:YES];
-    
+
     NSLog(@"Aetherwave Display Engine started");
 }
 
@@ -274,7 +274,7 @@ public:
     void run() {
 #ifdef __APPLE__
         NSLog(@"🌊 Starting Aetherwave Visual Display Engine...");
-        
+
         @autoreleasepool {
             NSApplication *app = [NSApplication sharedApplication];
             AetherwaveAppDelegate *delegate = [[AetherwaveAppDelegate alloc] init];
@@ -294,7 +294,7 @@ public:
 int main() {
     std::cout << "🌊 Aetherwave Display Engine v2.0" << std::endl;
     std::cout << "📱 Starting visual application..." << std::endl;
-    
+
     try {
         Aetherwave::VisualApp app;
         app.run();
@@ -302,6 +302,6 @@ int main() {
         std::cerr << "❌ Error: " << e.what() << std::endl;
         return 1;
     }
-    
+
     return 0;
 }

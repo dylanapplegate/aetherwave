@@ -15,12 +15,14 @@ assets/
 ## Usage
 
 ### Adding Images
+
 1. Place your images in the `assets/images/` directory
 2. Run the build process: `./scripts/cpp-setup.sh`
 3. Images will be automatically copied to `build/bin/assets/images/`
 4. Launch the application: `./scripts/cpp-run.sh`
 
 ### Supported Formats
+
 - **JPEG** (.jpg, .jpeg) - Recommended for photographs
 - **PNG** (.png) - Recommended for graphics with transparency
 - **GIF** (.gif) - Animated images supported
@@ -28,6 +30,7 @@ assets/
 - **BMP** (.bmp) - Basic bitmap format
 
 ### File Organization
+
 - **High Resolution**: 4K+ images recommended for multi-monitor displays
 - **Naming**: Use descriptive filenames (e.g., `cyberfemme_neon_01.jpg`)
 - **Collections**: Organize by theme or aesthetic style
@@ -36,6 +39,7 @@ assets/
 ## Build Process Integration
 
 The build system automatically:
+
 1. **Scans** the `assets/images/` directory during build
 2. **Copies** all supported image formats to `build/bin/assets/images/`
 3. **Preserves** directory structure and filenames
@@ -57,10 +61,12 @@ The build system automatically:
 ## Integration with Classification System
 
 The Python classification API analyzes images from this directory to:
+
 - Extract dominant color palettes
-- Detect mood and aesthetic characteristics  
+- Detect mood and aesthetic characteristics
 - Generate appropriate UI themes
 - Cache analysis results for performance
 
 ---
-*This directory is part of the Aetherwave content-driven display engine.*
+
+_This directory is part of the Aetherwave content-driven display engine._

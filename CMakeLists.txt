@@ -50,7 +50,7 @@ endif()
 if(APPLE)
     # Find OpenGL and other required frameworks for basic compilation
     find_package(OpenGL REQUIRED)
-    
+
     target_link_libraries(${PROJECT_NAME} PRIVATE
         ${OpenGL_LIBRARIES}
         "-framework Cocoa"
@@ -65,7 +65,7 @@ if(APPLE)
         "-framework Security"
         "-framework ApplicationServices"
     )
-    
+
     # Add filesystem library for C++17
     if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
         target_link_libraries(${PROJECT_NAME} PRIVATE stdc++fs)
@@ -94,30 +94,30 @@ configure_file("${SOURCE_ASSETS_DIR}/images/README.md" "${BUILD_ASSETS_DIR}/imag
 # Function to copy assets during build
 function(sync_assets)
     # Get list of image files from source assets
-    file(GLOB_RECURSE ASSET_FILES 
+    file(GLOB_RECURSE ASSET_FILES
         "${SOURCE_ASSETS_DIR}/images/*.jpg"
-        "${SOURCE_ASSETS_DIR}/images/*.jpeg" 
+        "${SOURCE_ASSETS_DIR}/images/*.jpeg"
         "${SOURCE_ASSETS_DIR}/images/*.png"
         "${SOURCE_ASSETS_DIR}/images/*.gif"
         "${SOURCE_ASSETS_DIR}/images/*.bmp"
         "${SOURCE_ASSETS_DIR}/images/*.tiff"
         "${SOURCE_ASSETS_DIR}/images/*.tif"
     )
-    
+
     # Copy each asset file, preserving directory structure
     foreach(ASSET_FILE ${ASSET_FILES})
         # Get relative path from source assets directory
         file(RELATIVE_PATH REL_PATH "${SOURCE_ASSETS_DIR}" "${ASSET_FILE}")
         set(DEST_FILE "${BUILD_ASSETS_DIR}/${REL_PATH}")
-        
+
         # Get directory of destination file
         get_filename_component(DEST_DIR "${DEST_FILE}" DIRECTORY)
         file(MAKE_DIRECTORY "${DEST_DIR}")
-        
+
         # Copy file if source is newer than destination
         configure_file("${ASSET_FILE}" "${DEST_FILE}" COPYONLY)
     endforeach()
-    
+
     list(LENGTH ASSET_FILES ASSET_COUNT)
     if(ASSET_COUNT GREATER 0)
         message(STATUS "📸 Synced ${ASSET_COUNT} asset files to build directory")
