@@ -162,10 +162,16 @@ Image Collection → Classification → Theme Detection → Visual Rendering
 - **Rebuild After Changes**: `docker-compose build && docker-compose up -d`
 - **View Logs**: `docker-compose logs -f classification-api`
 
+**C++ Display Engine:**
+
+- **One-Command Setup**: `./scripts/cpp-setup.sh` (includes openFrameworks installation and build)
+- **Run Application**: `./scripts/cpp-run.sh`
+- **Clean Rebuild**: `./scripts/cpp-setup.sh clean`
+
 **Manual Workflow:**
 
 - **Python Setup**: `python -m venv venv && source venv/bin/activate && pip install -r requirements.txt`
-- **C++ Build**: `make build` (openFrameworks project)
+- **C++ Build**: `mkdir build && cd build && cmake .. && make`
 - **Testing**: `pytest tests/` (90%+ coverage requirement)
 - **Classification**: `python src/python/main.py` (FastAPI server on port 8000)
 

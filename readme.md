@@ -45,7 +45,29 @@ chmod +x scripts/dev-setup.sh
 - Visit http://localhost:8000/docs for API documentation
 - Continue with C++ setup below for full rendering
 
-### **Option 2: Manual Setup**
+### **Option 2: C++ Display Engine Setup**
+
+For the complete visual experience, you'll also want the C++ display engine:
+
+```bash
+# One-command C++ setup (handles openFrameworks installation)
+chmod +x scripts/cpp-setup.sh
+./scripts/cpp-setup.sh
+
+# Add images to the display directory
+cp your-images/* build/bin/assets/images/
+
+# Run the display engine
+./scripts/cpp-run.sh
+```
+
+**System Requirements for C++:**
+
+- macOS (Apple Silicon or Intel)
+- Xcode Command Line Tools: `xcode-select --install`
+- CMake: `brew install cmake` or download from cmake.org
+
+### **Option 3: Manual Setup**
 
 If you prefer manual setup or need to modify dependencies:
 
@@ -59,14 +81,26 @@ pip install -r requirements.txt
 python main.py  # Starts FastAPI server
 ```
 
-#### **2. C++ / openFrameworks Setup**
+#### **2. C++ Display Engine Setup**
 
 ```bash
-# Follow openFrameworks installation guide for macOS
-# Clone this repo into apps/myApps/ folder
-# Use projectGenerator to create .xcodeproj
-cd src/cpp
-make run  # or open in Xcode
+# One-command C++ setup (downloads openFrameworks, builds everything)
+./scripts/cpp-setup.sh
+
+# Run the display engine
+./scripts/cpp-run.sh
+```
+
+**Alternative manual setup:**
+
+```bash
+# Install openFrameworks first
+./scripts/setup_openframeworks.sh
+
+# Build and run
+mkdir build && cd build
+cmake .. && make
+cd bin && ./Aetherwave
 ```
 
 ## **📁 Project Layout**
@@ -91,7 +125,7 @@ make run  # or open in Xcode
 ### **Docker Workflow (Recommended)**
 
 ```bash
-# Start development environment
+# Start development environment (Python API only)
 ./scripts/dev-setup.sh
 
 # View logs
@@ -104,11 +138,27 @@ docker-compose logs -f classification-api
 docker-compose build && docker-compose up -d
 ```
 
+### **C++ Display Engine**
+
+```bash
+# One-command setup and build
+./scripts/cpp-setup.sh
+
+# Run the display application
+./scripts/cpp-run.sh
+
+# Rebuild after C++ changes
+./scripts/cpp-setup.sh clean
+```
+
 ### **Manual Workflow**
 
 ```bash
 # Python API server
 cd src/python && python main.py
+
+# C++ display engine
+./scripts/cpp-run.sh
 
 # Run tests
 pytest tests/
@@ -123,6 +173,51 @@ black src/python/ && pylint src/python/
 - Use `black` and `pylint` (Python), `clang-format` (C++)
 - Submit PRs with focused changes, descriptive titles, and test coverage
 - Docker setup ensures consistent development environments
+
+## **🔧 Troubleshooting**
+
+### **C++ Display Engine Issues**
+
+**Build fails with openFrameworks errors:**
+
+```bash
+# Clean rebuild everything
+./scripts/cpp-setup.sh clean
+
+# Or manually clean
+rm -rf build libs/openFrameworks
+./scripts/cpp-setup.sh
+```
+
+**"No images loaded" message:**
+
+- Add images to `build/bin/assets/images/` directory
+- Supported formats: JPEG, PNG, GIF, BMP, TIFF
+- Images should be in the binary directory, not project root assets
+
+**Application won't start:**
+
+- Check system requirements: `xcode-select --install` and `brew install cmake`
+- Verify binary exists: `ls -la build/bin/Aetherwave`
+- Run from correct directory: `cd build/bin && ./Aetherwave`
+
+### **Docker/Python API Issues**
+
+**Port 8000 already in use:**
+
+```bash
+# Stop existing services
+./scripts/dev-stop.sh
+# Or manually stop
+docker-compose down
+```
+
+**Permission denied on scripts:**
+
+```bash
+# Make scripts executable
+chmod +x scripts/*.sh
+```
 
 ## **🔒 Privacy and Asset Handling**
 
