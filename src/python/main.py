@@ -8,11 +8,15 @@ serving classification results to the C++ display engine.
 
 from typing import Dict, List, Optional, Any
 from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import json
 import logging
 from pathlib import Path
 import aiofiles
+import os
+import glob
 from .advanced_classifier import AdvancedImageClassifier
 from .content_theme_analyzer import CollectionAnalyzer, ThemeProfile, ContentThemeCache
 
