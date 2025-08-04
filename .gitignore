@@ -133,54 +133,58 @@ config/prod.yaml
 .cache/
 
 # ============================================================================
-# Unity Generated Files
+# Unity Projects
 # ============================================================================
 
-# Unity auto-generated folders (never commit these)
-src/unity/*/[Ll]ibrary/
-src/unity/*/[Tt]emp/
-src/unity/*/[Oo]bj/
-src/unity/*/[Bb]uild/
-src/unity/*/[Bb]uilds/
-src/unity/*/[Ll]ogs/
-src/unity/*/[Uu]ser[Ss]ettings/
-src/unity/*/[Mm]emoryCaptures/
+# Unity projects have their own .gitignore files at project root
+# See: src/unity/Aetherwave/.gitignore for Unity-specific rules
+# But we need to ignore generated files from repository level too
 
-# Unity cache and temp files
+# Unity auto-generated folders (never commit these)
+src/unity/*/Library/
+src/unity/*/Temp/
+src/unity/*/Obj/
+src/unity/*/Build/
+src/unity/*/Builds/
+src/unity/*/Logs/
+src/unity/*/UserSettings/
+src/unity/*/MemoryCaptures/
+
+# Unity cache and IDE files
 src/unity/*/.vs/
 src/unity/*/ExportedObj/
 src/unity/*/.consulo/
-src/unity/*/UnityGenerated/
-src/unity/*/Assets/AssetStoreTools*
-src/unity/*/Assets/StreamingAssets/
-
-# Unity generated project settings (auto-generated, version-dependent)
-src/unity/*/ProjectSettings/GraphicsSettings.asset
-src/unity/*/ProjectSettings/NetworkManager.asset
-src/unity/*/ProjectSettings/UnityConnectSettings.asset
-src/unity/*/ProjectSettings/TimeManager.asset
-src/unity/*/ProjectSettings/MultiplayerManager.asset
-src/unity/*/ProjectSettings/VersionControlSettings.asset
-src/unity/*/ProjectSettings/PresetManager.asset
-src/unity/*/ProjectSettings/EditorSettings.asset
-src/unity/*/ProjectSettings/EditorBuildSettings.asset
-src/unity/*/ProjectSettings/ClusterInputManager.asset
-src/unity/*/ProjectSettings/NavMeshAreas.asset
-src/unity/*/ProjectSettings/Physics2DSettings.asset
-src/unity/*/ProjectSettings/PackageManagerSettings.asset
-src/unity/*/ProjectSettings/AudioManager.asset
-src/unity/*/ProjectSettings/VFXManager.asset
-src/unity/*/ProjectSettings/InputManager.asset
-
-# Unity crash reports and logs
-src/unity/*/sysinfo.txt
-src/unity/*/crashlytics-build.properties
+src/unity/*/*.csproj
+src/unity/*/*.unityproj
+src/unity/*/*.sln
+src/unity/*/*.suo
+src/unity/*/*.user
+src/unity/*/*.userprefs
+src/unity/*/*.pidb
+src/unity/*/*.booproj
+src/unity/*/*.svd
+src/unity/*/*.pdb
+src/unity/*/*.mdb
+src/unity/*/*.opendb
+src/unity/*/*.VC.db
 
 # Unity package manager (auto-generated)
 src/unity/*/Packages/
 src/unity/*/packages-lock.json
 
-# Unity database files
-src/unity/*/*.pidb
-src/unity/*/*.pdb
-src/unity/*/*.mdb
+# Unity auto-generated ProjectSettings (version-dependent)
+src/unity/*/ProjectSettings/GraphicsSettings.asset
+src/unity/*/ProjectSettings/UnityConnectSettings.asset
+src/unity/*/ProjectSettings/TimeManager.asset
+src/unity/*/ProjectSettings/AudioManager.asset
+src/unity/*/ProjectSettings/InputManager.asset
+src/unity/*/ProjectSettings/Physics2DSettings.asset
+src/unity/*/ProjectSettings/VFXManager.asset
+src/unity/*/ProjectSettings/NavMeshAreas.asset
+src/unity/*/ProjectSettings/ClusterInputManager.asset
+src/unity/*/ProjectSettings/EditorSettings.asset
+src/unity/*/ProjectSettings/EditorBuildSettings.asset
+src/unity/*/ProjectSettings/PresetManager.asset
+src/unity/*/ProjectSettings/PackageManagerSettings.asset
+src/unity/*/ProjectSettings/MultiplayerManager.asset
+src/unity/*/ProjectSettings/VersionControlSettings.asset
