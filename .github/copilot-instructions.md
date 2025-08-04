@@ -75,6 +75,11 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
    ./scripts/cpp-setup.sh
    ./scripts/verify-app.sh
 
+   # CRITICAL: Ensure app processes are properly terminated
+   # The verify-app.sh script should handle this automatically
+   # If manual testing, always exit apps with ESC/Q keys or kill processes:
+   pkill -f "Aetherwave"
+
    # Must pass: All tests
    pytest tests/ --tb=short
    ```
@@ -84,10 +89,18 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
    - ✅ No hanging terminal jobs (`jobs -l` returns empty)
    - ✅ Python API builds and responds to health checks
    - ✅ C++ application builds without errors and launches successfully
+   - ✅ C++ application can be started, tested, and cleanly terminated
    - ✅ All tests pass with 90%+ coverage
    - ✅ No temporary files or old dependencies remain
 
 **CRITICAL**: An autonomous agent MUST NOT consider their work complete until ALL verification steps pass. If any step fails, troubleshoot and fix before ending the session.
+
+**APP LIFECYCLE MANAGEMENT**:
+
+- Visual applications must be properly started, verified to work, and cleanly terminated
+- Never leave graphical applications running indefinitely
+- Always verify applications can be exited gracefully (ESC/Q keys)
+- Use `pkill -f "Aetherwave"` if processes don't terminate properly
 
 ### **🧠 Memory & Documentation Management**
 
