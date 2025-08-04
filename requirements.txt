@@ -1,0 +1,4 @@
+# Aetherwave Project Dependencies
+# This file helps VS Code detect the required packages
+
+-r src/python/requirements.txt

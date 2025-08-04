@@ -1,0 +1,13 @@
+{
+  "filename": "final_test.jpg",
+  "width": 1920,
+  "height": 1080,
+  "dominant_colors": [
+    "#1a1a2e",
+    "#16213e",
+    "#0f3460"
+  ],
+  "mood": "cinematic",
+  "complexity": 0.7,
+  "classification_confidence": 0.95
+}

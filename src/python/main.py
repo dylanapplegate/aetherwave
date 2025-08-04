@@ -12,6 +12,7 @@ from pydantic import BaseModel
 import json
 import logging
 from pathlib import Path
+import aiofiles
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -109,8 +110,8 @@ async def classify_image(request: ClassificationRequest) -> ClassificationRespon
         config_dir.mkdir(exist_ok=True)
         
         metadata_file = config_dir / "sample_metadata.json"
-        with open(metadata_file, "w") as f:
-            json.dump(sample_metadata.dict(), f, indent=2)
+        async with aiofiles.open(metadata_file, "w") as f:
+            await f.write(json.dumps(sample_metadata.dict(), indent=2))
         
         logger.info(f"Sample metadata written to: {metadata_file}")
         

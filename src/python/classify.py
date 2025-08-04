@@ -54,7 +54,7 @@ def classify_image_stub(image_path: str, output_dir: str = "config") -> Dict[str
             "mood": "cinematic",
             "complexity": 0.7,
             "classification_confidence": 0.95,
-            "processing_timestamp": str(Path().ctime()),
+            "processing_timestamp": str(image_file.stat().st_ctime),
             "classifier_version": "1.0.0-stub"
         }
         

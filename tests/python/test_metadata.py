@@ -13,7 +13,13 @@ from typing import Dict, Any
 
 # Import the FastAPI app
 import sys
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src" / "python"))
+import os
+from pathlib import Path
+
+# Add the python source directory to the path
+project_root = Path(__file__).parent.parent.parent
+python_src = project_root / "src" / "python"
+sys.path.insert(0, str(python_src))
 
 from main import app, ClassificationRequest, ClassificationResponse, ImageMetadata
 
@@ -146,8 +152,8 @@ class TestAetherwaveAPI:
         assert metadata.height == 1080
         assert len(metadata.dominant_colors) == 3
         assert metadata.mood == "dramatic"
-        assert metadata.complexity == 0.8
-        assert metadata.classification_confidence == 0.95
+        assert metadata.complexity is not None and abs(metadata.complexity - 0.8) < 0.001
+        assert metadata.classification_confidence is not None and abs(metadata.classification_confidence - 0.95) < 0.001
     
     def test_classification_response_model(self) -> None:
         """Test the ClassificationResponse Pydantic model."""
