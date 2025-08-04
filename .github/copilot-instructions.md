@@ -12,7 +12,7 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
   - `tests/`
   - `.github/`
 - Perform metadata analysis on placeholder assets only
-- Use only openFrameworks (C++) for rendering and audio
+- Use SDL2 (C++) for rendering and graphics with hardware acceleration
 - Use Python for classification logic
 - Output only compilable or lint-clean code
 
@@ -98,10 +98,11 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
 
 #### **C++**
 
-- Use modern `C++17`Z
+- Use modern `C++17`
 - All logic should be wrapped in `namespace Aetherwave`
 - Split rendering logic and UI logic
-- Frame timing and sync via `ofGetElapsedTimef()` or similar tools
+- Use SDL2 for cross-platform graphics and window management
+- Frame timing and sync via SDL2's VSync and timing functions
 - No magic numbers—use constants and config files
 
 #### **Python**
@@ -130,7 +131,7 @@ Aetherwave is a content-driven media display engine for showcasing high-resoluti
 ### **Core Components:**
 
 - **Python Classification Engine** (`src/python/`): ColorThief + OpenCV analysis, FastAPI endpoints
-- **C++ Display Engine** (`src/cpp/`): openFrameworks rendering with 60 FPS multi-monitor support
+- **C++ Display Engine** (`src/cpp/`): SDL2 rendering with 60 FPS multi-monitor support
 - **Theme Management** (`src/shared/`): Content-to-theme mapping with statistical confidence
 - **Configuration System** (`config/`): YAML-based settings with theme caching
 
@@ -164,8 +165,9 @@ Image Collection → Classification → Theme Detection → Visual Rendering
 
 **C++ Display Engine:**
 
-- **One-Command Setup**: `./scripts/cpp-setup.sh` (includes openFrameworks installation and build)
+- **One-Command Setup**: `./scripts/cpp-setup.sh` (includes SDL2 installation and build)
 - **Run Application**: `./scripts/cpp-run.sh`
+- **Verify Installation**: `./scripts/verify-app.sh`
 - **Clean Rebuild**: `./scripts/cpp-setup.sh clean`
 
 **Manual Workflow:**
@@ -196,7 +198,8 @@ Image Collection → Classification → Theme Detection → Visual Rendering
 
 - `src/python/content_theme_analyzer.py`: Collection analysis and theme detection algorithms
 - `src/python/main.py`: FastAPI server with `/analyze/collection-theme` endpoint
-- `src/cpp/ThemeManager.h`: C++ theme management architecture
+- `src/cpp/visual_sdl.cpp`: SDL2-based visual display engine with real-time rendering
+- `src/shared/Config.cpp`: Configuration management and asset handling
 - `config/themes.yaml`: Theme configuration and caching system
 
 ### **Documentation & Planning:**
@@ -216,7 +219,8 @@ Image Collection → Classification → Theme Detection → Visual Rendering
 
 ### **C++ Dependencies:**
 
-- **openFrameworks**: Graphics rendering and multi-monitor support
+- **SDL2**: Cross-platform graphics and window management
+- **SDL2_image**: Image loading and texture creation
 - **Modern C++17**: Performance-optimized display engine
 
 ### **External Integrations:**

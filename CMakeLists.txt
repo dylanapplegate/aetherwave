@@ -51,13 +51,23 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${SDL2_IMAGE_INCLUDE_DIRS}
 )
 
+# Add library directories
+target_link_directories(${PROJECT_NAME} PRIVATE
+    ${SDL2_LIBRARY_DIRS}
+    ${SDL2_IMAGE_LIBRARY_DIRS}
+)
+
+# Link libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE
     ${SDL2_LIBRARIES}
     ${SDL2_IMAGE_LIBRARIES}
 )
 
-# Add SDL2 compile flags
-target_compile_options(${PROJECT_NAME} PRIVATE ${SDL2_CFLAGS_OTHER})
+# Add compile flags
+target_compile_options(${PROJECT_NAME} PRIVATE
+    ${SDL2_CFLAGS_OTHER}
+    ${SDL2_IMAGE_CFLAGS_OTHER}
+)
 
 # Add filesystem library for C++17
 if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)

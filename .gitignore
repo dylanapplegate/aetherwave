@@ -15,7 +15,6 @@ assets/images/*.tif
 # Build artifacts
 build/
 bin/
-libs/
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
@@ -23,9 +22,11 @@ Makefile
 *.cmake
 compile_commands.json
 
-# Temporary build files
+# Temporary build files (cleanup old test files)
 src/cpp/app_stub.cpp
 src/cpp/simple_app.cpp
+src/cpp/visual_app.cpp
+src/cpp/visual_simple.cpp
 
 # C++ compiled files
 *.o

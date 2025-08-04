@@ -45,7 +45,7 @@ if ! pkg-config --exists sdl2; then
         echo "✅ SDL2 installed successfully"
     else
         echo "❌ Homebrew not found. Please install SDL2 manually:"
-        echo "   1. Install Homebrew: /bin/bash -c "\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)""
+        echo "   1. Install Homebrew: /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
         echo "   2. Run: brew install sdl2 sdl2_image"
         exit 1
     fi

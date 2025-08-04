@@ -72,7 +72,7 @@ monitor_app_launch() {
 
     # Start the app in background
     cd build/bin
-    timeout 10s ./Aetherwave &
+    ./Aetherwave &
     APP_PID=$!
 
     sleep 2
