@@ -87,7 +87,8 @@ class AetherwaveQtApp:
             # Create main gallery window
             self.gallery_window = GalleryWindow(
                 api_client=self.api_client,
-                config=self.config
+                config=self.config,
+                window_id=1  # Main window gets ID 1
             )
             
             # Setup periodic health checks

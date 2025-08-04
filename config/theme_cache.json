@@ -929,5 +929,179 @@
       "analogous",
       "triadic"
     ]
+  },
+  "5f1078710d3168ec97e38d4a56df1fce": {
+    "theme_name": "organic",
+    "confidence": 0.4,
+    "primary_colors": [
+      "#706d6b",
+      "#ccc3c4",
+      "#d6ced7",
+      "#291e2b"
+    ],
+    "accent_colors": [
+      "#8fbc8f",
+      "#daa520",
+      "#f4a460",
+      "#90ee90"
+    ],
+    "temperature_bias": "neutral",
+    "mood_profile": {
+      "balanced": 0.15853658536585366,
+      "peaceful": 0.573170731707317,
+      "mysterious": 0.2682926829268293
+    },
+    "energy_level": "low",
+    "complexity_preference": 0.35954878048780486,
+    "harmony_types": [
+      "monochromatic",
+      "analogous",
+      "triadic"
+    ]
+  },
+  "f73a59be4de578a545946020558b9b48": {
+    "theme_name": "organic",
+    "confidence": 0.4,
+    "primary_colors": [
+      "#706d6b",
+      "#ccc3c4",
+      "#d6ced7",
+      "#291e2b"
+    ],
+    "accent_colors": [
+      "#8fbc8f",
+      "#daa520",
+      "#f4a460",
+      "#90ee90"
+    ],
+    "temperature_bias": "neutral",
+    "mood_profile": {
+      "balanced": 0.15853658536585366,
+      "peaceful": 0.573170731707317,
+      "mysterious": 0.2682926829268293
+    },
+    "energy_level": "low",
+    "complexity_preference": 0.35954878048780486,
+    "harmony_types": [
+      "monochromatic",
+      "analogous",
+      "triadic"
+    ]
+  },
+  "204c4c3862851467cd80eff55cc0a2f1": {
+    "theme_name": "organic",
+    "confidence": 0.4,
+    "primary_colors": [
+      "#706d6b",
+      "#ccc3c4",
+      "#d6ced7",
+      "#291e2b"
+    ],
+    "accent_colors": [
+      "#8fbc8f",
+      "#daa520",
+      "#f4a460",
+      "#90ee90"
+    ],
+    "temperature_bias": "neutral",
+    "mood_profile": {
+      "balanced": 0.15853658536585366,
+      "peaceful": 0.573170731707317,
+      "mysterious": 0.2682926829268293
+    },
+    "energy_level": "low",
+    "complexity_preference": 0.35954878048780486,
+    "harmony_types": [
+      "monochromatic",
+      "analogous",
+      "triadic"
+    ]
+  },
+  "bd337ae5cf78ac1604c0bc593fdffb29": {
+    "theme_name": "organic",
+    "confidence": 0.4,
+    "primary_colors": [
+      "#706d6b",
+      "#ccc3c4",
+      "#d6ced7",
+      "#291e2b"
+    ],
+    "accent_colors": [
+      "#8fbc8f",
+      "#daa520",
+      "#f4a460",
+      "#90ee90"
+    ],
+    "temperature_bias": "neutral",
+    "mood_profile": {
+      "balanced": 0.15853658536585366,
+      "peaceful": 0.573170731707317,
+      "mysterious": 0.2682926829268293
+    },
+    "energy_level": "low",
+    "complexity_preference": 0.35954878048780486,
+    "harmony_types": [
+      "monochromatic",
+      "analogous",
+      "triadic"
+    ]
+  },
+  "82f82266c9a390405606fef3ec15f1a1": {
+    "theme_name": "organic",
+    "confidence": 0.4,
+    "primary_colors": [
+      "#706d6b",
+      "#ccc3c4",
+      "#d6ced7",
+      "#291e2b"
+    ],
+    "accent_colors": [
+      "#8fbc8f",
+      "#daa520",
+      "#f4a460",
+      "#90ee90"
+    ],
+    "temperature_bias": "neutral",
+    "mood_profile": {
+      "balanced": 0.15853658536585366,
+      "peaceful": 0.573170731707317,
+      "mysterious": 0.2682926829268293
+    },
+    "energy_level": "low",
+    "complexity_preference": 0.35954878048780486,
+    "harmony_types": [
+      "monochromatic",
+      "analogous",
+      "triadic"
+    ]
+  },
+  "75fce5fd3a2706867be94989e79f6f7c": {
+    "theme_name": "organic",
+    "confidence": 0.4,
+    "primary_colors": [
+      "#706d6b",
+      "#ccc3c4",
+      "#d6ced7",
+      "#291e2b"
+    ],
+    "accent_colors": [
+      "#8fbc8f",
+      "#daa520",
+      "#f4a460",
+      "#90ee90"
+    ],
+    "temperature_bias": "neutral",
+    "mood_profile": {
+      "balanced": 0.15853658536585366,
+      "peaceful": 0.573170731707317,
+      "mysterious": 0.2682926829268293
+    },
+    "energy_level": "low",
+    "complexity_preference": 0.35954878048780486,
+    "harmony_types": [
+      "monochromatic",
+      "analogous",
+      "triadic"
+    ]
   }
 }

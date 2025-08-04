@@ -104,11 +104,20 @@ class CyberfemmeLabel(QLabel):
 class GalleryWindow(QMainWindow):
     """Main gallery window with multi-monitor support and cyberfemme aesthetics."""
     
-    def __init__(self, api_client: AetherwaveAPIClient, config: ConfigManager):
+    # Class variable to track all gallery windows for content coordination
+    _all_windows: List['GalleryWindow'] = []
+    _window_counter: int = 0
+    
+    def __init__(self, api_client: AetherwaveAPIClient, config: ConfigManager, window_id: Optional[int] = None):
         super().__init__()
         self.api_client = api_client
         self.config = config
         self.logger = logging.getLogger(__name__)
+        
+        # Window management
+        self.window_id = window_id or GalleryWindow._window_counter
+        GalleryWindow._window_counter += 1
+        GalleryWindow._all_windows.append(self)
         
         # Gallery state
         self.image_list: List[str] = []
@@ -284,13 +293,17 @@ class GalleryWindow(QMainWindow):
         self.setCursor(Qt.BlankCursor if self.config.is_fullscreen() else Qt.ArrowCursor)
     
     def load_images(self) -> None:
-        """Load the image list from the API."""
+        """Load the image list from the API with content coordination between windows."""
         try:
-            self.image_list = self.api_client.get_image_list()
+            # Use unique image distribution if multiple windows exist
+            if len(GalleryWindow._all_windows) > 1:
+                self.image_list = self.get_unique_image_list()
+            else:
+                self.image_list = self.api_client.get_image_list()
             
             if self.image_list:
                 random.shuffle(self.image_list)  # Randomize order
-                self.logger.info(f"Loaded {len(self.image_list)} images")
+                self.logger.info(f"Window #{self.window_id} loaded {len(self.image_list)} images")
                 self.update_info_display()
             else:
                 self.show_error("No images found")
@@ -774,7 +787,106 @@ class GalleryWindow(QMainWindow):
         """)
         self.connection_label.show()
     
-    def show_error(self, message: str) -> None:
+    def spawn_new_window(self) -> None:
+        """Spawn a new gallery window on the next available screen."""
+        try:
+            # Create new window with unique window ID
+            new_window_id = GalleryWindow._window_counter + 1
+            new_window = GalleryWindow(self.api_client, self.config, window_id=new_window_id)
+            
+            # Set window title to distinguish windows
+            new_window.setWindowTitle(f"Aetherwave Gallery #{new_window_id}")
+            
+            # Position on next available screen or offset position
+            self.position_new_window(new_window)
+            
+            # Start at different position in image list for variety
+            if new_window.image_list:
+                # Start at a different position based on window number
+                offset = (self.window_id * 13) % len(new_window.image_list)  # Use prime for better distribution
+                new_window.current_index = offset
+                new_window.load_current_image()
+                new_window.update_info_display()
+            
+            # Auto-start slideshow if current window is playing
+            if self.is_playing:
+                new_window.start_gallery()
+            
+            # Show the new window (use windowed mode by default unless current window is fullscreen)
+            if self.isFullScreen():
+                new_window.showFullScreen()
+            else:
+                new_window.show()
+            
+            self.logger.info(f"Spawned new gallery window #{new_window_id} with {len(new_window.image_list)} images, starting at index {new_window.current_index}")
+            
+        except Exception as e:
+            self.logger.error(f"Failed to spawn new window: {e}")
+            self.show_error(f"Failed to create new window: {e}")
+    
+    def position_new_window(self, new_window: 'GalleryWindow') -> None:
+        """Position new window on available screen or with offset."""
+        screens = QApplication.instance().screens()
+        
+        if len(screens) > 1:
+            # Try to place on different screen
+            current_screen_index = 0
+            current_geometry = self.geometry()
+            
+            # Find which screen the current window is on
+            for i, screen in enumerate(screens):
+                if screen.geometry().contains(current_geometry.center()):
+                    current_screen_index = i
+                    break
+            
+            # Use next screen (cycling through available screens)
+            next_screen_index = (current_screen_index + 1) % len(screens)
+            target_screen = screens[next_screen_index]
+            
+            # Position on target screen (center it, don't fill the screen)
+            screen_geometry = target_screen.geometry()
+            
+            # Use same size as current window, or reasonable default
+            window_size = self.size()
+            if window_size.width() < 100 or window_size.height() < 100:
+                window_size = QSize(1200, 800)  # Default size
+            
+            # Center on target screen
+            center_x = screen_geometry.center().x() - window_size.width() // 2
+            center_y = screen_geometry.center().y() - window_size.height() // 2
+            
+            new_window.move(center_x, center_y)
+            new_window.resize(window_size)
+            
+            self.logger.debug(f"Positioned new window on screen {next_screen_index}: {target_screen.name()}")
+        else:
+            # Single screen - offset the window position
+            current_pos = self.pos()
+            offset_x = 50 + (self.window_id * 30)  # Cascade windows
+            offset_y = 50 + (self.window_id * 30)
+            new_window.move(current_pos.x() + offset_x, current_pos.y() + offset_y)
+            new_window.resize(self.size())
+            
+            self.logger.debug(f"Positioned new window with cascade offset: +{offset_x}, +{offset_y}")
+    
+    def get_unique_image_list(self) -> List[str]:
+        """Get image list with images not currently displayed by other windows."""
+        all_images = self.api_client.get_image_list()
+        
+        # Get currently displayed images from other windows
+        used_images = set()
+        for window in GalleryWindow._all_windows:
+            if window != self and window.image_list and 0 <= window.current_index < len(window.image_list):
+                used_images.add(window.image_list[window.current_index])
+        
+        # Filter out used images, or return all if too few available
+        available_images = [img for img in all_images if img not in used_images]
+        
+        # If too few unique images available, use all images
+        if len(available_images) < 10:
+            available_images = all_images
+        
+        return available_images
         """Show an error message."""
         if self.info_label is None:
             return
@@ -811,6 +923,9 @@ class GalleryWindow(QMainWindow):
                     self.info_label.hide()
                 else:
                     self.update_info_display()
+        elif key == Qt.Key_N:
+            # Spawn new gallery window
+            self.spawn_new_window()
         elif key == Qt.Key_R:
             # Refresh image list
             self.load_images()
@@ -845,7 +960,11 @@ class GalleryWindow(QMainWindow):
     
     def closeEvent(self, event) -> None:
         """Handle window close event."""
-        self.logger.info("Closing gallery window")
+        self.logger.info(f"Closing gallery window #{self.window_id}")
+        
+        # Remove from window tracking
+        if self in GalleryWindow._all_windows:
+            GalleryWindow._all_windows.remove(self)
         
         # Stop all timers and threads
         if self.slideshow_timer:

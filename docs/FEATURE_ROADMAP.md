@@ -106,11 +106,39 @@ The current Qt + Python implementation is production-ready for:
 
 ## 🔮 Future Enhancement Opportunities
 
-### **Phase 5: OpenGL Effects Pipeline**
+### **Phase 5: Multi-Image Layouts & Window Management**
 
 **Priority**: High
 **Estimated Timeline**: 2-3 weeks
-**Dependencies**: Qt6 OpenGL integration
+**Dependencies**: Current Qt6 implementation
+
+**Features**:
+
+- **Shifting Tiles Layout**: Dynamic multi-image arrangement inspired by macOS Photos screensaver
+- **Multi-Window Spawning**: 'N' key shortcut to create independent gallery windows
+- **Independent Content**: Each window displays different image sequences for variety
+- **Layout Modes**: Toggle between single-image and multi-image tile arrangements
+- **Cross-Window Coordination**: Prevent duplicate images across multiple windows
+
+**Technical Implementation**:
+
+- Qt6 QGridLayout for dynamic tile arrangements
+- Window manager for tracking multiple gallery instances
+- Image pool coordination to ensure content diversity
+- Configurable tile sizes and transition animations
+
+**User Experience**:
+
+- Press 'N' to spawn new gallery window on any monitor
+- Press 'L' to toggle between single-image and shifting tiles layout
+- Independent slideshow timing and controls per window
+- Seamless multi-monitor gallery installations
+
+### **Phase 6: OpenGL Effects Pipeline**
+
+**Priority**: High
+**Estimated Timeline**: 2-3 weeks
+**Dependencies**: Phase 5 completion
 
 **Features**:
 
@@ -125,7 +153,7 @@ The current Qt + Python implementation is production-ready for:
 - Theme-specific effect selection based on content analysis
 - Configurable effect intensity through YAML settings
 
-### **Phase 6: Advanced Multi-Monitor**
+### **Phase 7: Advanced Multi-Monitor**
 
 **Priority**: Medium
 **Estimated Timeline**: 2-4 weeks
@@ -134,17 +162,17 @@ The current Qt + Python implementation is production-ready for:
 **Features**:
 
 - **Content Distribution**: Intelligent image placement across displays
-- **Independent Control**: Per-monitor playlist and timing control
 - **Synchronized Transitions**: Coordinated effects across all displays
 - **Installation Mode**: Gallery kiosk mode with auto-recovery
+- **Cross-Window Communication**: Shared state management between windows
 
 **Technical Approach**:
 
 - Extended Qt6 multi-monitor APIs
-- Centralized display coordination system
+- Inter-process communication for window coordination
 - Advanced window management and positioning
 
-### **Phase 7: Collection Management**
+### **Phase 8: Collection Management**
 
 **Priority**: Low
 **Estimated Timeline**: 3-4 weeks
