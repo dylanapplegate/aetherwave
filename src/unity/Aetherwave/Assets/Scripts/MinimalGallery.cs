@@ -12,7 +12,21 @@ namespace Aetherwave
             Debug.Log("🎨 Aetherwave Gallery Started!");
             Debug.Log($"📡 API should be running on http://localhost:8000");
             Debug.Log($"🎮 Controls: ESC to quit");
-            
+
+            // IMMEDIATELY clear the skybox that's causing the sunset gradient
+            RenderSettings.skybox = null;
+            DynamicGI.UpdateEnvironment();
+            Debug.Log("🎨 SKYBOX CLEARED - sunset should be gone!");
+
+            // Set camera to solid color background
+            Camera mainCamera = Camera.main;
+            if (mainCamera != null)
+            {
+                mainCamera.clearFlags = CameraClearFlags.SolidColor;
+                mainCamera.backgroundColor = Color.black;
+                Debug.Log("✅ Camera set to solid black background");
+            }
+
             // Add the API test component to this GameObject
             gameObject.AddComponent<APITestGallery>();
         }
