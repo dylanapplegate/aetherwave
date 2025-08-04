@@ -31,25 +31,44 @@ fi
 if ! command -v cmake &> /dev/null; then
     echo "❌ CMake not found"
     echo "   Please install CMake:"
-    echo "   - Using Homebrew: brew install cmake"
-    echo "   - Download from: https://cmake.org/download/"
+    echo "   Option 1: brew install cmake"
+    echo "   Option 2: Download from https://cmake.org"
     exit 1
 fi
 
+# Check for SDL2 (new requirement instead of openFrameworks)
+if ! pkg-config --exists sdl2; then
+    echo "❌ SDL2 not found"
+    echo "   Installing SDL2 via Homebrew..."
+    if command -v brew &> /dev/null; then
+        brew install sdl2 sdl2_image
+        echo "✅ SDL2 installed successfully"
+    else
+        echo "❌ Homebrew not found. Please install SDL2 manually:"
+        echo "   1. Install Homebrew: /bin/bash -c "\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)""
+        echo "   2. Run: brew install sdl2 sdl2_image"
+        exit 1
+    fi
+fi
+
+# Check for SDL2_image
+if ! pkg-config --exists SDL2_image; then
+    echo "❌ SDL2_image not found"
+    echo "   Installing SDL2_image via Homebrew..."
+    if command -v brew &> /dev/null; then
+        brew install sdl2_image
+        echo "✅ SDL2_image installed successfully"
+    else
+        echo "❌ Please install SDL2_image: brew install sdl2_image"
+        exit 1
+    fi
+fi
+
 echo "✅ System requirements satisfied"
+echo "✅ SDL2 graphics engine ready"
 
 # Navigate to project root
 cd "$PROJECT_ROOT"
-
-# Check if openFrameworks is installed
-OF_DIR="libs/openFrameworks"
-if [ ! -d "$OF_DIR" ]; then
-    echo ""
-    echo "🔧 openFrameworks not found. Setting up openFrameworks..."
-    ./scripts/setup_openframeworks.sh
-else
-    echo "✅ openFrameworks found"
-fi
 
 # Create and configure build directory
 echo ""
@@ -68,13 +87,12 @@ cd build
 # Configure CMake
 echo "📝 Running CMake configuration..."
 cmake .. -DCMAKE_BUILD_TYPE=Release \
-         -DOF_ROOT="../libs/openFrameworks" \
          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
 # Build the application
 echo ""
 echo "🔨 Building Aetherwave C++ application..."
-echo "   This may take a few minutes on first build..."
+echo "   Using SDL2 for hardware-accelerated graphics..."
 
 # Use all available CPU cores for faster compilation
 NCPU=$(sysctl -n hw.ncpu)

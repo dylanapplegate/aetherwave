@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Aetherwave C++ Application Runner  
+# Aetherwave C++ Application Runner
 # Quick run script for the C++ display engine
 
 set -e
@@ -29,7 +29,7 @@ if [ ! -d "$ASSETS_DIR" ] || [ -z "$(ls -A "$ASSETS_DIR" 2>/dev/null | grep -E '
     echo "⚠️  No images found in $ASSETS_DIR"
     echo "   The application will run but won't display any images"
     echo ""
-    
+
     if [ -d "$SOURCE_ASSETS_DIR" ] && [ "$(ls -A "$SOURCE_ASSETS_DIR" 2>/dev/null | grep -E '\.(jpg|jpeg|png|gif|bmp|tiff|tif)$')" ]; then
         echo "🔍 Found images in source assets directory ($SOURCE_ASSETS_DIR)"
         echo "   These will be synced during the next build"

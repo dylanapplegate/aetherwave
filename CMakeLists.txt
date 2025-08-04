@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Aetherwave VERSION 1.0.0 LANGUAGES CXX OBJCXX)
+project(Aetherwave VERSION 1.0.0 LANGUAGES CXX)
 
 # Set C++17 standard
 set(CMAKE_CXX_STANDARD 17)
@@ -11,17 +11,14 @@ if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0")
 endif()
 
-# Find openFrameworks
-set(OF_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/libs/openFrameworks" CACHE PATH "The root directory of openFrameworks")
+# Find SDL2 (much lighter than openFrameworks)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(SDL2 REQUIRED sdl2)
+pkg_check_modules(SDL2_IMAGE REQUIRED SDL2_image)
 
-# Check if openFrameworks exists
-if(NOT EXISTS ${OF_ROOT})
-    message(WARNING "openFrameworks not found at ${OF_ROOT}. Please install openFrameworks or set OF_ROOT variable.")
-endif()
-
-# Source files (using simplified visual app)
+# Source files (using real SDL2 visual app)
 set(SOURCES
-    "src/cpp/visual_simple.cpp"
+    "src/cpp/visual_sdl.cpp"
     "src/shared/Config.cpp"
 )
 
@@ -45,34 +42,27 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "App
     )
 endif()
 
-# For now, build without openFrameworks to test basic compilation
-# We'll add openFrameworks integration later
-if(APPLE)
-    # Find OpenGL and other required frameworks for basic compilation
-    find_package(OpenGL REQUIRED)
+# Link SDL2 libraries
+target_include_directories(${PROJECT_NAME} PRIVATE
+    src/cpp
+    src/shared
+    config
+    ${SDL2_INCLUDE_DIRS}
+    ${SDL2_IMAGE_INCLUDE_DIRS}
+)
 
-    target_link_libraries(${PROJECT_NAME} PRIVATE
-        ${OpenGL_LIBRARIES}
-        "-framework Cocoa"
-        "-framework IOKit"
-        "-framework CoreVideo"
-        "-framework CoreFoundation"
-        "-framework AppKit"
-        "-framework OpenGL"
-        "-framework AudioToolbox"
-        "-framework CoreAudio"
-        "-framework QuartzCore"
-        "-framework Security"
-        "-framework ApplicationServices"
-    )
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    ${SDL2_LIBRARIES}
+    ${SDL2_IMAGE_LIBRARIES}
+)
 
-    # Add filesystem library for C++17
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
-        target_link_libraries(${PROJECT_NAME} PRIVATE stdc++fs)
-    endif()
-endif()
+# Add SDL2 compile flags
+target_compile_options(${PROJECT_NAME} PRIVATE ${SDL2_CFLAGS_OTHER})
 
-# Set output directory
+# Add filesystem library for C++17
+if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+    target_link_libraries(${PROJECT_NAME} PRIVATE stdc++fs)
+endif()# Set output directory
 set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
