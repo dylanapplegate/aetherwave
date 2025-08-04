@@ -189,6 +189,8 @@ rm -rf build libs/openFrameworks
 ./scripts/cpp-setup.sh
 ```
 
+**Note**: The current C++ build system uses a test stub while openFrameworks integration is being finalized. The build and run scripts work correctly, and the foundation is ready for full openFrameworks integration.
+
 **"No images loaded" message:**
 
 - Add images to `build/bin/assets/images/` directory

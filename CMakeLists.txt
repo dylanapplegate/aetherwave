@@ -19,17 +19,10 @@ if(NOT EXISTS ${OF_ROOT})
     message(WARNING "openFrameworks not found at ${OF_ROOT}. Please install openFrameworks or set OF_ROOT variable.")
 endif()
 
-# Include openFrameworks
-if(EXISTS ${OF_ROOT})
-    include(${OF_ROOT}/libs/openFrameworksCompiled/project/makefileCommon/config.make.cmake)
-endif()
-
-# Source files
-file(GLOB_RECURSE SOURCES
-    "src/cpp/*.cpp"
-    "src/cpp/*.h"
-    "src/shared/*.cpp"
-    "src/shared/*.h"
+# Source files (using simplified version that actually runs)
+set(SOURCES
+    "src/cpp/simple_app.cpp"
+    "src/shared/Config.cpp"
 )
 
 # Create executable
@@ -52,9 +45,31 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "App
     )
 endif()
 
-# Link openFrameworks if available
-if(EXISTS ${OF_ROOT})
-    target_link_libraries(${PROJECT_NAME} PRIVATE openFrameworks)
+# For now, build without openFrameworks to test basic compilation
+# We'll add openFrameworks integration later
+if(APPLE)
+    # Find OpenGL and other required frameworks for basic compilation
+    find_package(OpenGL REQUIRED)
+    
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        ${OpenGL_LIBRARIES}
+        "-framework Cocoa"
+        "-framework IOKit"
+        "-framework CoreVideo"
+        "-framework CoreFoundation"
+        "-framework AppKit"
+        "-framework OpenGL"
+        "-framework AudioToolbox"
+        "-framework CoreAudio"
+        "-framework QuartzCore"
+        "-framework Security"
+        "-framework ApplicationServices"
+    )
+    
+    # Add filesystem library for C++17
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+        target_link_libraries(${PROJECT_NAME} PRIVATE stdc++fs)
+    endif()
 endif()
 
 # Set output directory

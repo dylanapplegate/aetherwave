@@ -6,7 +6,7 @@
 set -e
 
 # Configuration
-OF_VERSION="0.12.0"
+OF_VERSION="0.12.1"
 OF_DIR="libs/openFrameworks"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"

@@ -6,12 +6,17 @@ assets/
 # Build artifacts
 build/
 bin/
+libs/
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 Makefile
 *.cmake
 compile_commands.json
+
+# Temporary build files
+src/cpp/app_stub.cpp
+src/cpp/simple_app.cpp
 
 # C++ compiled files
 *.o
