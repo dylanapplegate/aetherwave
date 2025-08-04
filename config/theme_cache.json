@@ -357,5 +357,31 @@
     "harmony_types": [
       "triadic"
     ]
+  },
+  "72e74da897f04dd1cd9d998ca01b377b": {
+    "theme_name": "adaptive",
+    "confidence": 0.5,
+    "primary_colors": [
+      "#302532",
+      "#343e4a",
+      "#d9d2db",
+      "#aca3b0"
+    ],
+    "accent_colors": [
+      "#89798d",
+      "#a18da7",
+      "#c3a1a6",
+      "#806b76"
+    ],
+    "temperature_bias": "neutral",
+    "mood_profile": {
+      "mysterious": 1.0
+    },
+    "energy_level": "low",
+    "complexity_preference": 0.333,
+    "harmony_types": [
+      "monochromatic",
+      "triadic"
+    ]
   }
 }

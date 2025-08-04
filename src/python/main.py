@@ -13,8 +13,8 @@ import json
 import logging
 from pathlib import Path
 import aiofiles
-from advanced_classifier import AdvancedImageClassifier
-from content_theme_analyzer import CollectionAnalyzer, ThemeProfile, ContentThemeCache
+from .advanced_classifier import AdvancedImageClassifier
+from .content_theme_analyzer import CollectionAnalyzer, ThemeProfile, ContentThemeCache
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

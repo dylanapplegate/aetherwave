@@ -24,6 +24,67 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
 - Do NOT alter `assets/` (read-only unless instructed)
 - Do NOT use black-box AI models for classification (use colorthief, OpenCV, etc.)
 
+### **🔍 Feature Verification Protocol**
+
+**Before marking any feature as "COMPLETED" in documentation, ALWAYS verify functionality:**
+
+1. **Phase 4A Content-Driven Aesthetics Verification:**
+
+   ```bash
+   # MANDATORY: Test Python classification API
+   source venv/bin/activate
+   python -m uvicorn src.python.main:app --host 0.0.0.0 --port 8000 --reload &
+   sleep 3
+   
+   # Test individual image classification (should complete <1 second)
+   curl -X POST "http://localhost:8000/classify" \
+     -H "Content-Type: application/json" \
+     -d '{"image_path": "assets/images/06201422-D51B-414B-89DA-E12CACAB28CE.png", "include_metadata": true}' \
+     | jq '.metadata.dominant_color'
+   
+   # Test collection theme analysis (should complete <0.1 seconds)
+   curl -X POST "http://localhost:8000/analyze/collection-theme" \
+     -H "Content-Type: application/json" \
+     -d '{"collection_path": "assets/images", "sample_size": 5}' \
+     | jq '.theme.theme_name'
+   
+   # EXPECTED: API responses with valid color/theme data, not error messages
+   pkill -f "uvicorn"
+   ```
+
+2. **Unity Migration Verification:**
+
+   ```bash
+   # MANDATORY: Test Unity compilation
+   ./scripts/unity-build-verify.sh
+   # EXPECTED: "🎉 Unity Build Verification PASSED"
+   
+   # Test Unity Input System configuration
+   # EXPECTED: Unity editor launches without ArgumentException errors
+   # EXPECTED: activeInputHandler: 2 in ProjectSettings.asset
+   ```
+
+3. **Performance Benchmarks:**
+
+   ```bash
+   # Classification performance must meet standards:
+   # - Individual images (1-7MB PNG): <1.0 seconds
+   # - Collection analysis (5 images): <0.1 seconds
+   # - ColorThief quality=10 with image preprocessing for large files
+   ```
+
+4. **Integration Testing:**
+
+   ```bash
+   # MANDATORY: Test complete content→theme→visual pipeline
+   # 1. Python API generates theme from image collection
+   # 2. Unity/C++ app receives theme data via HTTP
+   # 3. Visual rendering adapts to detected theme
+   # EXPECTED: End-to-end workflow functional
+   ```
+
+**CRITICAL**: Never mark features as "COMPLETED" without passing ALL verification steps. If verification fails, fix the issues or update documentation to reflect actual status.
+
 ### **🧹 Project Cleanup & Verification Protocol**
 
 **Before completing any autonomous coding session, ALWAYS perform these cleanup steps:**

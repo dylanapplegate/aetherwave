@@ -39,14 +39,21 @@ class ColorAnalyzer:
             Dictionary containing color analysis results
         """
         try:
+            # Preprocess image for faster analysis if it's very large
+            processed_image_path = self._preprocess_image_for_analysis(image_path)
+            
             # Use ColorThief for dominant color extraction
-            color_thief = ColorThief(image_path)
+            color_thief = ColorThief(processed_image_path)
 
-            # Get dominant color
-            dominant_color = color_thief.get_color(quality=1)
+            # Get dominant color (quality=10 for much faster processing)
+            dominant_color = color_thief.get_color(quality=10)
 
-            # Get color palette
-            palette = color_thief.get_palette(color_count=max_colors, quality=1)
+            # Get color palette (quality=10 for much faster processing)
+            palette = color_thief.get_palette(color_count=max_colors, quality=10)
+
+            # Clean up temporary file if we created one
+            if processed_image_path != image_path:
+                Path(processed_image_path).unlink(missing_ok=True)
 
             # Convert RGB tuples to hex strings
             dominant_hex = self._rgb_to_hex(dominant_color)
@@ -192,6 +199,54 @@ class ColorAnalyzer:
 
         saturation = (max_val - min_val) / max_val
         return round(saturation, 3)
+
+    def _preprocess_image_for_analysis(self, image_path: str) -> str:
+        """
+        Preprocess large images for faster analysis by resizing if needed.
+        Returns path to processed image (original or temporary resized version).
+        """
+        import os
+        import tempfile
+        from PIL import Image
+        
+        # Check file size (in MB)
+        file_size_mb = os.path.getsize(image_path) / (1024 * 1024)
+        
+        # If file is smaller than 1MB, use original
+        if file_size_mb < 1.0:
+            return image_path
+            
+        try:
+            # Open image and check dimensions
+            with Image.open(image_path) as img:
+                width, height = img.size
+                
+                # If image is already small enough, use original
+                if width <= 800 and height <= 600:
+                    return image_path
+                    
+                # Calculate new dimensions (maintain aspect ratio)
+                aspect_ratio = width / height
+                if aspect_ratio > 1:  # Landscape
+                    new_width = 800
+                    new_height = int(800 / aspect_ratio)
+                else:  # Portrait
+                    new_height = 600
+                    new_width = int(600 * aspect_ratio)
+                
+                # Resize image
+                resized_img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                
+                # Save to temporary file
+                temp_fd, temp_path = tempfile.mkstemp(suffix='.png')
+                os.close(temp_fd)  # Close file descriptor, we just need the path
+                
+                resized_img.save(temp_path, 'PNG', optimize=True)
+                return temp_path
+                
+        except Exception as e:
+            print(f"Warning: Could not preprocess image {image_path}: {e}")
+            return image_path  # Fallback to original
 
     def _get_fallback_colors(self) -> Dict[str, Any]:
         """Return fallback color data when analysis fails."""
