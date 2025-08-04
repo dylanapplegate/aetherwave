@@ -127,7 +127,7 @@ Examples:
         metadata = classify_image_stub(args.image_path, args.output)
         
         # Print summary
-        print(f"\nClassification Summary:")
+        print("\nClassification Summary:")
         print(f"File: {metadata['filename']}")
         print(f"Dimensions: {metadata['width']}x{metadata['height']}")
         print(f"Mood: {metadata['mood']}")
