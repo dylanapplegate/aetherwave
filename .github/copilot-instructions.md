@@ -24,6 +24,71 @@ You are contributing to the `Aetherwave` project—a media display engine for sh
 - Do NOT alter `assets/` (read-only unless instructed)
 - Do NOT use black-box AI models for classification (use colorthief, OpenCV, etc.)
 
+### **🧹 Project Cleanup & Verification Protocol**
+
+**Before completing any autonomous coding session, ALWAYS perform these cleanup steps:**
+
+1. **Remove Old Dependencies & Test Files:**
+
+   ```bash
+   # Remove any old library installations
+   rm -rf libs/ external/ third_party/
+   # Remove temporary test files
+   find . -name "*_temp*" -delete
+   find . -name "*_test*" -not -path "./tests/*" -delete
+   find . -name "*.tmp" -delete
+   # Remove old build artifacts
+   rm -rf *.o *.obj *.exe *.dll *.dylib
+   ```
+
+2. **Terminate All Background Processes:**
+
+   ```bash
+   # Kill any running development servers
+   pkill -f "python.*main.py"
+   pkill -f "fastapi"
+   pkill -f "uvicorn"
+   # Kill any running C++ applications
+   pkill -f "Aetherwave"
+   pkill -f "visual_sdl"
+   # Clean up docker processes if used
+   docker-compose down --remove-orphans
+   ```
+
+3. **Clean Terminal State:**
+
+   ```bash
+   # Ensure no hanging background jobs
+   jobs -l
+   # Kill any background jobs if present
+   kill %1 %2 %3 2>/dev/null || true
+   ```
+
+4. **Verify Complete Build Pipeline:**
+
+   ```bash
+   # Must pass: Python API build verification
+   ./scripts/dev-setup.sh
+   curl -s http://localhost:8000/health | grep -q "healthy"
+
+   # Must pass: C++ application build verification
+   ./scripts/cpp-setup.sh
+   ./scripts/verify-app.sh
+
+   # Must pass: All tests
+   pytest tests/ --tb=short
+   ```
+
+5. **Final State Verification:**
+   - ✅ No running background processes (`ps aux | grep -E "python.*main|Aetherwave|fastapi"` returns empty)
+   - ✅ No hanging terminal jobs (`jobs -l` returns empty)
+   - ✅ Python API builds and responds to health checks
+   - ✅ C++ application builds without errors and launches successfully
+   - ✅ All tests pass with 90%+ coverage
+   - ✅ No temporary files or old dependencies remain
+
+**CRITICAL**: An autonomous agent MUST NOT consider their work complete until ALL verification steps pass. If any step fails, troubleshoot and fix before ending the session.
+
 ### **🧠 Memory & Documentation Management**
 
 **Follow these steps for each interaction:**
@@ -152,7 +217,50 @@ Image Collection → Classification → Theme Detection → Visual Rendering
 2. **Implementation**: Follow C++17/Python typing standards with comprehensive testing
 3. **Documentation**: Update architecture docs and README files during development
 4. **Memory Recording**: Store business decisions in MCP memory for conversational context
-5. **PR Creation**: Tag with scope (`feature/`, `bugfix/`) and document config changes
+5. **Build Verification**: Ensure both Python API and C++ application build successfully
+6. **Final Cleanup**: Execute project cleanup protocol before session completion
+7. **PR Creation**: Tag with scope (`feature/`, `bugfix/`) and document config changes
+
+### **Mandatory Verification Steps:**
+
+**For ANY code changes, autonomous agents must verify:**
+
+1. **Python API Verification:**
+
+   ```bash
+   # Start Docker services
+   ./scripts/dev-setup.sh
+   # Verify API health
+   curl -s http://localhost:8000/health
+   # Expected: {"healthy":true,"service_version":"2.0.0",...}
+   ```
+
+2. **C++ Application Verification:**
+
+   ```bash
+   # Build application
+   ./scripts/cpp-setup.sh
+   # Run comprehensive verification
+   ./scripts/verify-app.sh
+   # Expected: All ✅ checks pass, visual window appears
+   ```
+
+3. **Test Suite Verification:**
+
+   ```bash
+   # Run all tests
+   pytest tests/ --cov=src --cov-report=term-missing
+   # Expected: 90%+ coverage, all tests pass
+   ```
+
+4. **Clean Shutdown:**
+   ```bash
+   # Stop all services
+   ./scripts/dev-stop.sh
+   pkill -f "Aetherwave"
+   # Verify no processes remain
+   ps aux | grep -E "python.*main|Aetherwave|fastapi"
+   ```
 
 ### **Build Commands:**
 
