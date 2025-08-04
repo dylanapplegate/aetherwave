@@ -22,6 +22,7 @@ namespace Aetherwave
         public KeyCode previousImageKey = KeyCode.Backspace;
         public KeyCode refreshThemeKey = KeyCode.T;
         public KeyCode fullscreenToggleKey = KeyCode.F;
+        public KeyCode debugInfoToggleKey = KeyCode.I;
         
         [Header("API Integration")]
         public string apiBaseUrl = "http://localhost:8000";
@@ -30,6 +31,8 @@ namespace Aetherwave
         private int currentImageIndex = 0;
         private bool isTransitioning = false;
         private string currentTheme = "adaptive";
+        private Vector2 lastScreenSize;
+        private bool showDebugInfo = true;
         
         void Start()
         {
@@ -65,10 +68,27 @@ namespace Aetherwave
             }
             
             StartCoroutine(InitializeGallery());
+            
+            // Initialize screen size tracking
+            lastScreenSize = new Vector2(Screen.width, Screen.height);
         }
         
         void Update()
         {
+            // Check for screen size changes (monitor changes, window resizing)
+            Vector2 currentScreenSize = new Vector2(Screen.width, Screen.height);
+            if (currentScreenSize != lastScreenSize)
+            {
+                Debug.Log($"🖥️ Screen size changed: {lastScreenSize} -> {currentScreenSize}");
+                lastScreenSize = currentScreenSize;
+                
+                // Re-apply aspect ratio if we have a current image
+                if (imageDisplay != null && imageDisplay.texture != null)
+                {
+                    StartCoroutine(ReapplyAspectRatioAfterScreenChange());
+                }
+            }
+            
             if (!isTransitioning)
             {
                 if (Input.GetKeyDown(nextImageKey) || Input.GetKeyDown(KeyCode.RightArrow))
@@ -89,6 +109,12 @@ namespace Aetherwave
             if (Input.GetKeyDown(fullscreenToggleKey))
             {
                 ToggleFullscreen();
+            }
+            
+            // Debug info toggle (works even during transitions)
+            if (Input.GetKeyDown(debugInfoToggleKey))
+            {
+                ToggleDebugInfo();
             }
             
             if (Input.GetKeyDown(KeyCode.Escape))
@@ -213,6 +239,9 @@ namespace Aetherwave
             if (newTexture != null)
             {
                 ApplyProperAspectRatio(newTexture);
+                
+                // Extract and apply background color from the image
+                ApplyImageBasedBackgroundColor(newTexture);
             }
             
             Debug.Log($"✅ Texture applied. Current texture: {(imageDisplay.texture != null ? $"{imageDisplay.texture.width}x{imageDisplay.texture.height}" : "NULL")}");
@@ -242,14 +271,22 @@ namespace Aetherwave
             Debug.Log($"   - Image: {texture.width}x{texture.height} (aspect: {imageAspect:F3})");
             Debug.Log($"   - Screen: {Screen.width}x{Screen.height} (aspect: {screenAspect:F3})");
             
+            // Force canvas update to ensure we have correct screen dimensions
+            Canvas parentCanvas = imageDisplay.GetComponentInParent<Canvas>();
+            if (parentCanvas != null)
+            {
+                Canvas.ForceUpdateCanvases();
+                LayoutRebuilder.ForceRebuildLayoutImmediate(parentCanvas.GetComponent<RectTransform>());
+            }
+            
             // Always reset to full screen first
             rectTransform.anchorMin = Vector2.zero;
             rectTransform.anchorMax = Vector2.one;
             rectTransform.offsetMin = Vector2.zero;
             rectTransform.offsetMax = Vector2.zero;
             
-            // Wait one frame to ensure the RectTransform is updated
-            Canvas.ForceUpdateCanvases();
+            // Force immediate layout update
+            rectTransform.ForceUpdateRectTransforms();
             
             if (imageAspect > screenAspect)
             {
@@ -274,9 +311,10 @@ namespace Aetherwave
                 Debug.Log($"📐 Pillarboxing applied: width ratio {widthRatio:F3}, horizontal margin {horizontalMargin:F3}");
             }
             
-            // Ensure no additional offsets
+            // Ensure no additional offsets and force update
             rectTransform.offsetMin = Vector2.zero;
             rectTransform.offsetMax = Vector2.zero;
+            rectTransform.ForceUpdateRectTransforms();
             
             Debug.Log($"📐 Final anchors: min({rectTransform.anchorMin.x:F3}, {rectTransform.anchorMin.y:F3}) max({rectTransform.anchorMax.x:F3}, {rectTransform.anchorMax.y:F3})");
         }
@@ -305,6 +343,69 @@ namespace Aetherwave
                 Debug.Log("🔄 Reapplying aspect ratio after fullscreen change...");
                 ApplyProperAspectRatio(texture);
             }
+        }
+        
+        void ToggleDebugInfo()
+        {
+            showDebugInfo = !showDebugInfo;
+            Debug.Log($"🔍 Debug info display: {(showDebugInfo ? "ON" : "OFF")}");
+        }
+        
+        void ApplyImageBasedBackgroundColor(Texture2D texture)
+        {
+            if (texture == null) return;
+            
+            // Sample colors from the edges of the image to get a good background color
+            Color backgroundColor = ExtractDominantEdgeColor(texture);
+            
+            // Darken and desaturate the color for a subtle background
+            backgroundColor = Color.Lerp(backgroundColor, Color.black, 0.7f); // Darken significantly
+            backgroundColor = Color.Lerp(backgroundColor, new Color(backgroundColor.grayscale, backgroundColor.grayscale, backgroundColor.grayscale), 0.3f); // Slightly desaturate
+            
+            // Apply to camera
+            Camera mainCamera = Camera.main;
+            if (mainCamera != null)
+            {
+                mainCamera.backgroundColor = backgroundColor;
+                Debug.Log($"🎨 Applied image-based background color: {ColorUtility.ToHtmlStringRGB(backgroundColor)}");
+            }
+        }
+        
+        Color ExtractDominantEdgeColor(Texture2D texture)
+        {
+            // Sample colors from the edges of the image
+            Color[] edgeColors = new Color[40]; // Sample 40 edge pixels
+            int colorIndex = 0;
+            
+            int width = texture.width;
+            int height = texture.height;
+            
+            // Sample from top and bottom edges
+            for (int i = 0; i < 10 && colorIndex < edgeColors.Length; i++)
+            {
+                int x = (i * width) / 10;
+                if (colorIndex < edgeColors.Length) edgeColors[colorIndex++] = texture.GetPixel(x, 0); // Top edge
+                if (colorIndex < edgeColors.Length) edgeColors[colorIndex++] = texture.GetPixel(x, height - 1); // Bottom edge
+            }
+            
+            // Sample from left and right edges  
+            for (int i = 0; i < 10 && colorIndex < edgeColors.Length; i++)
+            {
+                int y = (i * height) / 10;
+                if (colorIndex < edgeColors.Length) edgeColors[colorIndex++] = texture.GetPixel(0, y); // Left edge
+                if (colorIndex < edgeColors.Length) edgeColors[colorIndex++] = texture.GetPixel(width - 1, y); // Right edge
+            }
+            
+            // Calculate average color
+            float r = 0, g = 0, b = 0;
+            for (int i = 0; i < colorIndex; i++)
+            {
+                r += edgeColors[i].r;
+                g += edgeColors[i].g;
+                b += edgeColors[i].b;
+            }
+            
+            return new Color(r / colorIndex, g / colorIndex, b / colorIndex, 1f);
         }
         
         public void NextImage()
@@ -366,23 +467,14 @@ namespace Aetherwave
         
         void ApplyTheme(ThemeData theme)
         {
-            // Basic theme application - set camera background color
-            Camera mainCamera = Camera.main;
-            if (mainCamera != null && theme.primary_colors != null && theme.primary_colors.Length > 0)
-            {
-                if (ColorUtility.TryParseHtmlString(theme.primary_colors[0], out Color bgColor))
-                {
-                    // Darken the primary color for background
-                    bgColor = Color.Lerp(bgColor, Color.black, 0.8f);
-                    mainCamera.backgroundColor = bgColor;
-                    Debug.Log($"🎨 Applied theme background: {theme.primary_colors[0]} -> {bgColor}");
-                }
-            }
+            // Theme data is available for future use
+            // Background color is now set dynamically based on each image
+            Debug.Log($"🎨 Theme applied: {theme.theme_name} with colors: {string.Join(", ", theme.primary_colors)}");
         }
         
         void OnGUI()
         {
-            if (imageUrls.Count == 0) return;
+            if (imageUrls.Count == 0 || !showDebugInfo) return;
             
             GUIStyle style = new GUIStyle();
             style.fontSize = 16;
@@ -393,9 +485,10 @@ namespace Aetherwave
             info += $"📸 Image: {currentImageIndex + 1}/{imageUrls.Count}\n";
             info += $"🎭 Theme: {currentTheme}\n";
             info += $"🖥️ Fullscreen: {(Screen.fullScreen ? "ON" : "OFF")}\n";
-            info += $"🎮 Controls: SPACE/← →, T=theme, F=fullscreen, ESC=quit";
+            info += $"🔍 Debug Info: {(showDebugInfo ? "ON" : "OFF")}\n";
+            info += $"🎮 Controls: SPACE/← →, T=theme, F=fullscreen, I=debug, ESC=quit";
             
-            GUI.Label(new Rect(20, 20, 400, 100), info, style);
+            GUI.Label(new Rect(20, 20, 450, 120), info, style);
         }
     }
     
