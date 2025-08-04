@@ -72,23 +72,33 @@ class ImageLoader(QThread):
 
 
 class CyberfemmeLabel(QLabel):
-    """Custom QLabel with cyberfemme visual effects."""
+    """Custom QLabel with cyberfemme visual effects optimized for detailed info display."""
     
     def __init__(self, parent=None):
         super().__init__(parent)
+        # Using user's personal brand colors: #FF2D88 (pink), #8A2BE2 (purple), #007BFF (blue)
         self.setStyleSheet("""
             QLabel {
-                background-color: rgba(0, 0, 0, 200);
-                color: #FF00FF;
-                font-family: 'Menlo', monospace;
-                font-size: 14px;
+                background-color: rgba(0, 0, 0, 220);
+                color: #FFFFFF;
+                font-family: 'Perfect DOS VGA 437', 'IBM Plex Mono', 'Courier New', 'PT Mono', 'Source Code Pro', 'Consolas', 'Liberation Mono', 'DejaVu Sans Mono', monospace;
+                font-size: 16px;
                 font-weight: bold;
-                padding: 10px;
-                border: 2px solid #FF00FF;
-                border-radius: 5px;
+                padding: 12px 16px;
+                border: 2px solid #FF2D88;
+                border-radius: 8px;
+                line-height: 1.4;
+                max-width: 2000px;
+                min-width: 300px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                box-shadow: 0 4px 12px rgba(255, 45, 136, 0.3);
             }
         """)
         self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setWordWrap(False)  # Disable word wrapping to prevent text wrapping
+        self.setTextFormat(Qt.RichText)  # Enable HTML/rich text formatting
 
 
 class GalleryWindow(QMainWindow):
@@ -175,32 +185,41 @@ class GalleryWindow(QMainWindow):
         self.connection_label = CyberfemmeLabel(self)
         if self.connection_label is not None:
             self.connection_label.setText("◉ CONNECTED")
+            # Using your brand blue #007BFF for connection status
             self.connection_label.setStyleSheet("""
                 QLabel {
-                    background-color: rgba(0, 100, 0, 200);
-                    color: #00FF00;
+                    background-color: rgba(0, 123, 255, 200);
+                    color: #FFFFFF;
                     font-size: 12px;
-                    padding: 5px 10px;
-                    border: 1px solid #00FF00;
+                    font-weight: bold;
+                    padding: 8px 12px;
+                    border: 2px solid #007BFF;
+                    border-radius: 6px;
+                    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.4);
                 }
             """)
-            self.connection_label.move(20, self.height() - 60)
+            # Position in bottom left with proper spacing for progress bar
+            self.connection_label.move(20, self.height() - 80)
         
         # Progress bar for slideshow
         self.progress_bar = QProgressBar(self)
         if self.progress_bar is not None:
+            # Using your brand colors: Pink #FF2D88, Purple #8A2BE2, Blue #007BFF
             self.progress_bar.setStyleSheet("""
                 QProgressBar {
-                    border: 2px solid #FF00FF;
-                    border-radius: 3px;
-                    background-color: rgba(0, 0, 0, 150);
+                    border: 2px solid #8A2BE2;
+                    border-radius: 4px;
+                    background-color: rgba(0, 0, 0, 180);
                     color: #FFFFFF;
                     text-align: center;
-                    font-size: 10px;
+                    font-size: 11px;
+                    font-weight: bold;
+                    min-height: 8px;
+                    box-shadow: 0 2px 6px rgba(138, 43, 226, 0.3);
                 }
                 QProgressBar::chunk {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 #FF00FF, stop:0.5 #00FFFF, stop:1 #FFFFFF);
+                        stop:0 #FF2D88, stop:0.5 #8A2BE2, stop:1 #007BFF);
                     border-radius: 2px;
                 }
             """)
@@ -441,24 +460,38 @@ class GalleryWindow(QMainWindow):
                     # Calculate perceived brightness using luminance formula
                     luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
                     
-                    # Adaptive background based on image brightness
-                    if luminance > 0.7:  # Light images -> light background
-                        bg_r = max(240, int(r * 0.95))  # Keep it very light
-                        bg_g = max(240, int(g * 0.95))
-                        bg_b = max(240, int(b * 0.95))
-                        brightness_desc = "light (95%)"
-                    elif luminance > 0.4:  # Medium images -> medium background  
-                        bg_r = max(80, int(r * 0.4))
-                        bg_g = max(80, int(g * 0.4))
-                        bg_b = max(80, int(b * 0.4))
-                        brightness_desc = "medium (40%)"
-                    else:  # Dark images -> dark background
-                        bg_r = max(15, int(r * 0.15))
-                        bg_g = max(15, int(g * 0.15))
-                        bg_b = max(15, int(b * 0.15))
-                        brightness_desc = "dark (15%)"
+                    # Enhanced hue-preserving adaptive background
+                    if luminance > 0.7:  # Light images -> light background with hue preservation
+                        # For light images, use a brighter version that preserves the hue
+                        bg_r = max(220, int(r * 0.85))  # Preserve more of the original color
+                        bg_g = max(220, int(g * 0.85))
+                        bg_b = max(220, int(b * 0.85))
+                        brightness_desc = "light (85%)"
+                    elif luminance > 0.4:  # Medium images -> medium background with enhanced hue
+                        # For medium images, preserve more hue information
+                        bg_r = max(60, int(r * 0.45))
+                        bg_g = max(60, int(g * 0.45))
+                        bg_b = max(60, int(b * 0.45))
+                        brightness_desc = "medium (45%)"
+                    else:  # Dark images -> dark background with subtle hue
+                        # For dark images, preserve hue but keep it subtle
+                        bg_r = max(12, int(r * 0.25))
+                        bg_g = max(12, int(g * 0.25))
+                        bg_b = max(12, int(b * 0.25))
+                        brightness_desc = "dark (25%)"
                     
-                    self.logger.debug(f"✨ Luminance: {luminance:.2f} → {brightness_desc} background RGB: ({bg_r}, {bg_g}, {bg_b})")
+                    # Calculate hue information for enhanced debugging
+                    import colorsys
+                    try:
+                        h, s, v = colorsys.rgb_to_hsv(r/255.0, g/255.0, b/255.0)
+                        hue_degrees = int(h * 360)
+                        saturation_pct = int(s * 100)
+                        value_pct = int(v * 100)
+                        hue_desc = f"H:{hue_degrees}° S:{saturation_pct}% V:{value_pct}%"
+                    except:
+                        hue_desc = "HSV calculation failed"
+                    
+                    self.logger.debug(f"✨ Luminance: {luminance:.2f} | {hue_desc} → {brightness_desc} background RGB: ({bg_r}, {bg_g}, {bg_b})")
                     
                     # METHOD 1: Clear existing styles first
                     self.setStyleSheet("")
@@ -539,26 +572,162 @@ class GalleryWindow(QMainWindow):
             self.apply_cyberfemme_theme()
     
     def update_info_display(self) -> None:
-        """Update the information overlay."""
+        """Update the information overlay with comprehensive classification data."""
         if not self.image_list or self.info_label is None:
             return
         
         filename = self.image_list[self.current_index]
-        info_text = f"[{self.current_index + 1}/{len(self.image_list)}] {filename}"
         
-        # Add theme information if available
-        theme_data = self.api_client.get_collection_theme()
-        if theme_data and 'theme' in theme_data:
-            theme_name = theme_data['theme'].get('theme_name', 'unknown')
-            confidence = theme_data['theme'].get('confidence', 0)
-            info_text += f"\nTheme: {theme_name} ({confidence:.1%})"
+        # Build comprehensive info display
+        info_lines = [f"[{self.current_index + 1}/{len(self.image_list)}]"]
+        
+        try:
+            # Get detailed classification data
+            classification_data = self.api_client.classify_image(filename, include_metadata=True)
+            
+            if classification_data and 'metadata' in classification_data:
+                metadata = classification_data['metadata']
+                
+                # Image properties section
+                width = metadata.get('width', 0)
+                height = metadata.get('height', 0)
+                if width and height:
+                    aspect_ratio = metadata.get('aspect_ratio', width/height)
+                    orientation = "Portrait" if height > width else "Landscape" if width > height else "Square"
+                    megapixels = metadata.get('megapixels', (width * height) / 1_000_000)
+                    # Handle both numeric and descriptive values
+                    try:
+                        mp_val = float(megapixels)
+                        info_lines.append(f"📐 {width}×{height} :: {orientation} :: {mp_val:.1f}MP")
+                    except (ValueError, TypeError):
+                        # Use the string value as-is if it can't be converted
+                        info_lines.append(f"📐 {width}×{height} :: {orientation} :: {megapixels}MP")
+                
+                # Color analysis section
+                dominant_color = metadata.get('dominant_color', '')
+                color_temp = metadata.get('color_temperature', '')
+                color_harmony = metadata.get('color_harmony', '')
+                if dominant_color:
+                    color_info = f"🎨 {dominant_color}"
+                    if color_temp:
+                        color_info += f" :: {color_temp}"
+                    if color_harmony:
+                        color_info += f" :: {color_harmony}"
+                    info_lines.append(color_info)
+                
+                # Visual complexity section
+                brightness = metadata.get('brightness', 0)
+                saturation = metadata.get('saturation', 0)
+                edge_density = metadata.get('edge_density', 0)
+                if brightness or saturation or edge_density:
+                    complexity_info = "📊"
+                    if brightness:
+                        # Handle both numeric and descriptive values
+                        try:
+                            bright_val = float(brightness)
+                            complexity_info += f" Bright:{bright_val:.1f}"
+                        except (ValueError, TypeError):
+                            # Use the string value as-is if it can't be converted
+                            complexity_info += f" Bright:{brightness}"
+                    if saturation:
+                        # Handle both numeric and descriptive values
+                        try:
+                            sat_val = float(saturation)
+                            complexity_info += f" Sat:{sat_val:.1f}"
+                        except (ValueError, TypeError):
+                            # Use the string value as-is if it can't be converted
+                            complexity_info += f" Sat:{saturation}"
+                    if edge_density:
+                        # Handle both numeric and descriptive values
+                        try:
+                            edge_val = float(edge_density)
+                            complexity_info += f" Detail:{edge_val:.1f}"
+                        except (ValueError, TypeError):
+                            # Use the string value as-is if it can't be converted
+                            complexity_info += f" Detail:{edge_density}"
+                    info_lines.append(complexity_info)
+                
+                # Mood and emotion section
+                primary_mood = metadata.get('primary_mood', '')
+                emotional_tone = metadata.get('emotional_tone', '')
+                energy_level = metadata.get('energy_level', '')
+                if primary_mood or emotional_tone or energy_level:
+                    mood_info = "💫"
+                    if primary_mood:
+                        mood_info += f" {primary_mood.title()}"
+                    if emotional_tone:
+                        mood_info += f" :: {emotional_tone.title()}"
+                    if energy_level:
+                        # Handle both numeric and descriptive values
+                        try:
+                            energy_val = float(energy_level)
+                            mood_info += f" :: Energy:{energy_val:.1f}"
+                        except (ValueError, TypeError):
+                            # Use the string value as-is if it can't be converted
+                            mood_info += f" :: Energy:{energy_level}"
+                    info_lines.append(mood_info)
+                
+                # Technical quality section
+                format_type = metadata.get('format', '')
+                cinematic_score = metadata.get('cinematic_score', 0)
+                classification_confidence = metadata.get('classification_confidence', 0)
+                if format_type or cinematic_score or classification_confidence:
+                    tech_info = "⚙️"
+                    if format_type:
+                        tech_info += f" {format_type.upper()}"
+                    if cinematic_score:
+                        # Handle both numeric and descriptive values
+                        try:
+                            cinema_val = float(cinematic_score)
+                            tech_info += f" :: Cinema:{cinema_val:.1f}"
+                        except (ValueError, TypeError):
+                            # Use the string value as-is if it can't be converted
+                            tech_info += f" :: Cinema:{cinematic_score}"
+                    if classification_confidence:
+                        # Handle both numeric and descriptive values
+                        try:
+                            conf_val = float(classification_confidence)
+                            tech_info += f" :: Conf:{conf_val:.1%}"
+                        except (ValueError, TypeError):
+                            # Use the string value as-is if it can't be converted
+                            tech_info += f" :: Conf:{classification_confidence}"
+                    info_lines.append(tech_info)
+            
+            # Add theme information if available
+            theme_data = self.api_client.get_collection_theme()
+            if theme_data and 'theme' in theme_data:
+                theme_name = theme_data['theme'].get('theme_name', 'unknown')
+                confidence = theme_data['theme'].get('confidence', 0)
+                # Handle both numeric and descriptive values
+                try:
+                    conf_val = float(confidence)
+                    info_lines.append(f"🎭 Theme: {theme_name.title()} ({conf_val:.1%})")
+                except (ValueError, TypeError):
+                    # Use the string value as-is if it can't be converted
+                    info_lines.append(f"🎭 Theme: {theme_name.title()} ({confidence})")
+                
+        except Exception as e:
+            # Fallback to basic info if classification fails
+            info_lines.append(f"📁 {filename}")
+            self.logger.debug(f"Failed to get detailed classification for info display: {e}")
+        
+        # Join all info lines with newlines and apply alternating brand colors
+        # Using your brand colors: #FF2D88 (pink), #8A2BE2 (purple), #007BFF (blue)
+        brand_colors = ["#FF2D88", "#8A2BE2", "#007BFF"]
+        colored_lines = []
+        
+        for i, line in enumerate(info_lines):
+            color = brand_colors[i % len(brand_colors)]
+            colored_lines.append(f'<span style="color: {color};">{line}</span>')
+        
+        info_text = "<br>".join(colored_lines)
         
         self.info_label.setText(info_text)
         self.info_label.adjustSize()
         
-        # Show info briefly
+        # Show info for longer to give time to read comprehensive data
         self.info_label.show()
-        QTimer.singleShot(3000, self.info_label.hide)
+        QTimer.singleShot(8000, self.info_label.hide)  # Show for 8 seconds for more info
     
     def update_progress(self) -> None:
         """Update the slideshow progress bar."""
@@ -572,14 +741,15 @@ class GalleryWindow(QMainWindow):
         self.progress_bar.setValue(progress)
     
     def position_progress_bar(self) -> None:
-        """Position the progress bar at the bottom of the window."""
+        """Position the progress bar at the bottom of the window, avoiding connection status."""
         if self.progress_bar is None:
             return
             
-        bar_height = 6
+        bar_height = 8
         bar_width = self.width() - 40
         x = 20
-        y = self.height() - bar_height - 20
+        # Position above connection status (which is at height - 80) with some padding
+        y = self.height() - bar_height - 30
         
         self.progress_bar.setGeometry(x, y, bar_width, bar_height)
     
@@ -589,13 +759,17 @@ class GalleryWindow(QMainWindow):
             return
             
         self.connection_label.setText("◉ DISCONNECTED")
+        # Use your brand pink #FF2D88 for error states
         self.connection_label.setStyleSheet("""
             QLabel {
-                background-color: rgba(100, 0, 0, 200);
-                color: #FF0000;
+                background-color: rgba(255, 45, 136, 200);
+                color: #FFFFFF;
                 font-size: 12px;
-                padding: 5px 10px;
-                border: 1px solid #FF0000;
+                font-weight: bold;
+                padding: 8px 12px;
+                border: 2px solid #FF2D88;
+                border-radius: 6px;
+                box-shadow: 0 2px 8px rgba(255, 45, 136, 0.4);
             }
         """)
         self.connection_label.show()
