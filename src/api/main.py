@@ -18,9 +18,9 @@ import aiofiles
 import os
 import glob
 from datetime import datetime
-from .advanced_classifier import AdvancedImageClassifier
-from .content_theme_analyzer import CollectionAnalyzer, ContentThemeCache
-from .bento_optimizer import bento_optimizer
+from advanced_classifier import AdvancedImageClassifier
+from content_theme_analyzer import CollectionAnalyzer, ContentThemeCache
+from bento_optimizer import bento_optimizer
 
 # Constants
 ASSETS_PATH = Path("assets/images")

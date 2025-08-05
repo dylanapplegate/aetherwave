@@ -6,7 +6,7 @@ services:
       context: .
       target: development
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
       - ./src/api:/app/src/api
       - ./config:/app/config
@@ -15,12 +15,6 @@ services:
     environment:
       - ENVIRONMENT=development
       - PYTHONPATH=/app
-    networks:
-      - aetherwave-net
-
-networks:
-  aetherwave-net:
-    driver: bridge
 
 volumes:
   config-cache:

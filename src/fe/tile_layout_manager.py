@@ -309,10 +309,10 @@ class TileLayoutManager(QObject):
             tiles=[
                 TileSpec(0, 0, 1, 2, TileSize.TALL),      # Left tall
                 TileSpec(0, 1, 2, 2, TileSize.LARGE),     # Center large
+                TileSpec(2, 0, 1, 1, TileSize.SMALL),     # Bottom left small
+                TileSpec(2, 2, 1, 2, TileSize.TALL),      # Right tall
                 TileSpec(0, 2, 1, 1, TileSize.SMALL),     # Top right small
                 TileSpec(1, 2, 1, 1, TileSize.SMALL),     # Middle right small
-                TileSpec(2, 0, 1, 1, TileSize.SMALL),     # Bottom left small
-                TileSpec(2, 1, 2, 1, TileSize.MEDIUM),    # Bottom center medium
                 TileSpec(3, 0, 1, 1, TileSize.SMALL),     # Bottom left small
                 TileSpec(3, 1, 2, 1, TileSize.MEDIUM),    # Bottom span medium
             ]
@@ -325,9 +325,9 @@ class TileLayoutManager(QObject):
             grid_rows=3,
             tiles=[
                 TileSpec(0, 0, 3, 2, TileSize.XLARGE),    # Large showcase
-                TileSpec(0, 3, 1, 1, TileSize.SMALL),     # Top right small
-                TileSpec(0, 4, 1, 1, TileSize.SMALL),     # Top far right small
-                TileSpec(1, 3, 2, 1, TileSize.MEDIUM),    # Middle right medium
+                TileSpec(0, 3, 2, 1, TileSize.MEDIUM),    # Top right medium
+                TileSpec(1, 3, 1, 1, TileSize.SMALL),     # Middle right small
+                TileSpec(1, 4, 1, 1, TileSize.SMALL),     # Middle far right small
                 TileSpec(2, 0, 1, 1, TileSize.SMALL),     # Bottom left small
                 TileSpec(2, 1, 2, 1, TileSize.MEDIUM),    # Bottom center medium
                 TileSpec(2, 3, 2, 1, TileSize.MEDIUM),    # Bottom right medium
@@ -341,14 +341,47 @@ class TileLayoutManager(QObject):
             grid_rows=4,
             tiles=[
                 TileSpec(0, 0, 2, 2, TileSize.LARGE),     # Top left large
-                TileSpec(0, 2, 1, 1, TileSize.SMALL),     # Top middle small
-                TileSpec(0, 3, 1, 2, TileSize.TALL),      # Top right tall
-                TileSpec(1, 2, 1, 1, TileSize.SMALL),     # Middle small
-                TileSpec(2, 0, 1, 1, TileSize.SMALL),     # Bottom left small
-                TileSpec(2, 1, 2, 1, TileSize.MEDIUM),    # Bottom center medium
-                TileSpec(2, 3, 1, 1, TileSize.SMALL),     # Bottom right small
-                TileSpec(3, 0, 2, 1, TileSize.MEDIUM),    # Bottom left medium
-                TileSpec(3, 2, 2, 1, TileSize.MEDIUM),    # Bottom right medium
+                TileSpec(0, 2, 2, 1, TileSize.MEDIUM),    # Top right medium
+                TileSpec(1, 2, 1, 2, TileSize.TALL),      # Middle right tall
+                TileSpec(2, 0, 1, 2, TileSize.TALL),      # Bottom left tall
+                TileSpec(2, 2, 2, 1, TileSize.MEDIUM),    # Bottom right medium
+                TileSpec(3, 0, 1, 1, TileSize.SMALL),     # Bottom left small
+                TileSpec(3, 1, 1, 1, TileSize.SMALL),     # Bottom middle small
+                TileSpec(3, 2, 1, 1, TileSize.SMALL),     # Bottom right small
+                TileSpec(3, 3, 1, 1, TileSize.SMALL),     # Bottom far right small
+            ]
+        ))
+
+        # Pattern 5: Ultrawide (6x3 grid)
+        patterns.append(BentoPattern(
+            name="ultrawide_panorama",
+            grid_cols=6,
+            grid_rows=3,
+            tiles=[
+                TileSpec(0, 0, 4, 2, TileSize.XLARGE),    # Main showcase
+                TileSpec(0, 4, 2, 1, TileSize.MEDIUM),   # Top right medium
+                TileSpec(1, 4, 2, 1, TileSize.MEDIUM),   # Middle right medium
+                TileSpec(2, 0, 2, 1, TileSize.MEDIUM),   # Bottom left medium
+                TileSpec(2, 2, 2, 1, TileSize.MEDIUM),   # Bottom middle medium
+                TileSpec(2, 4, 2, 1, TileSize.MEDIUM),   # Bottom right medium
+            ]
+        ))
+
+        # Pattern 6: Ultrawide Mixed (8x3 grid)
+        patterns.append(BentoPattern(
+            name="ultrawide_mixed",
+            grid_cols=8,
+            grid_rows=3,
+            tiles=[
+                TileSpec(0, 0, 2, 2, TileSize.LARGE),     # Top left large
+                TileSpec(0, 2, 3, 1, TileSize.WIDE),      # Top middle wide
+                TileSpec(0, 5, 1, 1, TileSize.SMALL),     # Top right small
+                TileSpec(0, 6, 2, 2, TileSize.LARGE),     # Top right large
+                TileSpec(1, 2, 1, 1, TileSize.SMALL),
+                TileSpec(1, 3, 2, 2, TileSize.LARGE),
+                TileSpec(2, 0, 1, 1, TileSize.SMALL),
+                TileSpec(2, 1, 1, 1, TileSize.SMALL),
+                TileSpec(2, 5, 1, 1, TileSize.SMALL),
             ]
         ))
 
@@ -373,8 +406,22 @@ class TileLayoutManager(QObject):
             self.logger.error("Grid layout not setup - call setup_layout first")
             return
 
+        # Check for ultrawide screen
+        screen_geometry = self.parent_widget.screen().geometry()
+        aspect_ratio = screen_geometry.width() / screen_geometry.height()
+        is_ultrawide = aspect_ratio > 2.0
+
+        # Select appropriate patterns
+        if is_ultrawide:
+            available_patterns = [p for p in self.patterns if "ultrawide" in p.name]
+        else:
+            available_patterns = [p for p in self.patterns if "ultrawide" not in p.name]
+
+        if not available_patterns:
+            available_patterns = self.patterns  # Fallback to all patterns
+
         # Select random pattern
-        pattern = random.choice(self.patterns)
+        pattern = random.choice(available_patterns)
         self.current_pattern = pattern
 
         # Create tiles for the pattern
@@ -400,9 +447,11 @@ class TileLayoutManager(QObject):
         # Clear existing tiles
         self.clear_layout()
 
-        # Configure grid layout
-        self.grid_layout.setColumnStretch(0, 1)
-        self.grid_layout.setRowStretch(0, 1)
+        # Configure grid layout to expand and fill space
+        for i in range(pattern.grid_cols):
+            self.grid_layout.setColumnStretch(i, 1)
+        for i in range(pattern.grid_rows):
+            self.grid_layout.setRowStretch(i, 1)
 
         # Shuffle images for variety
         available_images = image_list.copy()
