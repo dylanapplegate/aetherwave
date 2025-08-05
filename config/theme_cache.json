@@ -2209,5 +2209,65 @@
       "monochromatic",
       "analogous"
     ]
+  },
+  "350e7eb4203af51d714745f8ab5a34c9": {
+    "theme_name": "organic",
+    "confidence": 0.4,
+    "primary_colors": [
+      "#6c6c64",
+      "#64645c",
+      "#5c5c5c",
+      "#ccc3c4"
+    ],
+    "accent_colors": [
+      "#8fbc8f",
+      "#daa520",
+      "#f4a460",
+      "#90ee90"
+    ],
+    "temperature_bias": "neutral",
+    "mood_profile": {
+      "peaceful": 0.5852981969486823,
+      "balanced": 0.09153952843273232,
+      "mysterious": 0.31484049930651875,
+      "dramatic": 0.008321775312066574
+    },
+    "energy_level": "low",
+    "complexity_preference": 0.3685825242718447,
+    "harmony_types": [
+      "triadic",
+      "monochromatic",
+      "analogous"
+    ]
+  },
+  "0090095cb2186389b7202412a94d67c6": {
+    "theme_name": "organic",
+    "confidence": 0.4,
+    "primary_colors": [
+      "#6c6c64",
+      "#64645c",
+      "#5c5c5c",
+      "#ccc3c4"
+    ],
+    "accent_colors": [
+      "#8fbc8f",
+      "#daa520",
+      "#f4a460",
+      "#90ee90"
+    ],
+    "temperature_bias": "neutral",
+    "mood_profile": {
+      "peaceful": 0.5875862068965517,
+      "balanced": 0.0910344827586207,
+      "mysterious": 0.31310344827586206,
+      "dramatic": 0.008275862068965517
+    },
+    "energy_level": "low",
+    "complexity_preference": 0.36838344827586206,
+    "harmony_types": [
+      "triadic",
+      "monochromatic",
+      "analogous"
+    ]
   }
 }
