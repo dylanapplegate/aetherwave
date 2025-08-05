@@ -17,8 +17,10 @@ from pathlib import Path
 import aiofiles
 import os
 import glob
-from advanced_classifier import AdvancedImageClassifier
-from content_theme_analyzer import CollectionAnalyzer, ThemeProfile, ContentThemeCache
+from datetime import datetime
+from .advanced_classifier import AdvancedImageClassifier
+from .content_theme_analyzer import CollectionAnalyzer, ContentThemeCache
+from .bento_optimizer import bento_optimizer
 
 # Constants
 ASSETS_PATH = Path("assets/images")
@@ -146,6 +148,21 @@ class CollectionThemeResponse(BaseModel):
     cache_hit: bool = False
     error: Optional[str] = None
 
+class BentoCollectionRequest(BaseModel):
+    """
+    Request model for bento collection analysis.
+    """
+    collection_path: str
+    include_metadata: bool = True
+
+class BentoOptimizeRequest(BaseModel):
+    """
+    Request model for bento layout optimization.
+    """
+    image_paths: List[str]
+    target_pattern: Optional[str] = None
+    min_score_threshold: float = 0.7
+
 @app.get("/")
 async def root() -> Dict[str, Any]:
     """
@@ -169,6 +186,105 @@ async def root() -> Dict[str, Any]:
             "collection_analysis"
         ]
     }
+
+@app.post("/analyze/bento-collection")
+async def analyze_collection_for_bento(request: BentoCollectionRequest):
+    """Analyze collection aspect ratios and recommend optimal bento patterns."""
+    try:
+        logger.info(f"Analyzing collection for bento optimization: {request.collection_path}")
+        
+        # Get image metadata files from collection path
+        metadata_files = []
+        collection_path = Path(request.collection_path)
+        
+        if collection_path.is_dir():
+            # Load metadata from directory
+            for metadata_file in collection_path.glob("*.json"):
+                try:
+                    with open(metadata_file, 'r') as f:
+                        metadata = json.load(f)
+                        metadata_files.append(metadata)
+                except Exception as e:
+                    logger.warning(f"Failed to load metadata from {metadata_file}: {e}")
+        
+        if not metadata_files:
+            return {"ok": False, "error": "No valid metadata files found in collection"}
+        
+        # Perform analysis
+        analysis = bento_optimizer.analyze_collection(metadata_files)
+        
+        return {
+            "ok": True,
+            "analysis": analysis
+        }
+    except Exception as e:
+        logger.error(f"Bento collection analysis failed: {str(e)}")
+        return {"ok": False, "error": str(e)}
+
+@app.post("/bento/optimize-layout")
+async def optimize_bento_layout(request: BentoOptimizeRequest):
+    """Optimize bento layout for given images and pattern."""
+    try:
+        logger.info(f"Optimizing bento layout for {len(request.image_paths)} images")
+        
+        # Load metadata for each image
+        image_metadatas = []
+        for image_path in request.image_paths:
+            try:
+                # Try to find corresponding metadata file
+                metadata_path = Path(image_path).with_suffix('.json')
+                if metadata_path.exists():
+                    with open(metadata_path, 'r') as f:
+                        metadata = json.load(f)
+                        metadata['filename'] = Path(image_path).name
+                        image_metadatas.append(metadata)
+                else:
+                    # Create basic metadata if file doesn't exist
+                    image_metadatas.append({
+                        'filename': Path(image_path).name,
+                        'width': 1000,  # Default values
+                        'height': 1000
+                    })
+            except Exception as e:
+                logger.warning(f"Failed to load metadata for {image_path}: {e}")
+        
+        # Use first available pattern if no target specified
+        pattern_name = request.target_pattern or "balanced_mix"
+        
+        # Perform layout optimization (pattern_name first, then image_metadatas)
+        optimization = bento_optimizer.optimize_layout(pattern_name, image_metadatas)
+        
+        return {
+            "ok": True,
+            "optimization": optimization
+        }
+    except Exception as e:
+        logger.error(f"Bento layout optimization failed: {str(e)}")
+        return {"ok": False, "error": str(e)}
+
+
+@app.get("/bento/patterns")
+async def get_available_bento_patterns():
+    """Get list of available bento patterns with descriptions."""
+    try:
+        patterns_info = []
+        for pattern in bento_optimizer.patterns:
+            patterns_info.append({
+                "name": pattern.name,
+                "description": pattern.description,
+                "slots": len(pattern.slots),
+                "ideal_for": [cat.value for cat in pattern.ideal_for]
+            })
+        
+        return {
+            "available_patterns": patterns_info,
+            "total_patterns": len(patterns_info)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting bento patterns: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/health")
 async def health_check() -> Dict[str, Any]:

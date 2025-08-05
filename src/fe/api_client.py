@@ -166,3 +166,27 @@ class AetherwaveAPIClient:
         except Exception as e:
             self.logger.error(f"Unexpected error getting API stats: {e}")
             return {}
+
+    def get_image_pixmap(self, filename: str) -> 'QPixmap':
+        """Get image as QPixmap for display in Qt widgets."""
+        from PySide6.QtGui import QPixmap
+        import requests
+        
+        try:
+            response = self.session.get(self.get_image_url(filename))
+            response.raise_for_status()
+            
+            # Create QPixmap from image data
+            pixmap = QPixmap()
+            if pixmap.loadFromData(response.content):
+                return pixmap
+            else:
+                self.logger.warning(f"Failed to load pixmap data for {filename}")
+                return QPixmap()  # Return empty pixmap
+                
+        except requests.RequestException as e:
+            self.logger.error(f"Failed to fetch image {filename}: {e}")
+            return QPixmap()  # Return empty pixmap
+        except Exception as e:
+            self.logger.error(f"Unexpected error loading pixmap for {filename}: {e}")
+            return QPixmap()  # Return empty pixmap

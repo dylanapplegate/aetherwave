@@ -23,6 +23,7 @@ from PySide6.QtGui import (
 
 from api_client import AetherwaveAPIClient
 from config_manager import ConfigManager
+from tile_layout_manager import TileLayoutManager
 
 
 class ImageLoader(QThread):
@@ -136,6 +137,11 @@ class GalleryWindow(QMainWindow):
         self.image_loader: Optional[ImageLoader] = None
         self.fade_animation: Optional[QPropertyAnimation] = None
 
+        # Layout modes
+        self.layout_mode: str = "single"  # "single" or "tiles"
+        self.tile_layout_manager: Optional[TileLayoutManager] = None
+        self.tile_container: Optional[QWidget] = None
+
         # Multi-monitor support
         self.screens: List[QScreen] = []
         self.primary_screen: Optional[QScreen] = None
@@ -144,6 +150,7 @@ class GalleryWindow(QMainWindow):
         self.setup_multi_monitor()
         self.setup_image_loader()
         self.setup_timers()
+        self.setup_tile_layout()
         self.load_images()
 
     def setup_ui(self) -> None:
@@ -161,13 +168,23 @@ class GalleryWindow(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # Image display area
+        # Create main display container that can switch between modes
+        self.display_container = QWidget()
+        layout.addWidget(self.display_container, 1)
+
+        # Single image display area
         self.image_label = QLabel()
         self.image_label.setObjectName("image_label")  # Set object name for CSS selector
         self.image_label.setAlignment(Qt.AlignCenter)
         # Don't set hardcoded background - let adaptive background handle it
         self.image_label.setScaledContents(False)  # We'll handle scaling manually
-        layout.addWidget(self.image_label, 1)
+
+        # Create tile container (initially hidden)
+        self.tile_container = QWidget()
+        self.tile_container.hide()
+
+        # Setup single image layout by default
+        self._setup_single_image_layout()
 
         # Info overlay
         self.setup_info_overlay()
@@ -271,6 +288,149 @@ class GalleryWindow(QMainWindow):
         self.update_timer = QTimer()
         self.update_timer.timeout.connect(self.update_progress)
         self.update_timer.start(100)  # Update every 100ms
+
+    def setup_tile_layout(self) -> None:
+        """Initialize the tile layout manager."""
+        self.tile_layout_manager = TileLayoutManager(self.display_container, self.api_client)
+        
+        # Setup tile layout in the tile container
+        if self.tile_container:
+            self.tile_layout_manager.setup_layout(self.tile_container)
+            self.tile_layout_manager.layout_changed.connect(self.on_layout_changed)
+        
+        self.logger.debug("Tile layout system initialized")
+
+    def _setup_single_image_layout(self) -> None:
+        """Setup the single image display layout."""
+        # Clear existing layout
+        if self.display_container.layout():
+            QWidget().setLayout(self.display_container.layout())
+        
+        # Create single image layout
+        single_layout = QVBoxLayout(self.display_container)
+        single_layout.setContentsMargins(0, 0, 0, 0)
+        single_layout.addWidget(self.image_label)
+        
+        self.display_container.setLayout(single_layout)
+
+    def _setup_tile_layout(self) -> None:
+        """Setup the tile display layout."""
+        # Clear existing layout
+        if self.display_container.layout():
+            QWidget().setLayout(self.display_container.layout())
+        
+        # Create tile layout
+        tile_layout = QVBoxLayout(self.display_container)
+        tile_layout.setContentsMargins(0, 0, 0, 0)
+        tile_layout.addWidget(self.tile_container)
+        
+        self.display_container.setLayout(tile_layout)
+
+    def toggle_layout_mode(self) -> None:
+        """Toggle between single image and tile layout modes."""
+        if self.layout_mode == "single":
+            self._switch_to_tile_mode()
+        else:
+            self._switch_to_single_mode()
+
+    def _switch_to_tile_mode(self) -> None:
+        """Switch to tile layout mode."""
+        if not self.tile_layout_manager or not self.image_list:
+            return
+        
+        self.layout_mode = "tiles"
+        
+        # Stop single image slideshow
+        if self.is_playing:
+            self.stop_gallery()
+        
+        # Hide single image display
+        if self.image_label:
+            self.image_label.hide()
+        
+        # Setup tile layout
+        self._setup_tile_layout()
+        
+        # Make tile container visible
+        if self.tile_container:
+            self.tile_container.show()
+            self.tile_container.setVisible(True)
+            
+            # Debug container visibility
+            self.logger.debug(f"🔍 Tile container visible: {self.tile_container.isVisible()}")
+            self.logger.debug(f"🔍 Tile container size: {self.tile_container.size()}")
+            self.logger.debug(f"🔍 Display container size: {self.display_container.size()}")
+        
+        # Activate tile mode with current images
+        self.tile_layout_manager.activate_tile_mode(self.image_list)
+        
+        # Force layout update
+        self.display_container.update()
+        if self.tile_container:
+            self.tile_container.update()
+        
+        # Update window title
+        self.setWindowTitle(f"Aetherwave Gallery #{self.window_id} - Tiles Mode")
+        
+        self.logger.info("Switched to tile layout mode")
+
+    def _switch_to_single_mode(self) -> None:
+        """Switch to single image mode."""
+        if not self.tile_layout_manager:
+            return
+        
+        self.layout_mode = "single"
+        
+        # Hide tile container
+        if self.tile_container:
+            self.tile_container.hide()
+        
+        # Show single image display
+        if self.image_label:
+            self.image_label.show()
+        
+        # Deactivate tile mode
+        self.tile_layout_manager.deactivate_tile_mode()
+        
+        # Setup single image layout
+        self._setup_single_image_layout()
+        
+        # Restore current image
+        if self.image_list and 0 <= self.current_index < len(self.image_list):
+            self.load_current_image()
+        
+        # Update window title
+        self.setWindowTitle(f"Aetherwave Gallery #{self.window_id}")
+        
+        self.logger.info("Switched to single image mode")
+
+    def _cycle_bento_pattern(self) -> None:
+        """Cycle through available bento patterns."""
+        if not self.tile_layout_manager:
+            return
+        
+        # Available pattern names
+        pattern_names = list(self.tile_layout_manager.bento_patterns.keys())
+        current_name = self.tile_layout_manager.current_pattern
+        
+        # Find next pattern in sequence
+        try:
+            current_index = pattern_names.index(current_name)
+            next_index = (current_index + 1) % len(pattern_names)
+            next_pattern = pattern_names[next_index]
+        except (ValueError, IndexError):
+            next_pattern = pattern_names[0] if pattern_names else None
+        
+        if next_pattern:
+            self.tile_layout_manager.shift_to_pattern(next_pattern)
+            self.logger.debug(f"Cycled to bento pattern: {next_pattern}")
+
+    def on_layout_changed(self) -> None:
+        """Handle layout change events from tile manager."""
+        if self.tile_layout_manager and self.tile_layout_manager.is_active():
+            # Update background with tile colors
+            pattern_info = self.tile_layout_manager.get_current_pattern_info()
+            self.logger.debug(f"Layout changed to pattern: {pattern_info.get('name', 'unknown')}")
 
     def apply_cyberfemme_theme(self) -> None:
         """Apply cyberfemme visual theme optimized for monochromatic purple/pink/blue artwork."""
@@ -592,7 +752,14 @@ class GalleryWindow(QMainWindow):
         filename = self.image_list[self.current_index]
 
         # Build comprehensive info display
-        info_lines = [f"[{self.current_index + 1}/{len(self.image_list)}]"]
+        layout_indicator = "🎯 TILES" if self.layout_mode == "tiles" else "🖼️  SINGLE"
+        info_lines = [f"{layout_indicator} [{self.current_index + 1}/{len(self.image_list)}]"]
+        
+        # Add tile pattern info if in tile mode
+        if self.layout_mode == "tiles" and self.tile_layout_manager:
+            pattern_info = self.tile_layout_manager.get_current_pattern_info()
+            if pattern_info:
+                info_lines.append(f"📐 Pattern: {pattern_info.get('name', 'unknown')} ({pattern_info.get('grid_size', 'NxN')})")
 
         try:
             # Get detailed classification data
@@ -916,6 +1083,17 @@ class GalleryWindow(QMainWindow):
                 self.start_gallery()
         elif key == Qt.Key_F or key == Qt.Key_F11:
             self.toggle_fullscreen()
+        elif key == Qt.Key_L:
+            # Toggle layout mode (single image vs tiles)
+            self.toggle_layout_mode()
+        elif key == Qt.Key_P and event.modifiers() & Qt.KeyboardModifier.ShiftModifier:
+            # Shift+P: Shift to next tile pattern
+            if self.layout_mode == 'tiles' and self.tile_layout_manager:
+                self.tile_layout_manager.shift_tiles()
+        elif key == Qt.Key_B and event.modifiers() & Qt.KeyboardModifier.ShiftModifier:
+            # Shift+B: Cycle through specific bento patterns
+            if self.layout_mode == 'tiles' and self.tile_layout_manager:
+                self._cycle_bento_pattern()
         elif key == Qt.Key_I:
             # Toggle info display
             if self.info_label is not None:
