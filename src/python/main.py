@@ -7,7 +7,7 @@ def exception_hook(exc_type, exc_value, exc_traceback):
     """Handle uncaught exceptions to show them in a dialog box"""
     error_msg = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
     print(error_msg)  # Print to console
-    
+
     # Create a message box to show the error
     msg_box = QMessageBox()
     msg_box.setIcon(QMessageBox.Icon.Critical)
@@ -20,7 +20,7 @@ def exception_hook(exc_type, exc_value, exc_traceback):
 if __name__ == "__main__":
     # Set up exception handling
     sys.excepthook = exception_hook
-    
+
     # Create and run application
     app = QApplication(sys.argv)
     try:
