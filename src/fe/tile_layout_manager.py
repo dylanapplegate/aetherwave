@@ -28,6 +28,7 @@ class TileSize(Enum):
     WIDE = (3, 1)       # 3x1 grid cell
     TALL = (1, 2)       # 1x2 grid cell
     XLARGE = (3, 2)     # 3x2 grid cell
+    HERO = (4, 3)       # 4x3 for major showcases
 
 
 @dataclass
@@ -63,7 +64,7 @@ class TileWidget(QLabel):
         self.logger = logging.getLogger(__name__)
 
         # Setup widget properties for complete fill
-        self.setAlignment(Qt.AlignCenter)
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setScaledContents(True)  # Scale content to fill completely
         self.setMinimumSize(50, 50)
 
@@ -98,7 +99,7 @@ class TileWidget(QLabel):
             tile_size = QSize(200, 200)
 
         # Scale image maintaining aspect ratio with intelligent cropping
-        scaled_pixmap = self._scale_with_smart_crop(pixmap, tile_size, crop_factor=0.0)
+        scaled_pixmap = self._scale_with_smart_crop(pixmap, tile_size)
 
         # Set the pixmap directly on this QLabel
         # CRITICAL: setScaledContents(False) ensures no stretching/distortion
@@ -108,73 +109,36 @@ class TileWidget(QLabel):
         # Store for animations
         self.current_pixmap = scaled_pixmap
 
-    def _scale_with_smart_crop(self, pixmap: QPixmap, target_size: QSize, crop_factor: float = 0.2) -> QPixmap:
-        """Scale image with intelligent cropping to fill target while maintaining aspect ratio."""
-        if pixmap.isNull():
-            return pixmap
-
-        # Get original dimensions
-        orig_width = pixmap.width()
-        orig_height = pixmap.height()
-        target_width = target_size.width()
-        target_height = target_size.height()
+    def _scale_with_smart_crop(self, pixmap: QPixmap, target_size: QSize) -> QPixmap:
+        """
+        Scale image to completely fill the target size while maintaining aspect ratio.
+        The image is scaled to be as small as possible while ensuring both dimensions
+        are greater than or equal to the target size, then center-cropped.
+        """
+        if pixmap.isNull() or not target_size.isValid() or target_size.width() == 0 or target_size.height() == 0:
+            return QPixmap(target_size)
 
         # Calculate aspect ratios
-        orig_ratio = orig_width / orig_height
-        target_ratio = target_width / target_height
+        source_ratio = pixmap.width() / pixmap.height()
+        target_ratio = target_size.width() / target_size.height()
 
-        # ALWAYS maintain aspect ratio - scale to fill and crop excess
-        if orig_ratio > target_ratio:
-            # Image is wider than target - scale by height, crop width
-            scale_factor = target_height / orig_height
-            scaled_width = int(orig_width * scale_factor)
-            scaled_height = target_height
+        # Determine scaled dimensions to fill the target
+        if source_ratio > target_ratio:
+            # Source is wider than target, scale to match target height
+            scaled_pixmap = pixmap.scaledToHeight(
+                target_size.height(), Qt.TransformationMode.SmoothTransformation
+            )
         else:
-            # Image is taller than target - scale by width, crop height
-            scale_factor = target_width / orig_width
-            scaled_width = target_width
-            scaled_height = int(orig_height * scale_factor)
+            # Source is taller or same ratio, scale to match target width
+            scaled_pixmap = pixmap.scaledToWidth(
+                target_size.width(), Qt.TransformationMode.SmoothTransformation
+            )
 
-        # Scale the image maintaining aspect ratio
-        scaled_pixmap = pixmap.scaled(
-            scaled_width, scaled_height,
-            Qt.AspectRatioMode.KeepAspectRatio,  # NEVER distort!
-            Qt.TransformationMode.SmoothTransformation
-        )
+        # Center-crop the scaled image to the exact target dimensions
+        crop_x = (scaled_pixmap.width() - target_size.width()) / 2
+        crop_y = (scaled_pixmap.height() - target_size.height()) / 2
 
-        # Center crop to exact target size if needed
-        if scaled_width > target_width or scaled_height > target_height:
-            # Calculate center crop position
-            crop_x = max(0, (scaled_width - target_width) // 2)
-            crop_y = max(0, (scaled_height - target_height) // 2)
-
-            # Ensure we don't exceed bounds
-            actual_width = min(target_width, scaled_width)
-            actual_height = min(target_height, scaled_height)
-
-            # Crop to exact target size
-            cropped_pixmap = scaled_pixmap.copy(crop_x, crop_y, actual_width, actual_height)
-
-            # If cropped result is smaller than target, create a new pixmap and center the image
-            if actual_width < target_width or actual_height < target_height:
-                result_pixmap = QPixmap(target_width, target_height)
-                result_pixmap.fill(Qt.GlobalColor.black)  # Fill with black background
-
-                painter = QPainter(result_pixmap)
-                painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-                # Center the cropped image
-                x_offset = (target_width - actual_width) // 2
-                y_offset = (target_height - actual_height) // 2
-
-                painter.drawPixmap(x_offset, y_offset, cropped_pixmap)
-                painter.end()
-
-                return result_pixmap
-
-            return cropped_pixmap
-
-        return scaled_pixmap
+        return scaled_pixmap.copy(int(crop_x), int(crop_y), target_size.width(), target_size.height())
 
     def resizeEvent(self, event) -> None:
         """Handle resize events and apply pending pixmap."""
@@ -194,7 +158,7 @@ class TileWidget(QLabel):
         self.fade_animation.setDuration(duration)
         self.fade_animation.setStartValue(0.0)
         self.fade_animation.setEndValue(1.0)
-        self.fade_animation.setEasingCurve(QEasingCurve.OutBack)  # Bounce effect
+        self.fade_animation.setEasingCurve(QEasingCurve.Type.OutBack)  # Bounce effect
 
         # Scale animation for drop-in effect
         self.scale_animation = QPropertyAnimation(self, b"geometry")
@@ -211,7 +175,7 @@ class TileWidget(QLabel):
         self.scale_animation.setDuration(duration)
         self.scale_animation.setStartValue(start_geometry)
         self.scale_animation.setEndValue(current_geometry)
-        self.scale_animation.setEasingCurve(QEasingCurve.OutBack)
+        self.scale_animation.setEasingCurve(QEasingCurve.Type.OutBack)
 
         # Run animations in parallel
         self.animation_group = QParallelAnimationGroup()
@@ -225,7 +189,7 @@ class TileWidget(QLabel):
         self.fade_animation.setDuration(duration)
         self.fade_animation.setStartValue(1.0)
         self.fade_animation.setEndValue(0.0)
-        self.fade_animation.setEasingCurve(QEasingCurve.InCubic)
+        self.fade_animation.setEasingCurve(QEasingCurve.Type.InCubic)
 
         # Scale down while fading
         self.scale_animation = QPropertyAnimation(self, b"geometry")
@@ -240,7 +204,7 @@ class TileWidget(QLabel):
         self.scale_animation.setDuration(duration)
         self.scale_animation.setStartValue(current_geometry)
         self.scale_animation.setEndValue(end_geometry)
-        self.scale_animation.setEasingCurve(QEasingCurve.InCubic)
+        self.scale_animation.setEasingCurve(QEasingCurve.Type.InCubic)
 
         # Run animations in parallel
         self.animation_group = QParallelAnimationGroup()
@@ -272,7 +236,7 @@ class TileLayoutManager(QObject):
         self.shift_timer.setSingleShot(False)
 
         # Layout configuration
-        self.gutter_size = 12  # Space between tiles
+        self.gutter_size = 2  # Space between tiles
         self.base_tile_size = 150  # Base size for 1x1 tile
         self.shift_interval = 8000  # 8 seconds between shifts
 
@@ -285,52 +249,53 @@ class TileLayoutManager(QObject):
         """Create various bento box layout patterns."""
         patterns = []
 
-        # Pattern 1: Mixed sizes (4x3 grid)
+        # Pattern 1: Mixed sizes (4x3 grid) - Denser
         patterns.append(BentoPattern(
-            name="mixed_classic",
+            name="mixed_classic_dense",
             grid_cols=4,
             grid_rows=3,
             tiles=[
-                TileSpec(0, 0, 2, 2, TileSize.LARGE),     # Top left large
-                TileSpec(0, 2, 1, 1, TileSize.SMALL),     # Top middle small
-                TileSpec(0, 3, 1, 1, TileSize.SMALL),     # Top right small
-                TileSpec(1, 2, 2, 1, TileSize.MEDIUM),    # Middle right medium
-                TileSpec(2, 0, 1, 1, TileSize.SMALL),     # Bottom left small
-                TileSpec(2, 1, 1, 1, TileSize.SMALL),     # Bottom middle small
-                TileSpec(2, 2, 2, 1, TileSize.MEDIUM),    # Bottom right medium
+                TileSpec(0, 0, 2, 2, TileSize.LARGE),
+                TileSpec(0, 2, 1, 1, TileSize.SMALL),
+                TileSpec(0, 3, 1, 1, TileSize.SMALL),
+                TileSpec(1, 2, 2, 1, TileSize.WIDE), # Changed from Medium
+                TileSpec(2, 0, 1, 1, TileSize.SMALL),
+                TileSpec(2, 1, 1, 1, TileSize.SMALL),
+                TileSpec(2, 2, 1, 1, TileSize.SMALL), # Added
+                TileSpec(2, 3, 1, 1, TileSize.SMALL), # Added
             ]
         ))
 
-        # Pattern 2: Tall focus (3x4 grid)
+        # Pattern 2: Tall focus (3x4 grid) - Denser
         patterns.append(BentoPattern(
-            name="tall_focus",
+            name="tall_focus_dense",
             grid_cols=3,
             grid_rows=4,
             tiles=[
-                TileSpec(0, 0, 1, 2, TileSize.TALL),      # Left tall
-                TileSpec(0, 1, 2, 2, TileSize.LARGE),     # Center large
-                TileSpec(2, 0, 1, 1, TileSize.SMALL),     # Bottom left small
-                TileSpec(2, 2, 1, 2, TileSize.TALL),      # Right tall
-                TileSpec(0, 2, 1, 1, TileSize.SMALL),     # Top right small
-                TileSpec(1, 2, 1, 1, TileSize.SMALL),     # Middle right small
-                TileSpec(3, 0, 1, 1, TileSize.SMALL),     # Bottom left small
-                TileSpec(3, 1, 2, 1, TileSize.MEDIUM),    # Bottom span medium
+                TileSpec(0, 0, 1, 2, TileSize.TALL),
+                TileSpec(0, 1, 2, 2, TileSize.LARGE),
+                TileSpec(2, 0, 1, 2, TileSize.TALL), # Changed from small
+                TileSpec(0, 2, 1, 2, TileSize.TALL), # Changed from small
+                TileSpec(2, 2, 1, 2, TileSize.TALL),
+                TileSpec(3, 0, 1, 1, TileSize.SMALL),
+                TileSpec(3, 1, 1, 1, TileSize.SMALL),
+                TileSpec(3, 2, 1, 1, TileSize.SMALL),
             ]
         ))
 
-        # Pattern 3: Wide showcase (5x3 grid)
+        # Pattern 3: Wide showcase (5x3 grid) - Denser
         patterns.append(BentoPattern(
-            name="wide_showcase",
+            name="wide_showcase_dense",
             grid_cols=5,
             grid_rows=3,
             tiles=[
-                TileSpec(0, 0, 3, 2, TileSize.XLARGE),    # Large showcase
-                TileSpec(0, 3, 2, 1, TileSize.MEDIUM),    # Top right medium
-                TileSpec(1, 3, 1, 1, TileSize.SMALL),     # Middle right small
-                TileSpec(1, 4, 1, 1, TileSize.SMALL),     # Middle far right small
-                TileSpec(2, 0, 1, 1, TileSize.SMALL),     # Bottom left small
-                TileSpec(2, 1, 2, 1, TileSize.MEDIUM),    # Bottom center medium
-                TileSpec(2, 3, 2, 1, TileSize.MEDIUM),    # Bottom right medium
+                TileSpec(0, 0, 3, 2, TileSize.XLARGE),
+                TileSpec(0, 3, 2, 1, TileSize.MEDIUM),
+                TileSpec(1, 3, 1, 2, TileSize.TALL), # Changed from smalls
+                TileSpec(2, 0, 1, 1, TileSize.SMALL),
+                TileSpec(2, 1, 2, 1, TileSize.MEDIUM),
+                TileSpec(2, 3, 2, 1, TileSize.MEDIUM),
+                TileSpec(0, 4, 1, 1, TileSize.SMALL), # Added
             ]
         ))
 
@@ -385,6 +350,39 @@ class TileLayoutManager(QObject):
             ]
         ))
 
+        # Add a new, even denser pattern with a hero image
+        patterns.append(BentoPattern(
+            name="hero_showcase",
+            grid_cols=5,
+            grid_rows=4,
+            tiles=[
+                TileSpec(0, 0, 4, 3, TileSize.HERO),      # Hero image
+                TileSpec(0, 4, 1, 1, TileSize.SMALL),
+                TileSpec(1, 4, 1, 1, TileSize.SMALL),
+                TileSpec(2, 4, 1, 1, TileSize.SMALL),
+                TileSpec(3, 0, 1, 1, TileSize.SMALL),
+                TileSpec(3, 1, 1, 1, TileSize.SMALL),
+                TileSpec(3, 2, 1, 1, TileSize.SMALL),
+                TileSpec(3, 3, 1, 1, TileSize.SMALL),
+                TileSpec(3, 4, 1, 1, TileSize.SMALL),
+            ]
+        ))
+
+        # Pattern from the user's screenshot reference (Corrected and simplified for images only)
+        patterns.append(BentoPattern(
+            name="inspiration_board_v2",
+            grid_cols=4,
+            grid_rows=4,
+            tiles=[
+                TileSpec(0, 0, 2, 2, TileSize.LARGE),      # Top-left
+                TileSpec(0, 2, 2, 1, TileSize.WIDE),       # Top-right wide
+                TileSpec(1, 2, 1, 2, TileSize.TALL),       # Middle-right tall
+                TileSpec(2, 0, 1, 2, TileSize.TALL),       # Bottom-left tall
+                TileSpec(3, 0, 1, 1, TileSize.SMALL),      # Bottom-left small
+                TileSpec(2, 2, 2, 2, TileSize.LARGE),      # Bottom-right large
+            ]
+        ))
+
         return patterns
 
     def setup_layout(self, container_widget: QWidget) -> None:
@@ -396,7 +394,7 @@ class TileLayoutManager(QObject):
         # Create new grid layout
         self.grid_layout = QGridLayout(container_widget)
         self.grid_layout.setSpacing(self.gutter_size)
-        self.grid_layout.setContentsMargins(20, 20, 20, 20)  # Outer margins
+        self.grid_layout.setContentsMargins(0, 0, 0, 0)  # Remove outer margins for a fuller look
 
         self.logger.debug("Grid layout setup complete")
 
@@ -420,8 +418,14 @@ class TileLayoutManager(QObject):
         if not available_patterns:
             available_patterns = self.patterns  # Fallback to all patterns
 
-        # Select random pattern
-        pattern = random.choice(available_patterns)
+        # Prioritize the new inspiration board pattern if it exists
+        inspiration_pattern = next((p for p in available_patterns if p.name == "inspiration_board_v2"), None)
+        if inspiration_pattern:
+            pattern = inspiration_pattern
+        else:
+            # Select random pattern if inspiration board not available for the aspect ratio
+            pattern = random.choice(available_patterns)
+
         self.current_pattern = pattern
 
         # Create tiles for the pattern
@@ -446,6 +450,8 @@ class TileLayoutManager(QObject):
         """Create tile widgets for the given pattern."""
         # Clear existing tiles
         self.clear_layout()
+
+        assert self.grid_layout is not None, "Grid layout must be initialized before creating tiles."
 
         # Configure grid layout to expand and fill space
         for i in range(pattern.grid_cols):
@@ -604,11 +610,12 @@ class TileLayoutManager(QObject):
 
     def shift_to_pattern(self, pattern_name: str) -> None:
         """Shift to a specific bento pattern by name."""
-        if pattern_name not in self.bento_patterns:
+        pattern = next((p for p in self.patterns if p.name == pattern_name), None)
+        if not pattern:
             self.logger.warning(f"Unknown pattern: {pattern_name}")
             return
 
-        if pattern_name == self.current_pattern:
+        if self.current_pattern and pattern_name == self.current_pattern.name:
             self.logger.debug(f"Already using pattern: {pattern_name}")
             return
 
@@ -623,10 +630,9 @@ class TileLayoutManager(QObject):
             tile.fade_out(400)
 
         # Switch to new pattern after fade out
-        pattern = self.bento_patterns[pattern_name]
         QTimer.singleShot(500, lambda: self._complete_pattern_shift_to(pattern, current_images))
 
-        self.current_pattern = pattern_name
+        self.current_pattern = pattern
         self.logger.debug(f"Shifting to pattern: {pattern_name}")
 
     def _complete_pattern_shift_to(self, pattern: BentoPattern, images: List[str]) -> None:
@@ -635,10 +641,7 @@ class TileLayoutManager(QObject):
         self.clear_layout()
 
         # Build new pattern
-        self._build_tile_grid(pattern)
-
-        # Load images with the new pattern
-        self.load_images(images)
+        self._create_tiles_for_pattern(pattern, images)
 
     def clear_layout(self) -> None:
         """Clear all tiles from the layout."""
@@ -658,7 +661,7 @@ class TileLayoutManager(QObject):
 
         # Create gradient from averaged colors
         gradient = QLinearGradient(0, 0, 1, 1)
-        gradient.setCoordinateMode(QLinearGradient.ObjectBoundingMode)
+        gradient.setCoordinateMode(QLinearGradient.CoordinateMode.ObjectBoundingMode)
 
         # Add color stops
         for i, color in enumerate(colors[:4]):  # Max 4 colors
@@ -667,7 +670,7 @@ class TileLayoutManager(QObject):
 
         # Apply gradient background
         palette = self.parent_widget.palette()
-        palette.setBrush(QPalette.Window, QBrush(gradient))
+        palette.setBrush(QPalette.ColorRole.Window, QBrush(gradient))
         self.parent_widget.setPalette(palette)
         self.parent_widget.setAutoFillBackground(True)
 

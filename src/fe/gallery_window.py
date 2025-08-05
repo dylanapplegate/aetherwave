@@ -97,9 +97,9 @@ class CyberfemmeLabel(QLabel):
                 box-shadow: 0 4px 12px rgba(255, 45, 136, 0.3);
             }
         """)
-        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setWordWrap(False)  # Disable word wrapping to prevent text wrapping
-        self.setTextFormat(Qt.RichText)  # Enable HTML/rich text formatting
+        self.setTextFormat(Qt.TextFormat.RichText)  # Enable HTML/rich text formatting
 
 
 class GalleryWindow(QMainWindow):
@@ -164,27 +164,30 @@ class GalleryWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
         # Main layout
-        layout = QVBoxLayout(central_widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        main_layout = QVBoxLayout(central_widget)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
 
         # Create main display container that can switch between modes
         self.display_container = QWidget()
-        layout.addWidget(self.display_container, 1)
+        main_layout.addWidget(self.display_container, 1)
+
+        # The display_container will have its own layout that we can swap
+        self.display_layout = QVBoxLayout(self.display_container)
+        self.display_layout.setContentsMargins(0, 0, 0, 0)
+        self.display_container.setLayout(self.display_layout)
 
         # Single image display area
         self.image_label = QLabel()
-        self.image_label.setObjectName("image_label")  # Set object name for CSS selector
-        self.image_label.setAlignment(Qt.AlignCenter)
-        # Don't set hardcoded background - let adaptive background handle it
-        self.image_label.setScaledContents(False)  # We'll handle scaling manually
+        self.image_label.setObjectName("image_label")
+        self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.image_label.setScaledContents(False)
 
-        # Create tile container (initially hidden)
+        # Create tile container (initially not added to any layout)
         self.tile_container = QWidget()
-        self.tile_container.hide()
 
-        # Setup single image layout by default
-        self._setup_single_image_layout()
+        # Add single image label to the layout by default
+        self.display_layout.addWidget(self.image_label)
 
         # Info overlay
         self.setup_info_overlay()
@@ -255,8 +258,12 @@ class GalleryWindow(QMainWindow):
     def setup_multi_monitor(self) -> None:
         """Setup multi-monitor detection and configuration."""
         app = QApplication.instance()
-        self.screens = app.screens()
-        self.primary_screen = app.primaryScreen()
+        if app:
+            self.screens = app.screens()
+            self.primary_screen = app.primaryScreen()
+        else:
+            self.screens = []
+            self.primary_screen = None
 
         screen_count = len(self.screens)
         self.logger.info(f"Detected {screen_count} screen(s)")
@@ -300,31 +307,32 @@ class GalleryWindow(QMainWindow):
 
         self.logger.debug("Tile layout system initialized")
 
+    def _clear_display_layout(self):
+        """Safely clear all widgets from the display layout."""
+        if self.display_layout:
+            while self.display_layout.count():
+                child = self.display_layout.takeAt(0)
+                if child.widget():
+                    child.widget().hide()
+                    child.widget().setParent(None)
+
     def _setup_single_image_layout(self) -> None:
         """Setup the single image display layout."""
-        # Clear existing layout
-        if self.display_container.layout():
-            QWidget().setLayout(self.display_container.layout())
-
-        # Create single image layout
-        single_layout = QVBoxLayout(self.display_container)
-        single_layout.setContentsMargins(0, 0, 0, 0)
-        single_layout.addWidget(self.image_label)
-
-        self.display_container.setLayout(single_layout)
+        self._clear_display_layout()
+        if self.image_label:
+            self.display_layout.addWidget(self.image_label)
+            self.image_label.show()
+        if self.tile_container:
+            self.tile_container.hide()
 
     def _setup_tile_layout(self) -> None:
         """Setup the tile display layout."""
-        # Clear existing layout
-        if self.display_container.layout():
-            QWidget().setLayout(self.display_container.layout())
-
-        # Create tile layout
-        tile_layout = QVBoxLayout(self.display_container)
-        tile_layout.setContentsMargins(0, 0, 0, 0)
-        tile_layout.addWidget(self.tile_container)
-
-        self.display_container.setLayout(tile_layout)
+        self._clear_display_layout()
+        if self.tile_container:
+            self.display_layout.addWidget(self.tile_container)
+            self.tile_container.show()
+        if self.image_label:
+            self.image_label.hide()
 
     def toggle_layout_mode(self) -> None:
         """Toggle between single image and tile layout modes."""
