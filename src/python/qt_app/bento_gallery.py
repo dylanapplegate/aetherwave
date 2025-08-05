@@ -3,7 +3,7 @@ Bento Gallery Window (Qt)
 Displays images in a bento box layout using QGridLayout and BentoOptimizer assignments.
 """
 from typing import List, Dict, Any, Optional
-from PySide6.QtWidgets import QWidget, QGridLayout, QLabel, QApplication, QSizePolicy
+from PySide6.QtWidgets import QWidget, QGridLayout, QLabel, QApplication, QSizePolicy, QFrame
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt, QSize
 import math
@@ -48,10 +48,10 @@ class ResizeImageLabel(QLabel):
 
 class BentoGalleryWindow(QWidget):
     """
-    Responsive bento layout:
-    - Compute rows/cols from window size
-    - Tile the optimizer's pattern across the whole grid
-    - Backfill remaining cells to avoid gaps
+    Responsive bento layout on a single logical canvas:
+    - Compute canvas rows/cols from monitor size
+    - Scale pattern slots proportionally to fill canvas exactly once
+    - No overlaps, no tiling; every cell belongs to exactly one slot
     """
 
     def __init__(self, image_metadatas: List[Dict[str, Any]], pattern_name: str = "balanced_mix"):
@@ -71,37 +71,21 @@ class BentoGalleryWindow(QWidget):
         self.grid.setContentsMargins(base * 2, base * 2, base * 2, base * 2)
         self.setStyleSheet("background-color: #2c3e50;")
 
-    def _target_cell_px(self) -> int:
-        # Derive a target cell from available area so density scales with monitor size
-        w = max(1, self.width())
-        h = max(1, self.height())
-        area = w * h
-        # Aim for ~90–140 tiles total depending on size (dense but readable)
-        target_tiles = max(48, min(140, area // (140 * 140)))  # ~140px tile baseline
-        # Derive approximate tile width from target tile count and aspect ratio
-        aspect = w / h if h else 1.0
-        cols_guess = max(8, int((target_tiles * aspect) ** 0.5))
-        tile_w = max(110, min(220, w // max(1, cols_guess)))
-        return tile_w
-
-    def _compute_rows_cols(self) -> tuple[int, int]:
+    def _canvas_rows_cols(self) -> tuple[int, int]:
+        """Compute a single bento canvas size from window dimensions.
+        Keeps tiles around 140–180 px and biases columns for ultrawide.
+        """
         margins = self.grid.contentsMargins()
         spacing = self.grid.spacing()
         usable_w = max(1, self.width() - (margins.left() + margins.right()))
         usable_h = max(1, self.height() - (margins.top() + margins.bottom()))
-        cell = self._target_cell_px()
-        # Bias columns by aspect ratio for ultra-wide monitors
         aspect = usable_w / usable_h if usable_h else 1.0
-        base_cols = max(8, int(usable_w / (cell + spacing)))
-        base_rows = max(6, int(usable_h / (cell + spacing)))
-        if aspect > 2.2:
-            base_cols = int(base_cols * min(1.6, aspect / 1.6))
-        # Clamp to avoid over/under density; ensure at least 96 cells on big displays
-        total = base_cols * base_rows
-        if total < 96 and usable_w > 1800:
-            base_cols = max(base_cols, 14)
-            base_rows = max(base_rows, 8)
-        return base_rows, base_cols
+        target = 160  # target tile px
+        cols = max(6, int(usable_w / (target + spacing)))
+        rows = max(6, int(usable_h / (target + spacing)))
+        if aspect > 2.0:
+            cols = max(cols, int(rows * aspect))
+        return rows, cols
 
     def _clear_grid(self) -> None:
         while self.grid.count():
@@ -118,8 +102,91 @@ class BentoGalleryWindow(QWidget):
                 paths.append(p)
         return paths
 
+    def _scale_slots_to_canvas(self, pattern) -> list[dict]:
+        """Scale pattern slots to canvas and correct edges to ensure exact coverage.
+        Returns list of dicts with row, col, height, width for runtime grid.
+        """
+        rows, cols = self._canvas_rows_cols()
+        pat_rows = max(s.row + s.height for s in pattern.slots)
+        pat_cols = max(s.col + s.width for s in pattern.slots)
+        # Initial proportional mapping using float scale
+        r_scale = rows / pat_rows
+        c_scale = cols / pat_cols
+        scaled = []
+        for s in pattern.slots:
+            r = int(round(s.row * r_scale))
+            c = int(round(s.col * c_scale))
+            rh = int(round(s.height * r_scale))
+            cw = int(round(s.width * c_scale))
+            scaled.append({"row": r, "col": c, "height": max(1, rh), "width": max(1, cw)})
+        # Normalize bands: ensure everything fits within canvas and adjust last slot in each row/col band
+        for sl in scaled:
+            sl["row"] = max(0, min(rows - 1, sl["row"]))
+            sl["col"] = max(0, min(cols - 1, sl["col"]))
+            sl["height"] = max(1, min(rows - sl["row"], sl["height"]))
+            sl["width"] = max(1, min(cols - sl["col"], sl["width"]))
+        # Resolve overlaps by simple occupancy painting; shrink conflicting spans
+        occ = [[-1 for _ in range(cols)] for _ in range(rows)]
+        for idx, sl in enumerate(scaled):
+            r0, c0, rh, cw = sl["row"], sl["col"], sl["height"], sl["width"]
+            # Reduce until fits empty region
+            while True:
+                conflict = False
+                for r in range(r0, min(rows, r0 + rh)):
+                    for c in range(c0, min(cols, c0 + cw)):
+                        if occ[r][c] != -1:
+                            conflict = True
+                            break
+                    if conflict:
+                        break
+                if not conflict:
+                    break
+                # Prefer shrinking along the larger span
+                if rh >= cw and rh > 1:
+                    rh -= 1
+                elif cw > 1:
+                    cw -= 1
+                else:
+                    break
+            sl["height"], sl["width"] = rh, cw
+            for r in range(r0, min(rows, r0 + rh)):
+                for c in range(c0, min(cols, c0 + cw)):
+                    occ[r][c] = idx
+        # Fill any gaps by assigning to nearest slot (simple Voronoi by Manhattan distance)
+        coords = [
+            (i, s["row"] + s["height"] / 2.0, s["col"] + s["width"] / 2.0)
+            for i, s in enumerate(scaled)
+        ]
+        for r in range(rows):
+            for c in range(cols):
+                if occ[r][c] != -1:
+                    continue
+                # Bind r,c as defaults to avoid late-binding in lambdas
+                rr, cc = r, c
+                nearest = min(coords, key=lambda t, rr=rr, cc=cc: abs(t[1] - rr) + abs(t[2] - cc))[0]
+                occ[r][c] = nearest
+        # Convert painted regions back into merged rectangles per slot id
+        merged: list[dict] = []
+        for i, _ in enumerate(scaled):
+            # Find bounding box of cells belonging to slot i
+            min_r, min_c, max_r, max_c = rows, cols, -1, -1
+            for r in range(rows):
+                for c in range(cols):
+                    if occ[r][c] == i:
+                        min_r = min(min_r, r)
+                        min_c = min(min_c, c)
+                        max_r = max(max_r, r)
+                        max_c = max(max_c, c)
+            if max_r >= 0:
+                merged.append({
+                    "row": min_r,
+                    "col": min_c,
+                    "height": (max_r - min_r + 1),
+                    "width": (max_c - min_c + 1),
+                })
+        return merged
+
     def _populate_bento_grid(self) -> None:
-        # Re-apply adaptive spacing for current size
         self._apply_common_styling()
         self._clear_grid()
 
@@ -129,96 +196,65 @@ class BentoGalleryWindow(QWidget):
         if not pattern:
             return
 
-        rows, cols = self._compute_rows_cols()
-        occupied = [[False for _ in range(cols)] for _ in range(rows)]
+        # Scale pattern to the runtime canvas exactly once (macro layout)
+        scaled_slots = self._scale_slots_to_canvas(pattern)
 
-        # Base pattern size
-        pat_rows = max(s.row + s.height for s in pattern.slots)
-        pat_cols = max(s.col + s.width for s in pattern.slots)
-        tiles_r = max(1, math.ceil(rows / pat_rows))
-        tiles_c = max(1, math.ceil(cols / pat_cols))
-
-        # Prepare iterator over images; start with those used by assignments
+        # Collect image paths, prefer optimizer picks first
         paths = self._get_all_paths()
-        if not paths:
-            paths = []
-        # Try to maintain the optimizer-chosen ordering first
-        chosen = [a.get("filename") for k, a in sorted(assignments.items()) if isinstance(a, dict) and a.get("filename")]
+        chosen = [a.get("filename") for _, a in sorted(assignments.items()) if isinstance(a, dict) and a.get("filename")]
         remaining = [p for p in paths if p not in chosen]
         ordered_paths = (chosen + remaining) if paths else []
         img_idx = 0
 
-        # Helper to create label by path
-        def make_label(path: Optional[str]) -> QLabel:
-            if not path:
-                lab = QLabel("")
-                lab.setAlignment(Qt.AlignmentFlag.AlignCenter)
-                return lab
-            pm = QPixmap(path)
+        def make_label_local(p: Optional[str]) -> QLabel:
+            if not p:
+                lbl = QLabel("")
+                lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                return lbl
+            pm = QPixmap(str(p))
             if pm.isNull():
-                lab = QLabel(f"Missing: {os.path.basename(path)}")
-                lab.setAlignment(Qt.AlignmentFlag.AlignCenter)
-                return lab
+                lbl = QLabel(f"Missing: {os.path.basename(str(p))}")
+                lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                return lbl
             return ResizeImageLabel(pm)
 
-        # Tile the pattern across the grid
-        for tr in range(tiles_r):
-            for tc in range(tiles_c):
-                row_off = tr * pat_rows
-                col_off = tc * pat_cols
-                for slot in pattern.slots:
-                    r = slot.row + row_off
-                    c = slot.col + col_off
-                    if r >= rows or c >= cols:
-                        continue
-                    rh = min(slot.height, rows - r)
-                    cw = min(slot.width, cols - c)
+        # For each macro slot, embed a small sub-grid (2x2 or 3x2 depending on span)
+        rows, cols = self._canvas_rows_cols()
+        spacing = max(4, min(10, self.grid.spacing()))
+        for sl in scaled_slots:
+            r, c, rh, cw = sl["row"], sl["col"], sl["height"], sl["width"]
 
-                    # Use assignment for first tile only, otherwise iterate images
-                    path: Optional[str] = None
-                    if tr == 0 and tc == 0:
-                        a = assignments.get(f"slot_{slot.row}_{slot.col}")
-                        if isinstance(a, dict):
-                            path = a.get("filename")
-                    if not path and ordered_paths:
-                        path = ordered_paths[img_idx % len(ordered_paths)]
-                        img_idx += 1
+            # Container frame to hold sub-grid; margins small to keep tight look
+            container = QFrame()
+            sub = QGridLayout()
+            sub.setContentsMargins(spacing // 2, spacing // 2, spacing // 2, spacing // 2)
+            sub.setSpacing(spacing // 2)
+            container.setLayout(sub)
 
-                    label = make_label(path)
-                    self.grid.addWidget(label, r, c, rh, cw)
-                    for rr in range(r, r + rh):
-                        for cc in range(c, c + cw):
-                            occupied[rr][cc] = True
+            # Decide sub-grid density based on macro span
+            if rh * cw >= 6:
+                sub_rows, sub_cols = 2, 3
+            elif rh * cw >= 4:
+                sub_rows, sub_cols = 2, 2
+            elif rh * cw >= 3:
+                sub_rows, sub_cols = 1, 3
+            else:
+                sub_rows, sub_cols = 1, max(1, cw)
 
-        # Backfill any remaining single cells
-        for r in range(rows):
-            for c in range(cols):
-                if occupied[r][c]:
-                    continue
-                path = ordered_paths[img_idx % len(ordered_paths)] if ordered_paths else None
-                img_idx += 1 if ordered_paths else 0
-                self.grid.addWidget(make_label(path), r, c, 1, 1)
+            # Fill sub-grid with images
+            for sr in range(sub_rows):
+                for sc in range(sub_cols):
+                    path = ordered_paths[img_idx % len(ordered_paths)] if ordered_paths else None
+                    img_idx += 1 if ordered_paths else 0
+                    sub.addWidget(make_label_local(path), sr, sc)
+                sub.setRowStretch(sr, 1)
+            for sc in range(sub_cols):
+                sub.setColumnStretch(sc, 1)
 
-        # Stretch to fill
+            self.grid.addWidget(container, r, c, rh, cw)
+
+        # Stretch outer grid
         for r in range(rows):
             self.grid.setRowStretch(r, 1)
         for c in range(cols):
             self.grid.setColumnStretch(c, 1)
-
-    # --------------------------- Qt events --------------------------- #
-    def resizeEvent(self, event) -> None:  # noqa: D401
-        self._populate_bento_grid()
-        super().resizeEvent(event)
-
-
-if __name__ == "__main__":
-    # Example usage: load metadata from config/sample_metadata.json
-    import json
-    sample_metadata_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../config/sample_metadata.json'))
-    with open(sample_metadata_path, "r") as f:
-        image_metadatas = json.load(f)
-    app = QApplication(sys.argv)
-    window = BentoGalleryWindow(image_metadatas, pattern_name="balanced_mix")
-    window.resize(1200, 800)
-    window.show()
-    sys.exit(app.exec())
